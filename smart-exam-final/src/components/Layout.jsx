@@ -5,7 +5,7 @@ import Sidebar from './Sidebar'
 const Layout = ({ children }) => {
     return (
         <>
-            <div className='flex flex-auto h-screen'>
+            <div className='flex flex-auto h-full'>
                 <Sidebar />
                 <div className='grow'>
                     <Navbar />

@@ -16,10 +16,10 @@ const Sidebar = () => {
 
   const Menus = [
     { title: 'Dashboard', path: '/dashboard', src: <AiFillPieChart /> },
-    { title: 'Course', path: '/course', src: <SiFuturelearn /> },
-    { title: 'Users', path: '/user', src: <SiFuturelearn /> },
-    { title: 'Profile', path: '/profile', src: <CgProfile /> },
-    { title: 'Signin', path: '/login', src: <SiOpenaccess />, gap: 'true' },
+    { title: 'Students', path: '/course', src: <SiFuturelearn /> },
+    { title: 'Questionnaire', path: '/user', src: <SiFuturelearn /> },
+    { title: 'Room', path: '/profile', src: <SiFuturelearn /> },
+    // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ]
 
   return (
@@ -28,6 +28,10 @@ const Sidebar = () => {
         className={`${
           open ? 'w-60' : 'w-fit'
         } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 p-5 dark:bg-slate-800`}
+        style={{
+          position: 'sticky',
+          top: 0,
+        }}
       >
         <BsArrowLeftCircle
           className={`${
