@@ -17,10 +17,10 @@ const Navbar = () => {
   };
   return (
     <div className="navbar">
-      <div className="logo">
+      {/* <div className="logo">
         <img src="logo.svg" alt="" />
         <span className="dark:text-white">Admin</span>
-      </div>
+      </div> */}
       <div className="flex items-center mx-auto">
         <span className="text-xl font-medium whitespace-nowrap dark:text-white">
           Welcome

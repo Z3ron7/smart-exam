@@ -1,9 +1,8 @@
-import { GridColDef } from "@mui/x-data-grid";
-import DataTable from "../../components/dataTable/DataTable";
-import "./Users.scss";
-import { useState } from "react";
+import React, { useState } from "react";
 import Add from "../../components/add/Add";
 import { userRows } from "../../data";
+import DataTable from "../../components/dataTable/DataTable";
+import "./users.scss";
 // import { useQuery } from "@tanstack/react-query";
 
 const columns = [
@@ -13,7 +12,10 @@ const columns = [
     headerName: "Avatar",
     width: 100,
     renderCell: (params) => {
-      return <img src={params.row.img || "/noavatar.png"} alt="" />;
+      return React.createElement("img", {
+        src: params.row.img || "/noavatar.png",
+        alt: "",
+      });
     },
   },
   {
@@ -53,6 +55,7 @@ const columns = [
     type: "boolean",
   },
 ];
+
 
 const Users = () => {
   const [open, setOpen] = useState(false);

@@ -5,7 +5,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, } from '
 import PieComponent from './PieComponent';
 // import { Progress } from 'antd';
 import error from "../assets/images/error.png"
-
+import './dashboard.scss'
 
 
 
@@ -62,11 +62,11 @@ const Dashboard = () => {
 
 
     return (
-        <div className=' bg-[#F8F9FC] pb-[40px]  dark:bg-slate-800'>
+        <div className='dash dark:bg-slate-800'>
             <div className='flex items-center justify-between'>
                 <h1 className='text-[28px] leading-[34px] font-normal text-[#5a5c69] cursor-pointer dark:text-white'>Dashboard</h1>
             </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 mt-4 md:mt-6 pb-4 md:pb-6 '>
+            <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4'>
             
                 <div className=' dark:bg-slate-800 border-2 h-[100px] rounded-[8px] bg-white border-l-[6px] border-[#4E73DF] flex items-center px-[30px] cursor-pointer hover:shadow-lg transform hover:scale-[103%] transition duration-300 ease-out'>
                 <div className="rounded-full h-12 w-12 flex items-center justify-center bg-orange-600">
@@ -108,8 +108,8 @@ const Dashboard = () => {
                 </div>
 
             </div>
-            <div className='flex mt-[22px] w-full gap-[30px] '>
-                <div className='basis-[70%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
+            <div className='flex flex-col md:flex-row md:gap-6 mt-[22px] w-full'>
+            <div className='basis-[70%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED] mb-[20px]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold '>Students task chart</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
@@ -119,7 +119,7 @@ const Dashboard = () => {
                         {/* <canvas id="myAreaChart"></canvas> */}
                         {/* <Line options={options} data={data} /> */}
                         <LineChart
-                            width={1150}
+                            width={1100}
                             height={500}
                             data={datas}
                             margin={{
@@ -155,8 +155,8 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-            <div className='flex mt-[22px] w-full gap-[30px]'>
-                <div className='basis-[55%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
+            <div className='flex flex-col md:flex-row lg:flex-row md:gap-6 lg:gap-6 mt-[22px] w-full'>
+            <div className='basis-[55%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Pending Students</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
@@ -204,7 +204,7 @@ const Dashboard = () => {
             </div>
 
 
-        </div >
+        </div>
     )
 }
 
