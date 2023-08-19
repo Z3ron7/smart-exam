@@ -48,7 +48,7 @@ import {
     return (
       <div className="dataTable">
         <DataGrid
-          className="dataGrid"
+          className="dataGrid dark:text-white"
           rows={props.rows}
           columns={[...props.columns, actionColumn]}
           initialState={{
