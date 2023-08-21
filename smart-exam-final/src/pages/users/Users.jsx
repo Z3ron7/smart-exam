@@ -6,7 +6,7 @@ import "./users.scss";
 // import { useQuery } from "@tanstack/react-query";
 
 const columns = [
-  { field: "id", headerName: "ID", width: 90 },
+  { field: "id", headerName: "ID", width: 50 },
   {
     field: "img",
     headerName: "Avatar",
@@ -40,19 +40,7 @@ const columns = [
     field: "phone",
     type: "string",
     headerName: "Phone",
-    width: 200,
-  },
-  {
-    field: "createdAt",
-    headerName: "Created At",
-    width: 200,
-    type: "string",
-  },
-  {
-    field: "verified",
-    headerName: "Verified",
     width: 150,
-    type: "boolean",
   },
 ];
 
@@ -73,8 +61,8 @@ const Users = () => {
   return (
     <div className="users">
       <div className="info">
-        <h1>Users</h1>
-        <button onClick={() => setOpen(true)}>Add New User</button>
+        <h1 className="dark:text-white">Students</h1>
+        {/* <button className="dark:text-white border-2 bg-blue-600 hover:bg-fuchsia-300" onClick={() => setOpen(true)}>Add New User</button> */}
       </div>
       <DataTable slug="users" columns={columns} rows={userRows} />
       {/* TEST THE API */}

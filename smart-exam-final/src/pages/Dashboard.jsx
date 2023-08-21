@@ -109,17 +109,18 @@ const Dashboard = () => {
 
             </div>
             <div className='flex flex-col md:flex-row md:gap-6 mt-[22px] w-full'>
-            <div className='basis-[70%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
+            <div className='basis-[53%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED] mb-[20px]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold '>Students task chart</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>
 
-                    <div className="w-full">
+                    <div className="lineChart">
                         {/* <canvas id="myAreaChart"></canvas> */}
                         {/* <Line options={options} data={data} /> */}
+                        
                         <LineChart
-                            width={1100}
+                            width={550}
                             height={500}
                             data={datas}
                             margin={{
@@ -196,7 +197,7 @@ const Dashboard = () => {
                     </div>
                     <div className='pl-[35px] flex items-center justify-center h-[100%]'>
                         <div>
-                            <img src={error} alt="" className='transform scale-[135%]' />
+                            <img src={error} alt="" className='scale-[135%]' />
                             <p className='mt-[15px] text-semibold text-gray-500'>No data available</p>
                         </div>
                     </div>
