@@ -118,10 +118,8 @@ const Dashboard = () => {
                     <div className="lineChart">
                         {/* <canvas id="myAreaChart"></canvas> */}
                         {/* <Line options={options} data={data} /> */}
-                        
+                        <ResponsiveContainer width="99%" height="100%">
                         <LineChart
-                            width={550}
-                            height={500}
                             data={datas}
                             margin={{
                                 top: 5,
@@ -138,6 +136,7 @@ const Dashboard = () => {
                             <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
                             <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
                         </LineChart>
+                        </ResponsiveContainer>
                     </div>
 
                 </div>

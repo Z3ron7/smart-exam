@@ -62,7 +62,7 @@ import {
           slotProps={{
             toolbar: {
               showQuickFilter: true,
-              quickFilterProps: { debounceMs: 200 },
+              quickFilterProps: { debounceMs: 500 },
             },
           }}
           pageSizeOptions={[5, 10]}

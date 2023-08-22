@@ -5,7 +5,6 @@ import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Course from './pages/Course'
 import Room from './pages/Room'
-import Login from './pages/Login'
 import Users from './pages/users/Users'
 
 function App() {
@@ -13,11 +12,11 @@ function App() {
         <BrowserRouter>
             <Layout>
                 <Routes>
-                    <Route path='/' element={<Home />} />
+                    
                     <Route path='/dashboard' element={<Dashboard />} />
                     <Route path='/users' element={<Users />} />
                     <Route path='/room' element={<Room />} />
-                    <Route path='/login' element={<Login />} />
+                    <Route path='/course' element={<Course />} />
                 </Routes>
             </Layout>
         </BrowserRouter>
