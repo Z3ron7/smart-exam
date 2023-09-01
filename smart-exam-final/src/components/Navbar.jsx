@@ -5,15 +5,23 @@ import { FaBell, FaCog } from "react-icons/fa";
 import { Menu, Popover, Transition } from '@headlessui/react'
 import { HiOutlineBell, HiOutlineSearch, HiOutlineChatAlt } from 'react-icons/hi'
 import classNames from 'classnames'
+import { useNavigate } from 'react-router-dom'
 
 
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   const showProfile = () => {
     // alert("helloo")
     setOpen(!open);
+  };
+
+  const handleLogout = () => {
+    // Clear the token from localStorage and redirect to the login page
+    localStorage.removeItem("token");
+    navigate("/");
   };
   return (
     <div className="navbar">
@@ -37,8 +45,8 @@ const Navbar = () => {
 						<>
 							<Popover.Button
 								className={classNames(
-									open && 'bg-gray-100',
-									'group inline-flex items-center rounded-sm p-1.5 text-gray-700 hover:text-opacity-100 focus:outline-none active:bg-gray-100'
+									open && 'bg-transparent',
+									'group inline-flex items-center rounded-sm p-1.5 text-gray-700 hover:text-opacity-100 focus:outline-none active:bg-slate-500 '
 								)}
 							>
 								<HiOutlineBell fontSize={24} className="dark:text-white" />
@@ -85,7 +93,7 @@ const Navbar = () => {
               <p className="cursor-pointer hover:text-[blue] font-semibold">
                 Settings
               </p>
-              <p className="cursor-pointer hover:text-[blue] font-semibold">
+              <p className="cursor-pointer hover:text-[blue] font-semibold" onClick={handleLogout}>
                 Log out
               </p>
             </div>
