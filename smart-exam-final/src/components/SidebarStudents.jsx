@@ -16,7 +16,7 @@ const SidebarStudents = () => {
 
   const Menus = [
     { title: 'Dashboard', path: '/dashboard', src: <AiFillPieChart /> },
-    { title: 'Students', path: '/users', src: <SiFuturelearn /> },
+    { title: 'Test', path: '/users', src: <SiFuturelearn /> },
     { title: 'Questionnaire', path: '/questionnaire', src: <SiFuturelearn /> },
     { title: 'Room', path: '/room', src: <SiFuturelearn /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },

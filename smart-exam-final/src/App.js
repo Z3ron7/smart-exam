@@ -11,41 +11,122 @@ import Users from './pages/users/Users';
 import LoginPage from './pages/Login/LoginPage';
 import Register from './pages/Login/Register';
 import PageNotFound from './pages/PageNotFound';
+import StudentDashboard from './pages/Students/StudentDashboard';
+import ProtectedRoute from './pages/ProtectedRoute';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
     setIsLoggedIn(token !== null);
+    setUserRole(role);
   }, []);
-
-  
 
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/*" element={<PageNotFound />} />
+
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<LandingPage />} />
         <Route path="/Log-in" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
 
-        {isLoggedIn ? (
-          <>
-            <Route path='/dashboard' element={<Layout><Dashboard /></Layout>} />
-            <Route path='/users' element={<Layout><Users /></Layout>} />
-            <Route path='/room' element={<Layout><Room /></Layout>} />
-            <Route path='/questionnaire' element={<Layout><Questionnaire /></Layout>} />
-          </>
-        ) : (
-          <>
-            <Route path='/dashboard' element={<Navigate to="/" replace />} />
-            <Route path='/users' element={<Navigate to="/" replace />} />
-            <Route path='/room' element={<Navigate to="/" replace />} />
-            <Route path='/questionnaire' element={<Navigate to="/" replace />} />
-          </>
-        )}
+        {/* Routes for admin */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute
+              element={<Layout><Dashboard /></Layout>}
+              allowedRoles={['admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute
+              element={<Layout><Users /></Layout>}
+              allowedRoles={['admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/room"
+          element={
+            <ProtectedRoute
+              element={<Layout><Room /></Layout>}
+              allowedRoles={['admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/questionnaire"
+          element={
+            <ProtectedRoute
+              element={<Layout><Questionnaire /></Layout>}
+              allowedRoles={['admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
 
-        <Route path='/*' element={<PageNotFound />} />
+        {/* Routes for student */}
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><StudentDashboard /></LayoutStudents>}
+              allowedRoles={['student']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/test"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><Users /></LayoutStudents>}
+              allowedRoles={['student']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/student-room"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><Room /></LayoutStudents>}
+              allowedRoles={['student']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/student-questionnaire"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><Questionnaire /></LayoutStudents>}
+              allowedRoles={['student']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+
+        <Route path="/" element={<LandingPage />} />
+
       </Routes>
     </BrowserRouter>
   );

@@ -4,27 +4,31 @@ import axios from 'axios'
 
 function LoginPage() {
   const [values, setValues] = useState({
-    username: "",
-    password: "",
+    username: '',
+    password: '',
   });
   const navigate = useNavigate(); // Hook for navigation
 
   const handleLogin = (event) => {
     event.preventDefault();
     axios
-      .post("http://localhost:3001/login", values, { withCredentials: true })
+      .post('http://localhost:3001/login', values, { withCredentials: true })
       .then((res) => {
-        if (res.data.Status === "Login Successful") {
-          localStorage.setItem("token", res.data.token); // Store the token in local storage
-          navigate("/dashboard");
-          alert("Login successfully."); // Display the alert message
+        if (res.data.Status === 'Login Successful') {
+          localStorage.setItem('token', res.data.token); // Store the token in local storage
+          localStorage.setItem('role', res.data.role);
+          // Determine the redirect URL based on the user's role
+          const userRole = localStorage.getItem('role');
+          const dashboardURL = userRole === 'admin' ? '/dashboard' : '/student-dashboard';
+          navigate(dashboardURL);
+          alert('Login successfully.'); // Display the alert message
         } else {
           alert(res.data.Error);
         }
       })
       .catch((err) => {
         console.log(err.response);
-        alert("An error occurred during login.");
+        alert('An error occurred during login.');
       });
   };
   return (
@@ -49,7 +53,6 @@ function LoginPage() {
               </label>
               <div className="mt-2">
                 <input
-                  id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -73,7 +76,6 @@ function LoginPage() {
               </div>
               <div className="mt-2">
                 <input
-                  id="password"
                   name="password"
                   type="password"
                   autoComplete="current-password"

@@ -4,35 +4,61 @@ import axios from "axios";
 import { RadioGroup } from "@headlessui/react";
 
 export default function Register() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [role, setRole] = useState("student");
-  const navigate = useNavigate()
+  const [registrationStatus, setRegistrationStatus] = useState(null);
+  const navigate = useNavigate();
 
-  const handleRegister = async () => {
-    if (password !== passwordConfirmation) {
+  const [values, setValues] = useState({
+    name: '',
+    username: '', // Assuming username maps to email
+    password: '',
+    role: 'student', // Set a default role
+  });
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    if (values.password !== passwordConfirmation) {
       console.error("Password and password confirmation do not match");
       return;
     }
+
     try {
-      const response = await axios.post("http://localhost:3001/register", {
-        name,
-        username: email,
-        password,
-        role,
-      });
-      if (response.data.Status === "Success") {
-        console.log("Registration successful");
-        navigate("/Log-in");
+      const response = await axios.post('http://localhost:3001/register', values);
+
+      if (response.data.Status === "Success") {  
+        setRegistrationStatus("success");
+        setTimeout(() => {
+          navigate('/Log-in');
+        }, 2000);
+      } else {
+        setRegistrationStatus("error");
       }
-    } catch (error) {
-      console.error("Registration error:", error.response.data.Error);
+    } catch (err) {
+      console.error(err); // Log the error
+      setRegistrationStatus("error");
     }
   };
+    
+  
   return (
     <div>
+      {registrationStatus === "success" && (
+        <div
+          className=" flex w-1/2 mx-auto rounded-lg bg-green-100 px-6 py-5 text-base text-green-500 justify-center items-center"
+          role="alert"
+        >
+          Registration successful! Redirecting to login page...
+        </div>
+      )}
+      {registrationStatus === "error" && (
+        <div
+          className="mb-4 rounded-lg bg-error-100 px-6 py-5 text-base text-error-700"
+          role="alert"
+        >
+          Registration failed. Please try again.
+        </div>
+      )}
       <div className="flex flex-col items-center min-h-screen pt-6 sm:justify-center sm:pt-0 bg-gray-50">
         <div>
           <a href="/">
@@ -40,7 +66,7 @@ export default function Register() {
           </a>
         </div>
         <div className="w-full px-6 py-4 mt-6 overflow-hidden bg-white shadow-md sm:max-w-lg sm:rounded-lg">
-          <form onSubmit={handleRegister} method="post">
+          <form onSubmit={handleRegister}>
             <div>
               <label
                 htmlFor="name"
@@ -52,8 +78,8 @@ export default function Register() {
                 <input
                   type="text"
                   name="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)} // Update the name state
+                  value={values.name}
+                  onChange={e => setValues({ ...values, name: e.target.value })} // Update the name state
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -69,13 +95,13 @@ export default function Register() {
                 <input
                   type="email"
                   name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={values.username} // Use values.username
+                  onChange={e => setValues({ ...values, username: e.target.value })} // Update values.username
                   className="block w-full rounded-md py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
-            <RadioGroup value={role} onChange={(e) => setRole(e.target.value)}>
+            <RadioGroup value={values.role} onChange={role => setValues({ ...values, role })}>
               <div className="flex items-start mt-3 mb-3">
                 <RadioGroup.Label className="block text-sm font-medium text-gray-700">
                   Status:
@@ -131,8 +157,8 @@ export default function Register() {
                 <input
                   type="password"
                   name="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={values.password}
+                  onChange={e => setValues({ ...values, password: e.target.value })}
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
@@ -154,7 +180,7 @@ export default function Register() {
                 />
               </div>
             </div>
-            <a href="#" className="text-xs text-purple-600 hover:underline">
+            <a href="/" className="text-xs text-purple-600 hover:underline">
               Forget Password?
             </a>
             <div className="flex items-center mt-4">
@@ -196,7 +222,6 @@ export default function Register() {
             </button>
             <button
               aria-label="Login with GitHub"
-              role="button"
               className="flex items-center justify-center w-full p-4 space-x-4 border rounded-md focus:ring-2 focus:ring-offset-1 dark:border-gray-400 focus:ring-violet-400"
             >
               <svg

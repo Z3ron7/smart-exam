@@ -53,7 +53,7 @@ app.post('/register', async (req, res) => {
       // Validate incoming data
       if (!name || !username || !password || !role) {
         return res.status(400).json({ Error: "Missing required fields" });
-      }
+      }  
   
       // Check if the username already exists
       const usernameExists = await new Promise((resolve, reject) => {
