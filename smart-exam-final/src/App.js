@@ -12,6 +12,7 @@ import LoginPage from './pages/Login/LoginPage';
 import Register from './pages/Login/Register';
 import PageNotFound from './pages/PageNotFound';
 import StudentDashboard from './pages/Students/StudentDashboard';
+import Exam from './pages/Students/Exam'
 import ProtectedRoute from './pages/ProtectedRoute';
 
 function App() {
@@ -92,10 +93,10 @@ function App() {
           }
         />
         <Route
-          path="/test"
+          path="/exam"
           element={
             <ProtectedRoute
-              element={<LayoutStudents><Users /></LayoutStudents>}
+              element={<LayoutStudents><Exam /></LayoutStudents>}
               allowedRoles={['student']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}

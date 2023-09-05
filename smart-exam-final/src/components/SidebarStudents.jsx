@@ -15,9 +15,9 @@ const SidebarStudents = () => {
   const location = useLocation()
 
   const Menus = [
-    { title: 'Dashboard', path: '/dashboard', src: <AiFillPieChart /> },
-    { title: 'Test', path: '/users', src: <SiFuturelearn /> },
-    { title: 'Questionnaire', path: '/questionnaire', src: <SiFuturelearn /> },
+    { title: 'Dashboard', path: '/student-dashboard', src: <AiFillPieChart /> },
+    { title: 'Exam', path: '/exam', src: <SiFuturelearn /> },
+    { title: 'View Result', path: '/result', src: <SiFuturelearn /> },
     { title: 'Room', path: '/room', src: <SiFuturelearn /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ]
@@ -27,7 +27,7 @@ const SidebarStudents = () => {
       <div
         className={`${
           open ? 'w-60' : 'w-fit'
-        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 p-5 dark:bg-slate-800`}
+        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 p-5 dark:bg-darkBlue `}
         style={{
           position: 'sticky',
           top: 0,
