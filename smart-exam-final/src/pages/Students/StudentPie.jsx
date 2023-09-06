@@ -1,7 +1,7 @@
 
 
 import React, { PureComponent } from 'react';
-import { PieChart, Pie, Sector, Cell,  } from 'recharts';
+import { PieChart, Pie, Sector, Cell, ResponsiveContainer } from 'recharts';
 const data = [
     { name: 'Group A', value: 400 },
     { name: 'Group B', value: 300 },
@@ -26,8 +26,9 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 const StudentPie = () => {
     return (
         <div>
-     
-                <PieChart width={400} height={400}>
+                <div >
+                <ResponsiveContainer width="100%" height={400}>
+                <PieChart >
                     <Pie
                         data={data}
                         cx="50%"
@@ -43,19 +44,21 @@ const StudentPie = () => {
                         ))}
                     </Pie>
                 </PieChart>
-                <div className='grid grid-cols-4'>
+                </ResponsiveContainer>
+                </div>
+                <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-center mx-auto items-center'>
                 {
                   
                      data.map((item)=>(
-                        <p className='cursor-pointer font-bold'>{item.name}</p>
+                        <p className='flex cursor-pointer font-bold justify-center items-center mx-auto'>{item.name}</p>
                               ))
 
                 }
                 </div>
-                <div className='grid grid-cols-4 mt-[15px]'>
+                <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
                     {
                          COLORS.map((item)=>(
-                <div className="h-[30px] w-[30px] " style={{backgroundColor:item}}>
+                <div className="flex h-[20px] w-[20px] justify-center items-center mx-auto mb-3" style={{backgroundColor:item}}>
 
                   </div>
                          ))

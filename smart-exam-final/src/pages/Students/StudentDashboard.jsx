@@ -77,7 +77,7 @@ const StudentDashboard = () => {
                     <div className="lineChart">
                         {/* <canvas id="myAreaChart"></canvas> */}
                         {/* <Line options={options} data={data} /> */}
-                        <ResponsiveContainer width="99%" height="80%">
+                        <ResponsiveContainer width="100%" height={400}>
                         <LineChart
                             data={datas}
                             margin={{
@@ -104,7 +104,7 @@ const StudentDashboard = () => {
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Categories</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>
-                    <div className='pl-[35px] md:w-60 h-4/5 dark:text-white'>
+                    <div className='w-full h-4/5 dark:text-white'>
 
                         <PieComponent />
 
