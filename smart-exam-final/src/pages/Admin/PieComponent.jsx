@@ -1,7 +1,7 @@
 
 
 import React, { PureComponent } from 'react';
-import { PieChart, Pie, Sector, Cell,  } from 'recharts';
+import { PieChart, Pie, Sector, Cell, ResponsiveContainer  } from 'recharts';
 const data = [
     { name: 'Group A', value: 400 },
     { name: 'Group B', value: 300 },
@@ -26,8 +26,8 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 const PieComponent = () => {
     return (
         <div>
-     
-                <PieChart width={400} height={400}>
+                <ResponsiveContainer width="99%" height="80%">
+                <PieChart>
                     <Pie
                         data={data}
                         cx="50%"
@@ -43,7 +43,8 @@ const PieComponent = () => {
                         ))}
                     </Pie>
                 </PieChart>
-                <div className='grid grid-cols-4'>
+                </ResponsiveContainer>
+                <div className=' grid grid-cols-4 justify-center mx-auto items-center'>
                 {
                   
                      data.map((item)=>(
@@ -52,10 +53,10 @@ const PieComponent = () => {
 
                 }
                 </div>
-                <div className='grid grid-cols-4 mt-[15px]'>
+                <div className='grid grid-cols-4 justify-center items-center mx-auto mt-[10px]'>
                     {
                          COLORS.map((item)=>(
-                <div className="h-[30px] w-[30px] " style={{backgroundColor:item}}>
+                <div className="h-[20px] w-[20px] " style={{backgroundColor:item}}>
 
                   </div>
                          ))
