@@ -1,13 +1,12 @@
-// Questionnaire.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import QuestionModal from './QuestionModal';
+import Select from 'react-select';
 
 const Questionnaire = () => {
-  const [questions, setQuestions] = useState([]);
+  const [questionsData, setQuestionsData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState(null);
-  const [questionsData, setQuestionsData] = useState([]);
 
   const openModal = (question) => {
     setIsModalOpen(true);
@@ -23,25 +22,12 @@ const Questionnaire = () => {
     // Fetch data from the backend
     axios.get('http://localhost:3001/questions/fetch')
       .then((response) => {
-        setQuestionsData(response.data.data);
+        setQuestionsData(response.data);
       })
       .catch((error) => {
         console.error(error);
       });
   }, []);
-
-  const addQuestion = (newQuestion) => {
-    setQuestions([...questions, newQuestion]);
-    closeModal();
-  };
-
-  const editQuestion = (editedQuestion) => {
-    const updatedQuestions = questions.map((question) =>
-      question === questionToEdit ? { ...question, ...editedQuestion } : question
-    );
-    setQuestions(updatedQuestions);
-    closeModal();
-  };
 
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
@@ -58,32 +44,32 @@ const Questionnaire = () => {
       <QuestionModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        addQuestion={addQuestion}
-        editQuestion={editQuestion}
         questionToEdit={questionToEdit}
       />
 
       {/* Render the list of questions */}
-      <div className="bg-red-500">
-      <div className="grid grid-cols-1 gap-4 mt-4">
-      <ul>
-        {questionsData.map((question) => (
-          <li key={question.question_id}>
-            <strong>Question:</strong> {question.questionText}
-            <br />
-            <strong>Choices:</strong> {question.choices}
-            <br />
-            <strong>Program:</strong> {question.program}
-            <br />
-            <strong>Competency:</strong> {question.competency}
-            <br />
-            <strong>Answer Key:</strong> {question.answer}
-            <br />
-            <strong>Is Correct:</strong> {question.is_correct ? 'Yes' : 'No'}
-          </li>
-        ))}
-      </ul>
-      </div>
+      <div className="container min-h-screen h-auto items flex flex-col bg-blue-100">
+        {/* Your program and competency dropdowns can go here */}
+        
+        {/* Render the questions */}
+        <div className="grid grid-cols-1 gap-4 mt-4">
+          <ul>
+            {questionsData.map((question) => (
+              <li key={question.question_id}>
+                <strong>Program:</strong> {question.program}
+                <br />
+                <strong>Competency:</strong> {question.competency}
+                <br />
+                <strong>Question:</strong> {question.questionText}
+                <br />
+                <strong>Choices:</strong> {question.choices}
+                <br />
+                <strong>Answer:</strong> {question.answer}
+                <br />
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
