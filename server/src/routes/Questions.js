@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/create', async (req, res) => {
   const db = new Database();
   const conn = db.connection;
-  const { program, competency, questionText, choicesText, answerText, isCorrect } = req.body;
+  const { program, competency, questionText, answerText } = req.body;
 
   try {
     await conn.connect();
@@ -16,11 +16,11 @@ router.post('/create', async (req, res) => {
 
     // Create a new question and get its question_id
     const questionQuery =
-      'INSERT INTO question (questionText, choices, program, competency, answer, is_correct) VALUES (?, ?, ?, ?, ?, ?)';
-    
+      'INSERT INTO question (questionText, program, competency, answer) VALUES (?, ?, ?, ?)';
+
     const result = await conn.query(
       questionQuery,
-      [questionText, choicesText.join(','), program, competency, answerText, isCorrect]
+      [questionText, program, competency, answerText]
     );
 
     const question_id = result.insertId;
@@ -41,6 +41,36 @@ router.post('/create', async (req, res) => {
     conn.end();
   }
 });
+
+router.post('/choices/create/:questionId', async (req, res) => {
+  const { questionId } = req.params;
+  const { choices } = req.body;
+
+  try {
+    // Insert choices into the choices table associated with the given questionId
+    if (choices && choices.length > 0) {
+      for (const choice of choices) {
+        const { choiceText, isCorrect } = choice;
+
+        // Modify your database query to insert choices associated with the questionId
+        await conn.query(
+          'INSERT INTO choices (question_id, choiceText, is_correct) VALUES (?, ?, ?)',
+          [questionId, choiceText, isCorrect]
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Choices added successfully',
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 
 // Fetch all questions
