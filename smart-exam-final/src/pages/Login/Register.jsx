@@ -12,7 +12,7 @@ export default function Register() {
     name: '',
     username: '', // Assuming username maps to email
     password: '',
-    role: 'student', // Set a default role
+    status: 'student', // Set a default status
   });
 
   const handleRegister = async (e) => {
@@ -101,7 +101,7 @@ export default function Register() {
                 />
               </div>
             </div>
-            <RadioGroup value={values.role} onChange={role => setValues({ ...values, role })}>
+            <RadioGroup value={values.status} onChange={status => setValues({ ...values, status })}>
               <div className="flex items-start mt-3 mb-3">
                 <RadioGroup.Label className="block text-sm font-medium text-gray-700">
                   Status:
@@ -138,7 +138,7 @@ export default function Register() {
                             checked ? "text-blue-500" : "text-gray-800"
                           }`}
                         >
-                          Admin
+                          Alumni
                         </div>
                       </label>
                     )}

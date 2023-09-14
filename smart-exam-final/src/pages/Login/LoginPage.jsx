@@ -7,7 +7,8 @@ function LoginPage() {
     username: '',
     password: '',
   });
-  const navigate = useNavigate(); // Hook for navigation
+  const [error, setError] = useState(null); // State for displaying error messages
+  const navigate = useNavigate();
 
   const handleLogin = (event) => {
     event.preventDefault();
@@ -15,20 +16,19 @@ function LoginPage() {
       .post('http://localhost:3001/login', values, { withCredentials: true })
       .then((res) => {
         if (res.data.Status === 'Login Successful') {
-          localStorage.setItem('token', res.data.token); // Store the token in local storage
+          localStorage.setItem('token', res.data.token);
           localStorage.setItem('role', res.data.role);
-          // Determine the redirect URL based on the user's role
-          const userRole = localStorage.getItem('role');
-          const dashboardURL = userRole === 'admin' ? '/dashboard' : '/student-dashboard';
+          const userRole = res.data.role; // Use the role from the response
+          const dashboardURL = userRole === 'Admin' ? '/dashboard' : '/student-dashboard';
           navigate(dashboardURL);
-          alert('Login successfully.'); // Display the alert message
+          alert('Login successfully.');
         } else {
-          alert(res.data.Error);
+          setError('Login failed. Please check your credentials.');
         }
       })
       .catch((err) => {
-        console.log(err.response);
-        alert('An error occurred during login.');
+        console.error(err.response);
+        setError('An error occurred during login.');
       });
   };
   return (
@@ -46,55 +46,63 @@ function LoginPage() {
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form className="space-y-6" onSubmit={handleLogin}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                Email address
+        <form className="space-y-6" onSubmit={handleLogin}>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+              Email address
+            </label>
+            <div className="mt-2">
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                onChange={(e) => setValues({ ...values, username: e.target.value })}
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+                Password
               </label>
-              <div className="mt-2">
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  onChange={(e) => setValues({ ...values, username: e.target.value })}
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
+              <div className="text-sm">
+                <button
+                  type="button" // Use a button for navigation
+                  onClick={() => navigate('/forgot-password')} // Navigate to the forgot password page
+                  className="font-semibold text-indigo-600 hover:text-indigo-500"
+                >
+                  Forgot password?
+                </button>
               </div>
             </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
-                  Password
-                </label>
-                <div className="text-sm">
-                  <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
-                    Forgot password?
-                  </a>
-                </div>
-              </div>
-              <div className="mt-2">
-                <input
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  onChange={(e) => setValues({ ...values, password: e.target.value })}
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
+            <div className="mt-2">
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                onChange={(e) => setValues({ ...values, password: e.target.value })}
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
             </div>
+          </div>
 
-            <div>
-          <button
-            type="submit"
-            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Sign in
-          </button>
-        </div>
-          </form>
+          {error && (
+            <div className="text-red-600">{error}</div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Sign in
+            </button>
+          </div>
+        </form>
 
           <p className="mt-10 text-center text-sm text-gray-500">
             Not a member?{' '}

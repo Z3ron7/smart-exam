@@ -19,6 +19,7 @@ const Sidebar = () => {
     { title: 'Students', path: '/users', src: <SiFuturelearn /> },
     { title: 'Questionnaire', path: '/questionnaire', src: <SiFuturelearn /> },
     { title: 'Room', path: '/room', src: <SiFuturelearn /> },
+    { title: 'AddQuestion', path: '/addQuestion', src: <SiFuturelearn /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ]
 

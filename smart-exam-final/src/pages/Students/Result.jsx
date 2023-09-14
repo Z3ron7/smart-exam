@@ -1,22 +1,63 @@
-import React from 'react'
+import React, { useRef, useEffect, useState } from "react";
 
-export const Result = () => {
+export default function Result() {
+  const [num, setNum] = useState(0);
+  const [selectedTime, setSelectedTime] = useState(0);
+  const [countdownStarted, setCountdownStarted] = useState(false);
+
+  let intervalRef = useRef();
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
+  };
+
+  const decreaseNum = () => setNum((prev) => prev - 1);
+
+  useEffect(() => {
+    if (countdownStarted && selectedTime > 0 && num > 0) {
+      intervalRef.current = setInterval(decreaseNum, 1000);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [countdownStarted, selectedTime, num]);
+
+  const handleStart = () => {
+    if (selectedTime > 0) {
+      setNum(selectedTime * 3600); // Convert selected time to seconds
+      setCountdownStarted(true);
+    }
+  };
+
+  const handleTimeChange = (event) => {
+    setSelectedTime(parseInt(event.target.value, 10));
+    setNum(parseInt(event.target.value, 10) * 3600); // Update num when the time is changed
+    setCountdownStarted(false); // Reset the countdown when the time is changed
+  };
+
   return (
-    <div className='bg-gray-100 dark:bg-slate-600 dark:text-white'>
-        <header className="dark:bg-slate-800 space-y-4 p-4 sm:px-8 sm:py-6 lg:p-4 xl:px-8 xl:py-6">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900 dark:text-white">Questions</h2>
-          <div className="flex justify-end">
-                <button className="bg-blue-500 hover:bg-blue-400 ease-out duration-300 ring-2 ring-purple-500 text-white px-4 py-2 rounded">New Question</button>
-            </div>
+    <div>
+      <div>
+        <select value={selectedTime} onChange={handleTimeChange}>
+          <option value={0}>Select Time</option>
+          <option value={1}>1 Hour</option>
+          <option value={2}>2 Hours</option>
+          <option value={3}>3 Hours</option>
+          <option value={4}>4 Hours</option>
+          <option value={5}>5 Hours</option>
+        </select>
+        <button onClick={handleStart} disabled={selectedTime === 0 || countdownStarted}>
+          Start
+        </button>
+      </div>
+      {selectedTime > 0 && (
+        <div>
+          {formatTime(num)}
         </div>
-        <form className="group relative ">
-          <svg width="20" height="20" fill="currentColor" className="absolute left-3 top-1/2 -mt-2.5 text-slate-400 pointer-events-none group-focus-within:text-blue-500" aria-hidden="true">
-            <path fillRule="evenodd" clipRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
-          </svg>
-          <input className="focus:ring-2 focus:ring-blue-500 focus:outline-none appearance-none w-full text-sm leading-6 text-slate-900 placeholder-slate-400 rounded-md py-2 pl-10 ring-1 ring-slate-200 shadow-sm" type="text" aria-label="Filter projects" placeholder="Filter questions..." />
-        </form>
-      </header>
+      )}
     </div>
-  )
+  );
 }

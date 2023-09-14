@@ -1,61 +1,92 @@
-import React, {useState} from "react";
+// Questionnaire.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import QuestionModal from './QuestionModal';
 
 const Questionnaire = () => {
-  const [questions, setQuestions] = useState([
-    {
-        question: "What is the capital of France?",
-        choices: ["Paris", "Berlin", "Madrid", "Rome"],
-        correctAnswer: "Paris"
-    },
-    {
-        question: "What is the largest planet in our solar system?",
-        choices: ["Venus", "Jupiter", "Mars", "Saturn"],
-        correctAnswer: "Jupiter"
-    }
-]);
-const renderQuestion = (question, index) => {
+  const [questions, setQuestions] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [questionToEdit, setQuestionToEdit] = useState(null);
+  const [questionsData, setQuestionsData] = useState([]);
 
-    return (
-    
-      <div key={index} className="mt-4 bg-white p-4 text-black rounded shadow">
-                <div className="text-lg font-semibold mb-2">Question {index + 1}: {question.question}</div>
-                <div className="grid gap-2">
-                    {question.choices.map((choice, choiceIndex) => (
-                        <label key={choiceIndex} className="flex items-center">
-                            <input type="radio" name={`question${index}`} className="mr-2" />
-                            {choice}
-                        </label>
-                    ))}
-                </div>
-                <div className="bg-blue-500 text-white p-2 mt-2 rounded">
-                    Correct Answer: {question.correctAnswer}
-                </div>
-            </div>
-     );
-    };
+  const openModal = (question) => {
+    setIsModalOpen(true);
+    setQuestionToEdit(question);
+  };
 
-    return (
-          <div className='bg-gray-100 dark:bg-slate-600 dark:text-white'>
-        <header className="dark:bg-slate-800 space-y-4 p-4 sm:px-8 sm:py-6 lg:p-4 xl:px-8 xl:py-6">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900 dark:text-white">Questions</h2>
-          <div className="flex justify-end">
-                <button className="bg-blue-500 hover:bg-blue-400 ease-out duration-300 ring-2 ring-purple-500 text-white px-4 py-2 rounded">New Question</button>
-            </div>
-        </div>
-        <form className="group relative ">
-          <svg width="20" height="20" fill="currentColor" className="absolute left-3 top-1/2 -mt-2.5 text-slate-400 pointer-events-none group-focus-within:text-blue-500" aria-hidden="true">
-            <path fillRule="evenodd" clipRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
-          </svg>
-          <input className="focus:ring-2 focus:ring-blue-500 focus:outline-none appearance-none w-full text-sm leading-6 text-slate-900 placeholder-slate-400 rounded-md py-2 pl-10 ring-1 ring-slate-200 shadow-sm" type="text" aria-label="Filter projects" placeholder="Filter questions..." />
-        </form>
-      </header>
-            
-            <div className="max-w-lg mx-auto p-4">
-                {questions.map((question, index) => renderQuestion(question, index))}
-            </div>
-        </div>
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setQuestionToEdit(null);
+  };
+
+  useEffect(() => {
+    // Fetch data from the backend
+    axios.get('http://localhost:3001/questions/fetch')
+      .then((response) => {
+        setQuestionsData(response.data.data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
+  const addQuestion = (newQuestion) => {
+    setQuestions([...questions, newQuestion]);
+    closeModal();
+  };
+
+  const editQuestion = (editedQuestion) => {
+    const updatedQuestions = questions.map((question) =>
+      question === questionToEdit ? { ...question, ...editedQuestion } : question
     );
+    setQuestions(updatedQuestions);
+    closeModal();
+  };
+
+  return (
+    <div className="container min-h-screen h-auto items flex flex-col">
+      <div className="flex justify-end">
+        <button
+          onClick={() => openModal()}
+          className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+        >
+          New Question
+        </button>
+      </div>
+
+      {/* Render the modal */}
+      <QuestionModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        addQuestion={addQuestion}
+        editQuestion={editQuestion}
+        questionToEdit={questionToEdit}
+      />
+
+      {/* Render the list of questions */}
+      <div className="bg-red-500">
+      <div className="grid grid-cols-1 gap-4 mt-4">
+      <ul>
+        {questionsData.map((question) => (
+          <li key={question.question_id}>
+            <strong>Question:</strong> {question.questionText}
+            <br />
+            <strong>Choices:</strong> {question.choices}
+            <br />
+            <strong>Program:</strong> {question.program}
+            <br />
+            <strong>Competency:</strong> {question.competency}
+            <br />
+            <strong>Answer Key:</strong> {question.answer}
+            <br />
+            <strong>Is Correct:</strong> {question.is_correct ? 'Yes' : 'No'}
+          </li>
+        ))}
+      </ul>
+      </div>
+      </div>
+    </div>
+  );
 };
 
 export default Questionnaire;

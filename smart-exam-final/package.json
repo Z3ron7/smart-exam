@@ -16,8 +16,10 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-icons": "^4.10.1",
+    "react-modal": "^3.16.1",
     "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
+    "react-select": "^5.7.4",
     "recharts": "^2.7.3",
     "sass": "^1.65.1",
     "web-vitals": "^2.1.4"

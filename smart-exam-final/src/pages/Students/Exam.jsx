@@ -140,15 +140,33 @@ function Exam() {
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white ">
-        
-      <div className="w-72">
-      <Select label="Select Version">
-        <Option>Material Tailwind HTML</Option>
-        <Option>Material Tailwind React</Option>
+        <div className=" flex gap-8 justify-center items-center mx-auto dark:text-white">
+      <div className="w-72 dark:text-white">
+      <Select className="bg-black" label="Program" info>
+        <Option className="text-white bg-blue-gray-600" active>Social Work</Option>
+        <Option>Option</Option>
         <Option>Material Tailwind Vue</Option>
         <Option>Material Tailwind Angular</Option>
         <Option>Material Tailwind Svelte</Option>
       </Select>
+    </div>
+    <div className="w-72">
+      <Select label="Competency" info>
+        <Option>Human Behavior and Social Environment</Option>
+        <Option>Social Case Work</Option>
+        <Option>Social Group Work</Option>
+        <Option>Community Organization</Option>
+      </Select>
+    </div>
+    <div className="w-72">
+      <Select label="Time Duration" danger>
+        <Option>30mins</Option>
+        <Option>1hr</Option>
+        <Option>2hrs</Option>
+        <Option>3hrs</Option>
+        <Option>4hrs</Option>
+      </Select>
+    </div>
     </div>
       </div>
       {currentQuestion !== maxQuestions ? (

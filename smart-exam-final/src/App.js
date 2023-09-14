@@ -13,7 +13,9 @@ import Register from './pages/Login/Register';
 import PageNotFound from './pages/PageNotFound';
 import StudentDashboard from './pages/Students/StudentDashboard';
 import Exam from './pages/Students/Exam'
+import Result from './pages/Students/Result'
 import ProtectedRoute from './pages/ProtectedRoute';
+import AddQuestion from './pages/Admin/AddQuestion'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,7 +42,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<Layout><Dashboard /></Layout>}
-              allowedRoles={['admin']}
+              allowedRoles={['Admin']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -51,7 +53,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<Layout><Users /></Layout>}
-              allowedRoles={['admin']}
+              allowedRoles={['Admin']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -62,7 +64,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<Layout><Room /></Layout>}
-              allowedRoles={['admin']}
+              allowedRoles={['Admin']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -73,7 +75,18 @@ function App() {
           element={
             <ProtectedRoute
               element={<Layout><Questionnaire /></Layout>}
-              allowedRoles={['admin']}
+              allowedRoles={['Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/addQuestion"
+          element={
+            <ProtectedRoute
+              element={<Layout><AddQuestion /></Layout>}
+              allowedRoles={['Admin']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -86,7 +99,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutStudents><StudentDashboard /></LayoutStudents>}
-              allowedRoles={['student']}
+              allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -97,7 +110,18 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutStudents><Exam /></LayoutStudents>}
-              allowedRoles={['student']}
+              allowedRoles={['Exam-taker']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/result"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><Result /></LayoutStudents>}
+              allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -108,7 +132,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutStudents><Room /></LayoutStudents>}
-              allowedRoles={['student']}
+              allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
@@ -119,7 +143,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutStudents><Questionnaire /></LayoutStudents>}
-              allowedRoles={['student']}
+              allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
             />
