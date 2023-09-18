@@ -31,43 +31,63 @@ const QuestionModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (questionText.trim() === '' || choiceText.some(choice => choice.choiceText.trim() === '') || answerText.trim() === '') {
-      return; // Prevent empty questions, choices, and answers
+  
+    if (
+      questionText.trim() === '' ||
+      choiceText.some((choice) => choice.choiceText.trim() === '') ||
+      answerText.trim() === '' ||
+      !selectedProgram ||
+      !selectedCompetency
+    ) {
+      return;
     }
-
+  
     try {
-      const questionResult = await axios.post('http://localhost:3001/questions/create', {
-        program: selectedProgram.label,
-        competency: selectedCompetency.label,
-        questionText: questionText,
-        answerText: answerText,
-      });
-
+      // Create the question with programName and competencyName
+      const questionResult = await axios.post(
+        'http://localhost:3001/questions/create',
+        {
+          programName: selectedProgram.label, // Assuming 'label' contains the program name
+          competencyName: selectedCompetency.label, // Assuming 'label' contains the competency name
+          questionText: questionText,
+          answerText: answerText,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+  
       const question_id = questionResult.data.question_id;
-
+  
       // Insert choices into the choices table
       if (choiceText && choiceText.length > 0) {
         for (const choice of choiceText) {
           const { choiceText, isCorrect } = choice;
-
+  
           console.log('Inserting into choices table:', {
             question_id: question_id,
             choiceText: choiceText,
             isCorrect: isCorrect,
           });
-
-          await axios.post('http://localhost:3001/questions/choices/create/:questionId', {
-            question_id: question_id,
-            choiceText: choiceText,
-            isCorrect: isCorrect,
-          });
+  
+          await axios.post(
+            `http://localhost:3001/questions/choices/create/${question_id}`,
+            {
+              choices: [{ choiceText, isCorrect }],
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
         }
       }
-
+  
       console.log('Data saved successfully');
       setAlertMessage('Question added successfully');
-      // Clear the inputs and choices
       setQuestionText('');
       setChoiceText([{ choiceText: '', isCorrect: false }]);
       setAnswerText('');
@@ -78,7 +98,9 @@ const QuestionModal = ({ isOpen, onClose }) => {
       setAlertMessage('Error adding question');
     }
   };
-
+  
+  
+  
   const programOptions = [
     { value: 'social_work', label: 'Social Work' },
     { value: 'option', label: 'Option' },

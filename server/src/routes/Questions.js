@@ -1,32 +1,56 @@
 // questions.js
+const { promisify } = require('util');
 const express = require("express");
+const SSE = require('sse-express'); 
 const Database = require("../configs/Database");
 const router = express.Router();
 
-// Handle POST request to create a new question and choices
-// Create a new question
-router.post('/create', async (req, res) => {
-  const db = new Database();
-  const conn = db.connection;
-  const { program, competency, questionText, answerText } = req.body;
-
+const db = new Database();
+const conn = db.connection;
+(async () => {
   try {
     await conn.connect();
-    await conn.beginTransaction();
+    console.log('Connected to the database');
+  } catch (error) {
+    console.error('Error connecting to the database:', error);
+    process.exit(1); // Exit the application if database connection fails
+  }
+})();
+const queryAsync = promisify(conn.query).bind(conn);
+// ...
 
-    // Create a new question and get its question_id
-    const questionQuery =
-      'INSERT INTO question (questionText, program, competency, answer) VALUES (?, ?, ?, ?)';
+router.post('/create', async (req, res) => {
+  const { programName, competencyName, questionText, answerText } = req.body;
 
-    const result = await conn.query(
-      questionQuery,
-      [questionText, program, competency, answerText]
+  try {
+    // Create the program first
+    const programResult = await queryAsync(
+      'INSERT INTO programs (program_name) VALUES (?)',
+      [programName]
     );
 
-    const question_id = result.insertId;
+    const programId = programResult.insertId;
 
-    // Commit the transaction
-    await conn.commit();
+    // Create the competency
+    const competencyResult = await queryAsync(
+      'INSERT INTO competency (competency_name) VALUES (?)',
+      [competencyName]
+    );
+
+    const competencyId = competencyResult.insertId;
+
+    // Now, insert the question into the database with program_id and competency_id
+    const questionQuery =
+      'INSERT INTO question (questionText, program_id, competency_id, answer) VALUES (?, ?, ?, ?)';
+
+    const result = await queryAsync(questionQuery, [
+      questionText,
+      programId,
+      competencyId,
+      answerText,
+    ]);
+
+    const question_id = result.insertId;
 
     res.json({
       success: true,
@@ -35,27 +59,22 @@ router.post('/create', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    await conn.rollback();
     res.status(500).json({ message: 'Internal server error' });
-  } finally {
-    conn.end();
   }
 });
 
-router.post('/choices/create/:questionId', async (req, res) => {
-  const { questionId } = req.params;
+router.post('/choices/create/:question_id', async (req, res) => {
+  const { question_id } = req.params;
   const { choices } = req.body;
 
   try {
-    // Insert choices into the choices table associated with the given questionId
     if (choices && choices.length > 0) {
       for (const choice of choices) {
         const { choiceText, isCorrect } = choice;
 
-        // Modify your database query to insert choices associated with the questionId
-        await conn.query(
+        await queryAsync(
           'INSERT INTO choices (question_id, choiceText, is_correct) VALUES (?, ?, ?)',
-          [questionId, choiceText, isCorrect]
+          [question_id, choiceText, isCorrect]
         );
       }
     }
@@ -71,20 +90,53 @@ router.post('/choices/create/:questionId', async (req, res) => {
 });
 
 
-
-
 // Fetch all questions
 router.get("/fetch", async (req, res) => {
   const db = new Database();
   const conn = db.connection;
-  const query = "SELECT * FROM question";
+  
+  const query = `
+    SELECT q.*, c.choiceText, c.is_correct
+    FROM question AS q
+    LEFT JOIN choices AS c ON q.question_id = c.question_id
+  `;
 
   try {
     await conn.connect();
 
     conn.query(query, (err, result) => {
       if (err) throw err;
-      res.json(result);
+
+      // Organize the data into a more suitable structure
+      const questions = {};
+
+      result.forEach((row) => {
+        const questionId = row.question_id;
+
+        // If the question doesn't exist in the questions object, create it
+        if (!questions[questionId]) {
+          questions[questionId] = {
+            questionText: row.questionText,
+            program: row.program,
+            competency: row.competency,
+            answer: row.answer,
+            choices: [],
+          };
+        }
+
+        // Add choices to the respective question
+        if (row.choiceText !== null) {
+          questions[questionId].choices.push({
+            choiceText: row.choiceText,
+            is_correct: row.is_correct,
+          });
+        }
+      });
+
+      // Convert the object into an array of questions
+      const questionArray = Object.values(questions);
+
+      res.json(questionArray);
     });
   } catch (error) {
     console.error(error);
@@ -94,55 +146,22 @@ router.get("/fetch", async (req, res) => {
   }
 });
 
-// Update a question by ID
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { text } = req.body;
-
-  if (!text) {
-    return res.status(400).json({ message: 'Text cannot be empty' });
-  }
-
-  const db = new Database();
-  const conn = db.connection;
-  const query = "UPDATE Questions SET text = ? WHERE question_id = ?";
-  const values = [text, id];
-
+router.get('/refresh', async (req, res) => {
   try {
-    await conn.connect();
+    // Replace this query with the one that suits your database schema
+    const query = `
+      SELECT q.*, c.choiceText, c.is_correct
+      FROM question AS q
+      LEFT JOIN choices AS c ON q.question_id = c.question_id
+    `;
 
-    conn.query(query, values, (error, result) => {
-      if (error) throw error;
-      res.json({ message: "Question updated successfully" });
-    });
+    const { rows } = await queryAsync(query);
+    res.json(rows);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  } finally {
-    conn.end();
+    console.error('Error fetching data for refresh:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Delete a question by ID
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  const db = new Database();
-  const conn = db.connection;
-  const query = "DELETE FROM Questions WHERE question_id = ?";
-
-  try {
-    await conn.connect();
-
-    conn.query(query, id, (error, result) => {
-      if (error) throw error;
-      res.json({ message: "Question deleted successfully" });
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  } finally {
-    conn.end();
-  }
-});
 
 module.exports = router;

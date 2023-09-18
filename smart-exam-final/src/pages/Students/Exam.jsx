@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
-import { Select, Option } from "@material-tailwind/react";
+import { useEffect, useState, useCallback } from "react";
+import Select from 'react-select';
+import EndExitExam from './EndExitExam'; 
+import axios from 'axios';
+import Countdown from './Countdown';
+
 
 function Exam() {
   const [currentGame, setCurrentGame] = useState([]);
@@ -8,85 +12,138 @@ function Exam() {
   const [maxQuestions, setMaxQuestions] = useState(10);
   const [currentGamePlaying, setCurrentGamePlaying] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [selectedCompetency, setSelectedCompetency] = useState(null);
+  const [selectedCountdown, setSelectedCountdown] = useState(null);
+  const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(-1));
+  const [startTime, setStartTime] = useState(null);
+const [endTime, setEndTime] = useState(null);
 
   const questionsPerPage = 5;
 
-  const getGameData = async () => {
-    let res = await fetch(
-      "https://raw.githubusercontent.com/aaronnech/Who-Wants-to-Be-a-Millionaire/master/questions.json"
-    );
-    let data = await res.json();
-    await setCurrentGame(data.games[0]?.questions);
+
+  const getGameData = () => {
+    axios.get('http://localhost:3001/questions/fetch')
+      .then((response) => {
+        // Assuming that the response contains an array of questions
+        setCurrentGame(response.data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
+  
 
   useEffect(() => {
     getGameData();
   }, [currentGamePlaying]);
 
   const updateScore = (answer_index, el) => {
-    if (currentQuestion >= maxQuestions) return; // change this to display end game scene
-    if (answer_index === currentGame[currentQuestion].correct) {
-      setPlayerScore((current_score) => current_score + 1000);
-      el.target.classList.add("correct");
-    } else {
-      el.target.classList.add("wrong");
+    if (currentQuestion >= maxQuestions || !currentGame || currentQuestion >= currentGame.length) {
+      return; // Handle or display end game logic here
     }
-    setTimeout(() => {
-      setCurrentQuestion((current_question) => current_question + 1);
-      el.target.classList.remove("correct");
-      el.target.classList.remove("wrong");
-    }, 1000);
-    console.log(playerScore);
-  };
+    
+    const question = currentGame[currentQuestion];
 
-  const endGameScreen = () => (
-    <>
-      {playerScore >= 8000 ? (
-        <>
-          <div className="container text-center p-2 text-white mt-auto header-bg">
-            <h2 className="text-2xl pb-1 border-b border-gray-500">
-              Bank: ${playerScore}
-            </h2>
-            <h4 className="text-lg">
-              Get $8000 to advance to the next round.
-            </h4>
-          </div>
-          <div className="mb-auto p-6 header-bg">
-            <h2 className="font-bold text-lg">You Advanced To Next Round</h2>
-            <p>
-              You can keep playing to stand to win the cash price of $20 000.
-              Answer the next 5 questions.
-            </p>
-            <p>What will you do?</p>
-            <div className="flex p-3 text-white">
-              <div className="py-2 px-5 cursor-pointer btn-primary rounded-xl mr-3">
-                Cash Out
-              </div>
-              <div className="py-2 px-5 cursor-pointer bg-green-500 rounded-xl"  onClick={() => setCurrentGamePlaying((current) => current + 1)}>
-                Keep playing
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="my-auto p-6 header-bg">
-          <h2 className="font-bold text-lg">You Did Not Advance</h2>
-          <p>
-            It seems like you are lacking in general knowledge... Your welcome
-            to play again
-          </p>
-          <div className="flex p-3 text-white">
-            <div
-              className="py-2 px-5 cursor-pointer bg-green-500 rounded-xl mr-3"
-              onClick={() => setCurrentGamePlaying((current) => current + 1)}
-            >
-              Play Again
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+    setSelectedChoices((prevChoices) => {
+      const updatedChoices = [...prevChoices];
+      updatedChoices[currentQuestion] = answer_index;
+      return updatedChoices;
+    });
+
+    if (answer_index === question.correct) {
+      // Apply a class for a correct answer
+      el.target.classList.add("correct-answer");
+    } else {
+      // Apply a class for a wrong answer
+      el.target.classList.add("wrong-answer");
+    }
+  
+    // You can remove any previous classes if needed
+    // el.target.classList.remove("correct-answer");
+    // el.target.classList.remove("wrong-answer");
+  
+    console.log(playerScore);
+    const updatedSelectedChoices = [...selectedChoices];
+    updatedSelectedChoices[currentQuestion] = answer_index;
+    setSelectedChoices(updatedSelectedChoices);
+  
+    // Increment the current question
+    setCurrentQuestion(currentQuestion + 1);
+  };
+  
+  const submitExam = () => {
+    // Prepare exam results data to send to the backend
+    const currentEndTime = new Date(); // Capture the current date and time
+    setEndTime(currentEndTime);
+    const examResults = currentGame.map((question, index) => ({
+      question_id: question.id, // Use the actual question ID from your data
+      selected_choice: selectedChoices[index],
+    }));
+  
+    // Check if endTime is not null before calling toISOString
+    const endTimeISO = endTime ? endTime.toISOString() : null;
+  
+    // Send the exam results to the backend
+    axios
+      .post("http://localhost:3001/exams/exams/submit", {
+        examResults,
+        totalScore: playerScore,
+        startTime: startTime.toISOString(), // Convert to ISO format for consistency
+        endTime: endTimeISO, // Use the ISO format or null if endTime is null
+      })
+      .then((response) => {
+        // Handle success response if needed
+        console.log("Exam submitted successfully");
+      })
+      .catch((error) => {
+        console.error("Error submitting exam:", error);
+        // Handle error if needed
+      });
+  };
+  
+
+  const EndExam = () => {
+    return (
+      <EndExitExam
+        playerScore={playerScore}
+        questions={currentGame}
+        onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
+      />
+    );
+  };
+  
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+
+  // Use a separate useEffect to refresh the data
+  const refresh = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/questions/refresh');
+      setFilteredQuestions(response.data);
+    } catch (error) {
+      console.error('Error fetching data for refresh:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    // Fetch questions based on selected program and competency
+    if (selectedProgram || selectedCompetency) {
+      axios.get(`http://localhost:3001/questions/fetch?program=${selectedProgram?.value || ''}&competency=${selectedCompetency?.value || ''}`)
+        .then((response) => {
+          setFilteredQuestions(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
+      // If no program or competency is selected, use all questions
+      setFilteredQuestions(currentGame);
+    }
+  }, [selectedProgram, selectedCompetency, currentGame]);
 
   const renderQuestions = () => {
     const startIndex = (currentPage - 1) * questionsPerPage;
@@ -94,33 +151,58 @@ function Exam() {
       startIndex + questionsPerPage,
       maxQuestions
     );
-
-    return currentGame.slice(startIndex, endIndex).map((question, index) => (
-      <div
-        key={index}
-        className="border-2 shadow-lg items-center justify-center my-2  "
-      >
-        <div className="text-xl text-center dark:text-white btn-primary">
-          Question {startIndex + index + 1}/{maxQuestions}
+  
+    if (!filteredQuestions || filteredQuestions.length === 0) {
+      // Handle the case when filteredQuestions is empty or not yet loaded
+      return (
+        <div className="text-center">
+          Loading questions...
         </div>
-        <div className="p-3 dark:text-white text-2xl text-center">{question?.question}</div>
-        <div id="answers-container" className="p-3">
-          {question?.content.map((answer, answerIndex) => (
-            <div
-              key={answerIndex}
-              className="container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer"
-              onClick={(el) => updateScore(answerIndex, el)}
-            >
-              <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
-                {String.fromCharCode(65 + answerIndex)}
+      );
+    }
+  
+    return filteredQuestions
+      .slice(startIndex, endIndex)
+      .map((question, index) => (
+        <div
+          key={index}
+          className="border-2 shadow-lg items-center justify-center my-2"
+        >
+          {/* Render each question component */}
+          <div className="text-xl text-center dark:text-white btn-primary">
+            Question {startIndex + index + 1}/{maxQuestions}
+          </div>
+          <div className="p-3 dark:text-white text-2xl text-center">
+            {question.questionText}
+          </div>
+          <div id="answers-container" className="p-3">
+            {question.choices.map((choice, answerIndex) => (
+               <div
+               key={answerIndex}
+               className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
+                 selectedChoices[currentQuestion] === answerIndex
+                   ? "bg-black text-white" // Apply bg-dark and text-white when selected
+                   : ""
+               }`}
+               onClick={(el) => updateScore(answerIndex, el)}
+             >
+                <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
+                  {String.fromCharCode(65 + answerIndex)}
+                </div>
+                <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
+                  {choice.choiceText}
+                </div>
               </div>
-              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{answer}</div>
-            </div>
-          ))}
+            ))}
+          </div>
+          
         </div>
-      </div>
-    ));
+      ));
   };
+  
+  // ...
+  
+  
   const totalPages = Math.ceil(maxQuestions / questionsPerPage);
 
   const goToPage = (page) => {
@@ -137,48 +219,60 @@ function Exam() {
     goToPage(currentPage + 1);
   };
 
+  const programOptions = [
+    { value: 'social_work', label: 'Social Work' },
+    { value: 'option', label: 'Option' },
+  ];
+
+  const competencyOptions = [
+    { value: 'human_behavior', label: 'Human Behavior and Social Environment' },
+    { value: 'social_case_work', label: 'Social Case Work' },
+  ];
+
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
-      <div className="flex text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white ">
-        <div className=" flex gap-8 justify-center items-center mx-auto dark:text-white">
-      <div className="w-72 dark:text-white">
-      <Select className="bg-black" label="Program" info>
-        <Option className="text-white bg-blue-gray-600" active>Social Work</Option>
-        <Option>Option</Option>
-        <Option>Material Tailwind Vue</Option>
-        <Option>Material Tailwind Angular</Option>
-        <Option>Material Tailwind Svelte</Option>
-      </Select>
+      <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
+  <div className="flex flex-col lg:flex-row gap-8 justify-center items-center mx-auto dark:text-white">
+    <div className="mb-4 lg:w-72">
+      <Select
+        placeholder="Program"
+        id="program"
+        name="program"
+        value={selectedProgram}
+        onChange={(selectedOption) => setSelectedProgram(selectedOption)}
+        options={programOptions}
+      />
     </div>
-    <div className="w-72">
-      <Select label="Competency" info>
-        <Option>Human Behavior and Social Environment</Option>
-        <Option>Social Case Work</Option>
-        <Option>Social Group Work</Option>
-        <Option>Community Organization</Option>
-      </Select>
+
+    <div className="mb-4 lg:w-72">
+      <Select
+        placeholder="Competency"
+        id="competency"
+        name="competency"
+        value={selectedCompetency}
+        onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+        options={competencyOptions}
+      />
     </div>
-    <div className="w-72">
-      <Select label="Time Duration" danger>
-        <Option>30mins</Option>
-        <Option>1hr</Option>
-        <Option>2hrs</Option>
-        <Option>3hrs</Option>
-        <Option>4hrs</Option>
-      </Select>
-    </div>
-    </div>
-      </div>
+      <Countdown /> 
+  </div>
+</div>
+
       {currentQuestion !== maxQuestions ? (
         <>
           {renderQuestions()}
           <div className="container text-center header-bg p-2 text-white mt-auto">
+          <div className="flex justify-center mx-auto dark:text-white">
+          <button
+            className="relative block rounded bg-primary-100 px-3 py-1.5 text-xl font-medium text-primary-700 transition-all duration-300"
+            onClick={submitExam}
+          >
+            Submit
+          </button>
+          </div>
             <h2 className="text-2xl pb-1 border-b border-gray-500">
-              Bank: ${playerScore}
+              Questions remaining: 
             </h2>
-            <h4 className="text-lg">
-              Get $8000 to advance to the next question.
-            </h4>
           </div>
           <div className="container flex justify-center p-4 header-bg text-white">
           <ul className="list-style-none flex">
@@ -225,7 +319,7 @@ function Exam() {
           </div>
         </>
       ) : (
-        endGameScreen()
+        EndExam()
       )}
     </div>
   );

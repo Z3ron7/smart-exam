@@ -19,12 +19,14 @@ app.use(
 const examsRouter = require("./src/routes/Exam");
 const questionsRouter = require("./src/routes/Questions"); // Add this
 const choicesRouter = require("./src/routes/Choices");
-const answerRouter = require("./src/routes/Answer");
+const programRouter = require("./src/routes/Program");
+const filterRouter = require ("./src/routes/FilterQuestion")
 
 app.use("/exams", examsRouter);
 app.use("/questions", questionsRouter); // Add this
 app.use("/choices", choicesRouter); // Add this
-app.use("/answer", answerRouter); // Add this
+app.use("/category", programRouter); // Add this
+app.use("/filter", filterRouter); // Add this
 
 app.use(cookieParser());
 
