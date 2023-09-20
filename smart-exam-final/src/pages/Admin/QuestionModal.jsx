@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
 
-const QuestionModal = ({ isOpen, onClose }) => {
+const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
   const [questionText, setQuestionText] = useState('');
   const [choiceText, setChoiceText] = useState([{ choiceText: '', isCorrect: false }]);
   const [answerText, setAnswerText] = useState('');
@@ -71,7 +71,7 @@ const QuestionModal = ({ isOpen, onClose }) => {
             choiceText: choiceText,
             isCorrect: isCorrect,
           });
-  
+            
           await axios.post(
             `http://localhost:3001/questions/choices/create/${question_id}`,
             {
@@ -85,8 +85,8 @@ const QuestionModal = ({ isOpen, onClose }) => {
           );
         }
       }
-  
       console.log('Data saved successfully');
+      fetchQuestions();
       setAlertMessage('Question added successfully');
       setQuestionText('');
       setChoiceText([{ choiceText: '', isCorrect: false }]);

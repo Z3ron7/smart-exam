@@ -6,50 +6,54 @@ const router = express.Router();
 
 const db = new Database();
 const conn = db.connection;
+(async () => {
+  try {
+    await conn.connect();
+    console.log('Connected to the database');
+  } catch (error) {
+    console.error('Error connecting to the database:', error);
+    process.exit(1); // Exit the application if database connection fails
+  }
+})();
+const queryAsync = promisify(conn.query).bind(conn);
 
-router.get('/questions', async (req, res) => {
+router.get("/filterQuestions", async (req, res) => {
+  try {
     const { program, competency } = req.query;
 
-    // Use JOINs to fetch related data from program and competency tables
-    let sql = `
-      SELECT q.*, p.program_name, c.competency_name
-      FROM question q
-      LEFT JOIN programs p ON q.program_id = p.program_id
-      LEFT JOIN competency c ON q.competency_id = c.competency_id
-      WHERE 1
+    // Build a SQL query with a LIKE clause to filter questions by program and competency
+    let sqlQuery = `
+      SELECT q.*
+      FROM questions AS q
+      INNER JOIN program AS p ON q.program_id = p.program_id
+      INNER JOIN competency AS c ON q.competency_id = c.competency_id
     `;
 
-    const params = [];
+    const queryParams = [];
 
     if (program) {
-      sql += ' AND p.program_name = ?';
-      params.push(program);
+      sqlQuery += 'WHERE p.program_name LIKE ?';
+      queryParams.push(`%${program}%`);
     }
 
     if (competency) {
-      sql += ' AND c.competency_name = ?';
-      params.push(competency);
+      if (program) {
+        sqlQuery += ' AND ';
+      } else {
+        sqlQuery += ' WHERE ';
+      }
+      sqlQuery += 'c.competency_text LIKE ?';
+      queryParams.push(`%${competency}%`);
     }
 
-    try {
-      // Connect to the database
-      await conn.connect();
+    const result = await queryAsync(sqlQuery, queryParams);
 
-      conn.query(sql, params, (err, results) => {
-        if (err) {
-          console.error('Error executing SQL query:', err);
-          res.status(500).json({ message: 'Internal server error' });
-        } else {
-          res.json(results);
-        }
-      });
-    } catch (error) {
-      console.error('Error connecting to the database:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    } finally {
-      // Close the database connection
-      conn.end();
-    }
+    res.json(result);
+  } catch (error) {
+    console.error('Error filtering questions:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
+
 
 module.exports = router;

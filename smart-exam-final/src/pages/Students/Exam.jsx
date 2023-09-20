@@ -22,21 +22,19 @@ const [endTime, setEndTime] = useState(null);
   const questionsPerPage = 5;
 
 
-  const getGameData = () => {
-    axios.get('http://localhost:3001/questions/fetch')
+  const getGameData = useCallback(() => {
+    axios
+      .get('http://localhost:3001/questions/fetch')
       .then((response) => {
-        // Assuming that the response contains an array of questions
         setCurrentGame(response.data);
+        setMaxQuestions(response.data.length);
+        setCurrentQuestion(0);
+        setSelectedChoices(Array(response.data.length).fill(-1));
       })
       .catch((error) => {
         console.error(error);
       });
-  };
-  
-
-  useEffect(() => {
-    getGameData();
-  }, [currentGamePlaying]);
+  }, []); 
 
   const updateScore = (answer_index, el) => {
     if (currentQuestion >= maxQuestions || !currentGame || currentQuestion >= currentGame.length) {
@@ -116,34 +114,30 @@ const [endTime, setEndTime] = useState(null);
   const [filteredQuestions, setFilteredQuestions] = useState([]);
 
   // Use a separate useEffect to refresh the data
-  const refresh = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:3001/questions/refresh');
-      setFilteredQuestions(response.data);
-    } catch (error) {
-      console.error('Error fetching data for refresh:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  
 
   useEffect(() => {
     // Fetch questions based on selected program and competency
     if (selectedProgram || selectedCompetency) {
-      axios.get(`http://localhost:3001/questions/fetch?program=${selectedProgram?.value || ''}&competency=${selectedCompetency?.value || ''}`)
+      axios
+        .get(
+          `http://localhost:3001/questions/filterQuestions?program=${selectedProgram?.value || ''}&competency=${selectedCompetency?.value || ''}`
+        )
         .then((response) => {
-          setFilteredQuestions(response.data);
+          setCurrentGame(response.data);
+          setMaxQuestions(response.data.length);
+          setCurrentQuestion(0);
+          setSelectedChoices(Array(response.data.length).fill(-1));
         })
         .catch((error) => {
           console.error(error);
         });
     } else {
       // If no program or competency is selected, use all questions
-      setFilteredQuestions(currentGame);
+      getGameData();
     }
-  }, [selectedProgram, selectedCompetency, currentGame]);
+  }, [selectedProgram, selectedCompetency]);
+  
 
   const renderQuestions = () => {
     const startIndex = (currentPage - 1) * questionsPerPage;
@@ -261,7 +255,7 @@ const [endTime, setEndTime] = useState(null);
       {currentQuestion !== maxQuestions ? (
         <>
           {renderQuestions()}
-          <div className="container text-center header-bg p-2 text-white mt-auto">
+          <div className="container text-center header-bg p-2 text-gray-800 mt-auto">
           <div className="flex justify-center mx-auto dark:text-white">
           <button
             className="relative block rounded bg-primary-100 px-3 py-1.5 text-xl font-medium text-primary-700 transition-all duration-300"
@@ -270,11 +264,11 @@ const [endTime, setEndTime] = useState(null);
             Submit
           </button>
           </div>
-            <h2 className="text-2xl pb-1 border-b border-gray-500">
+            <h2 className="text-2xl pb-1 border-b text-gray-900 dark:text-white border-gray-500">
               Questions remaining: 
             </h2>
           </div>
-          <div className="container flex justify-center p-4 header-bg text-white">
+          <div className="container flex justify-center p-4 header-bg dark:text-white">
           <ul className="list-style-none flex">
               <li>
                 {currentPage > 1 && (
@@ -308,7 +302,7 @@ const [endTime, setEndTime] = useState(null);
               <li>
                 {currentPage < totalPages && (
                   <button
-                    className="relative block rounded bg-primary-100 px-3 py-1.5 text-sm font-medium text-primary-700 transition-all duration-300"
+                    className="relative block rounded bg-primary-100 dark:text-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-all duration-300"
                     onClick={nextPage}
                   >
                     Next

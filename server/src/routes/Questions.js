@@ -1,7 +1,6 @@
 // questions.js
 const { promisify } = require('util');
-const express = require("express");
-const SSE = require('sse-express'); 
+const express = require("express")
 const Database = require("../configs/Database");
 const router = express.Router();
 
@@ -17,8 +16,10 @@ const conn = db.connection;
   }
 })();
 const queryAsync = promisify(conn.query).bind(conn);
-// ...
 
+// Create an SSE stream
+
+// Add SSE middleware to your Express router
 router.post('/create', async (req, res) => {
   const { programName, competencyName, questionText, answerText } = req.body;
 
@@ -51,7 +52,6 @@ router.post('/create', async (req, res) => {
     ]);
 
     const question_id = result.insertId;
-
     res.json({
       success: true,
       message: 'Data saved successfully',
@@ -145,23 +145,5 @@ router.get("/fetch", async (req, res) => {
     conn.end();
   }
 });
-
-router.get('/refresh', async (req, res) => {
-  try {
-    // Replace this query with the one that suits your database schema
-    const query = `
-      SELECT q.*, c.choiceText, c.is_correct
-      FROM question AS q
-      LEFT JOIN choices AS c ON q.question_id = c.question_id
-    `;
-
-    const { rows } = await queryAsync(query);
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching data for refresh:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
 
 module.exports = router;
