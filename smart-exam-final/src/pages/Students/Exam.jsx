@@ -34,7 +34,11 @@ const [endTime, setEndTime] = useState(null);
       .catch((error) => {
         console.error(error);
       });
-  }, []); 
+  }, []); // Use an empty dependency array because there are no dependencies
+  
+  useEffect(() => {
+    getGameData();
+  }, [getGameData, currentGamePlaying]);
 
   const updateScore = (answer_index, el) => {
     if (currentQuestion >= maxQuestions || !currentGame || currentQuestion >= currentGame.length) {
@@ -114,14 +118,25 @@ const [endTime, setEndTime] = useState(null);
   const [filteredQuestions, setFilteredQuestions] = useState([]);
 
   // Use a separate useEffect to refresh the data
+  const refresh = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/questions/refresh');
+      setFilteredQuestions(response.data);
+    } catch (error) {
+      console.error('Error fetching data for refresh:', error);
+    }
+  }, []);
   
+  useEffect(() => {
+    refresh();
+  }, [refresh]);  
 
   useEffect(() => {
     // Fetch questions based on selected program and competency
     if (selectedProgram || selectedCompetency) {
       axios
         .get(
-          `http://localhost:3001/questions/filterQuestions?program=${selectedProgram?.value || ''}&competency=${selectedCompetency?.value || ''}`
+          `http://localhost:3001/filter/filterQuestions?programs=${selectedProgram?.label || ''}&competency=${selectedCompetency?.label || ''}`
         )
         .then((response) => {
           setCurrentGame(response.data);

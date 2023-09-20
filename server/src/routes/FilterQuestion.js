@@ -24,8 +24,8 @@ router.get("/filterQuestions", async (req, res) => {
     // Build a SQL query with a LIKE clause to filter questions by program and competency
     let sqlQuery = `
       SELECT q.*
-      FROM questions AS q
-      INNER JOIN program AS p ON q.program_id = p.program_id
+      FROM question AS q
+      INNER JOIN programs AS p ON q.program_id = p.program_id
       INNER JOIN competency AS c ON q.competency_id = c.competency_id
     `;
 
@@ -42,7 +42,7 @@ router.get("/filterQuestions", async (req, res) => {
       } else {
         sqlQuery += ' WHERE ';
       }
-      sqlQuery += 'c.competency_text LIKE ?';
+      sqlQuery += 'c.competency_name LIKE ?';
       queryParams.push(`%${competency}%`);
     }
 

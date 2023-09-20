@@ -146,4 +146,60 @@ router.get("/fetch", async (req, res) => {
   }
 });
 
+router.get('/refresh', async (req, res) => {
+  const db = new Database();
+  const conn = db.connection;
+
+  const query = `
+    SELECT q.*, c.choiceText, c.is_correct
+    FROM question AS q
+    LEFT JOIN choices AS c ON q.question_id = c.question_id
+  `;
+
+  try {
+    await conn.connect();
+
+    conn.query(query, (err, result) => {
+      if (err) throw err;
+
+      // Organize the data into a more suitable structure
+      const questions = {};
+
+      result.forEach((row) => {
+        const questionId = row.question_id;
+
+        // If the question doesn't exist in the questions object, create it
+        if (!questions[questionId]) {
+          questions[questionId] = {
+            questionText: row.questionText,
+            program: row.program,
+            competency: row.competency,
+            answer: row.answer,
+            choices: [],
+          };
+        }
+
+        // Add choices to the respective question
+        if (row.choiceText !== null) {
+          questions[questionId].choices.push({
+            choiceText: row.choiceText,
+            is_correct: row.is_correct,
+          });
+        }
+      });
+
+      // Convert the object into an array of questions
+      const questionArray = Object.values(questions);
+
+      res.json(questionArray);
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    conn.end();
+  }
+});
+
+
 module.exports = router;
