@@ -17,9 +17,6 @@ const conn = db.connection;
 })();
 const queryAsync = promisify(conn.query).bind(conn);
 
-// Create an SSE stream
-
-// Add SSE middleware to your Express router
 router.post('/create', async (req, res) => {
   const { programName, competencyName, questionText, answerText } = req.body;
 

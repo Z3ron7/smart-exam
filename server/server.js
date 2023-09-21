@@ -42,7 +42,10 @@ const verifyUser = (req, res, next) => {
       if (err) {
         return res.json({ Error: "Token is not valid" });
       } else {
-        req.name = decoded.name;
+        req.user = {
+          user_id: decoded.user_id, // Attach user_id to req.user
+          name: decoded.name, // Attach other user data if needed
+        };
         next();
       }
     });
@@ -125,8 +128,8 @@ app.post("/login", (req, res) => {
             role = "Exam-taker";
           }
 
-          const token = jwt.sign({ name, role }, "jwt-secret-key", {
-            expiresIn: "1h",
+          const token = jwt.sign({ user_id: data[0].id, name, role }, "jwt-secret-key", {
+            expiresIn: "1d",
           });
           res.cookie("token", token);
           return res.json({ Status: "Login Successful", role });

@@ -14,10 +14,12 @@ function Exam() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
-  const [selectedCountdown, setSelectedCountdown] = useState(null);
-  const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(-1));
-  const [startTime, setStartTime] = useState(null);
-const [endTime, setEndTime] = useState(null);
+  const initialChoices = Array(currentGame.length).fill(null).map(() => ({
+    choiceText: "", // Add other properties as needed
+    isUsed: false,  // Initialize isUsed to false
+  }));
+  const [selectedChoices, setSelectedChoices] = useState(initialChoices);
+
 
   const questionsPerPage = 5;
 
@@ -26,6 +28,7 @@ const [endTime, setEndTime] = useState(null);
     axios
       .get('http://localhost:3001/questions/fetch')
       .then((response) => {
+        console.log('Response data:', response.data); // Add this line
         setCurrentGame(response.data);
         setMaxQuestions(response.data.length);
         setCurrentQuestion(0);
@@ -40,59 +43,52 @@ const [endTime, setEndTime] = useState(null);
     getGameData();
   }, [getGameData, currentGamePlaying]);
 
-  const updateScore = (answer_index, el) => {
-    if (currentQuestion >= maxQuestions || !currentGame || currentQuestion >= currentGame.length) {
+  const updateScore = (answer_index, question_index, el) => {
+    if (question_index >= maxQuestions || !currentGame || question_index >= currentGame.length) {
       return; // Handle or display end game logic here
     }
-    
-    const question = currentGame[currentQuestion];
-
-    setSelectedChoices((prevChoices) => {
-      const updatedChoices = [...prevChoices];
-      updatedChoices[currentQuestion] = answer_index;
-      return updatedChoices;
-    });
-
+  
+    const question = currentGame[question_index];
+  
+    // Check if the selected answer is correct
     if (answer_index === question.correct) {
-      // Apply a class for a correct answer
-      el.target.classList.add("correct-answer");
-    } else {
-      // Apply a class for a wrong answer
-      el.target.classList.add("wrong-answer");
+      // Increment the player's score
+      setPlayerScore(playerScore + 1);
     }
   
-    // You can remove any previous classes if needed
-    // el.target.classList.remove("correct-answer");
-    // el.target.classList.remove("wrong-answer");
+    // Update the selected choice for the current question
+    setSelectedChoices((prevChoices) => {
+      const updatedChoices = [...prevChoices];
+      updatedChoices[question_index] = {
+        ...updatedChoices[question_index],
+        isUsed: true, // Set isUsed to true for the selected choice
+      };
+      return updatedChoices;
+    });
   
-    console.log(playerScore);
-    const updatedSelectedChoices = [...selectedChoices];
-    updatedSelectedChoices[currentQuestion] = answer_index;
-    setSelectedChoices(updatedSelectedChoices);
-  
-    // Increment the current question
-    setCurrentQuestion(currentQuestion + 1);
+    // Apply the highlighting class to the selected choice here
+    el.target.classList.toggle("bg-blue-500", true);
+    el.target.classList.toggle("text-white", true);
   };
   
   const submitExam = () => {
-    // Prepare exam results data to send to the backend
-    const currentEndTime = new Date(); // Capture the current date and time
-    setEndTime(currentEndTime);
+    if (!currentGame || !Array.isArray(currentGame)) {
+      console.error('Current game data is missing or not an array.');
+      return;
+    }
+  
     const examResults = currentGame.map((question, index) => ({
-      question_id: question.id, // Use the actual question ID from your data
-      selected_choice: selectedChoices[index],
+      question_id: question.id,
+      selected_choice: selectedChoices[index].isUsed ? selectedChoices[index].choice_id : null,
+      // Other properties...
     }));
-  
-    // Check if endTime is not null before calling toISOString
-    const endTimeISO = endTime ? endTime.toISOString() : null;
-  
+    console.log('Exam Results:', examResults); // Add this line
+
     // Send the exam results to the backend
     axios
       .post("http://localhost:3001/exams/exams/submit", {
         examResults,
         totalScore: playerScore,
-        startTime: startTime.toISOString(), // Convert to ISO format for consistency
-        endTime: endTimeISO, // Use the ISO format or null if endTime is null
       })
       .then((response) => {
         // Handle success response if needed
@@ -103,6 +99,7 @@ const [endTime, setEndTime] = useState(null);
         // Handle error if needed
       });
   };
+  
   
 
   const EndExam = () => {
@@ -186,15 +183,15 @@ const [endTime, setEndTime] = useState(null);
           </div>
           <div id="answers-container" className="p-3">
             {question.choices.map((choice, answerIndex) => (
-               <div
-               key={answerIndex}
-               className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
-                 selectedChoices[currentQuestion] === answerIndex
-                   ? "bg-black text-white" // Apply bg-dark and text-white when selected
-                   : ""
-               }`}
-               onClick={(el) => updateScore(answerIndex, el)}
-             >
+                <div
+                key={answerIndex}
+                className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
+                  selectedChoices[startIndex + index] === answerIndex // Check if the choice index matches the selected choice
+                    ? "bg-blue-500 text-white" // Apply bg-blue-500 and text-white when selected
+                    : ""
+                }`}
+                onClick={(el) => updateScore(answerIndex, index, el)}
+              >
                 <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                   {String.fromCharCode(65 + answerIndex)}
                 </div>
@@ -237,7 +234,11 @@ const [endTime, setEndTime] = useState(null);
     { value: 'human_behavior', label: 'Human Behavior and Social Environment' },
     { value: 'social_case_work', label: 'Social Case Work' },
   ];
-
+  const handleStartExam = () => {
+    const currentStartTime = new Date(); // Capture the current date and time
+    // Other code to start the exam
+  };
+  
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
@@ -263,7 +264,7 @@ const [endTime, setEndTime] = useState(null);
         options={competencyOptions}
       />
     </div>
-      <Countdown /> 
+      <Countdown handleStartExam={handleStartExam}/> 
   </div>
 </div>
 

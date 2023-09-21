@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
 import Select from 'react-select';
 
-export default function Countdown() {
+export default function Countdown(props) {
   const [num, setNum] = useState(0);
   const [selectedTime, setSelectedTime] = useState(0);
   const [countdownStarted, setCountdownStarted] = useState(false);
+  const [startTime, setStartTime] = useState(null);
 
   let intervalRef = useRef();
 
@@ -22,6 +23,10 @@ export default function Countdown() {
       intervalRef.current = setInterval(decreaseNum, 1000);
     } else {
       clearInterval(intervalRef.current);
+      if (num === 0) {
+        // Call the handleStartExam function when the timer reaches 0
+        props.handleStartExam();
+      }
     }
     return () => clearInterval(intervalRef.current);
   }, [countdownStarted, selectedTime, num]);
@@ -30,6 +35,10 @@ export default function Countdown() {
     if (selectedTime > 0) {
       setNum(selectedTime * 3600); // Convert selected time to seconds
       setCountdownStarted(true);
+      const currentStartTime = new Date(); // Capture the start time
+      setStartTime(currentStartTime); // Set the start time in your state
+      // Call the handleStartExam function from props
+      props.handleStartExam();
     }
   };
 
@@ -62,8 +71,8 @@ export default function Countdown() {
         <div>
           {formatTime(num)}
           <button onClick={handleStart} disabled={selectedTime === 0 || countdownStarted}>
-          Start
-        </button>
+            Start
+          </button>
         </div>
       )}
     </div>
