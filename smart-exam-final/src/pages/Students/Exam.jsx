@@ -6,15 +6,15 @@ import Countdown from './Countdown';
 
 
 function Exam() {
-  const [currentGame, setCurrentGame] = useState([]);
+  const [currentExams, setcurrentExams] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [playerScore, setPlayerScore] = useState(0);
+  const [userScore, setUserScore] = useState(0);
   const [maxQuestions, setMaxQuestions] = useState(10);
-  const [currentGamePlaying, setCurrentGamePlaying] = useState(0);
+  const [currentExam, setcurrentExam] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
-  const initialChoices = Array(currentGame.length).fill(null).map(() => ({
+  const initialChoices = Array(currentExams.length).fill(null).map(() => ({
     choiceText: "", // Add other properties as needed
     isUsed: false,  // Initialize isUsed to false
   }));
@@ -24,12 +24,12 @@ function Exam() {
   const questionsPerPage = 5;
 
 
-  const getGameData = useCallback(() => {
+  const getExamData = useCallback(() => {
     axios
       .get('http://localhost:3001/questions/fetch')
       .then((response) => {
         console.log('Response data:', response.data); // Add this line
-        setCurrentGame(response.data);
+        setcurrentExams(response.data);
         setMaxQuestions(response.data.length);
         setCurrentQuestion(0);
         setSelectedChoices(Array(response.data.length).fill(-1));
@@ -40,20 +40,20 @@ function Exam() {
   }, []); // Use an empty dependency array because there are no dependencies
   
   useEffect(() => {
-    getGameData();
-  }, [getGameData, currentGamePlaying]);
+    getExamData();
+  }, [getExamData, currentExam]);
 
   const updateScore = (answer_index, question_index, el) => {
-    if (question_index >= maxQuestions || !currentGame || question_index >= currentGame.length) {
+    if (question_index >= maxQuestions || !currentExams || question_index >= currentExams.length) {
       return; // Handle or display end game logic here
     }
   
-    const question = currentGame[question_index];
+    const question = currentExams[question_index];
   
     // Check if the selected answer is correct
     if (answer_index === question.correct) {
       // Increment the player's score
-      setPlayerScore(playerScore + 1);
+      setUserScore(userScore + 1);
     }
   
     // Update the selected choice for the current question
@@ -65,48 +65,14 @@ function Exam() {
       };
       return updatedChoices;
     });
-  
-    // Apply the highlighting class to the selected choice here
-    el.target.classList.toggle("bg-blue-500", true);
-    el.target.classList.toggle("text-white", true);
   };
-  
-  const submitExam = () => {
-    if (!currentGame || !Array.isArray(currentGame)) {
-      console.error('Current game data is missing or not an array.');
-      return;
-    }
-  
-    const examResults = currentGame.map((question, index) => ({
-      question_id: question.id,
-      selected_choice: selectedChoices[index].isUsed ? selectedChoices[index].choice_id : null,
-      // Other properties...
-    }));
-    console.log('Exam Results:', examResults); // Add this line
-
-    // Send the exam results to the backend
-    axios
-      .post("http://localhost:3001/exams/exams/submit", {
-        examResults,
-        totalScore: playerScore,
-      })
-      .then((response) => {
-        // Handle success response if needed
-        console.log("Exam submitted successfully");
-      })
-      .catch((error) => {
-        console.error("Error submitting exam:", error);
-        // Handle error if needed
-      });
-  };
-  
   
 
   const EndExam = () => {
     return (
       <EndExitExam
-        playerScore={playerScore}
-        questions={currentGame}
+        userScore={userScore}
+        questions={currentExams}
         onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
       />
     );
@@ -136,7 +102,7 @@ function Exam() {
           `http://localhost:3001/filter/filterQuestions?programs=${selectedProgram?.label || ''}&competency=${selectedCompetency?.label || ''}`
         )
         .then((response) => {
-          setCurrentGame(response.data);
+          setcurrentExams(response.data);
           setMaxQuestions(response.data.length);
           setCurrentQuestion(0);
           setSelectedChoices(Array(response.data.length).fill(-1));
@@ -146,7 +112,7 @@ function Exam() {
         });
     } else {
       // If no program or competency is selected, use all questions
-      getGameData();
+      getExamData();
     }
   }, [selectedProgram, selectedCompetency]);
   
@@ -226,19 +192,21 @@ function Exam() {
   };
 
   const programOptions = [
-    { value: 'social_work', label: 'Social Work' },
-    { value: 'option', label: 'Option' },
+    { value: 'Social Work', label: 'Social Work' },
+    { value: 'Option', label: 'Option' },
   ];
-
+  
   const competencyOptions = [
-    { value: 'human_behavior', label: 'Human Behavior and Social Environment' },
-    { value: 'social_case_work', label: 'Social Case Work' },
+    { value: 'All Competency', label: 'All Competency' },
+    { value: 'SWPPS', label: 'SWPPS' },
+    { value: 'Casework', label: 'Casework' },
+    { value: 'HBSE', label: 'HBSE' },
   ];
+  
   const handleStartExam = () => {
     const currentStartTime = new Date(); // Capture the current date and time
     // Other code to start the exam
   };
-  
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
@@ -274,8 +242,8 @@ function Exam() {
           <div className="container text-center header-bg p-2 text-gray-800 mt-auto">
           <div className="flex justify-center mx-auto dark:text-white">
           <button
-            className="relative block rounded bg-primary-100 px-3 py-1.5 text-xl font-medium text-primary-700 transition-all duration-300"
-            onClick={submitExam}
+            className="relative block rounded bg-blue-700 px-3 py-1.5 text-xl font-medium text-gray-700 transition-all duration-300"
+
           >
             Submit
           </button>

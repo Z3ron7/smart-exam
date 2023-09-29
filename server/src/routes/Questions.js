@@ -17,46 +17,44 @@ const conn = db.connection;
 })();
 const queryAsync = promisify(conn.query).bind(conn);
 
-router.post('/create', async (req, res) => {
-  const { programName, competencyName, questionText, answerText } = req.body;
-
+router.post("/create", async (req, res) => {
   try {
-    // Create the program first
-    const programResult = await queryAsync(
-      'INSERT INTO programs (program_name) VALUES (?)',
-      [programName]
+    const { question_text, program, competency, choices } = req.body;
+
+    // Get program_id and competency_id based on predefined values
+    const [programResult] = await queryAsync(
+      "SELECT program_id FROM program WHERE program_name = ?",
+      [program]
     );
 
-    const programId = programResult.insertId;
-
-    // Create the competency
-    const competencyResult = await queryAsync(
-      'INSERT INTO competency (competency_name) VALUES (?)',
-      [competencyName]
+    const [competencyResult] = await queryAsync(
+      "SELECT competency_id FROM competency WHERE competency_name = ?",
+      [competency]
     );
 
-    const competencyId = competencyResult.insertId;
+    const program_id = programResult ? programResult.program_id : null;
+    const competency_id = competencyResult ? competencyResult.competency_id : null;
 
-    // Now, insert the question into the database with program_id and competency_id
-    const questionQuery =
-      'INSERT INTO question (questionText, program_id, competency_id, answer) VALUES (?, ?, ?, ?)';
-
-    const result = await queryAsync(questionQuery, [
-      questionText,
-      programId,
-      competencyId,
-      answerText,
-    ]);
+    // Insert the question into the database
+    const result = await queryAsync(
+      "INSERT INTO question (questionText, program_id, competency_id) VALUES (?, ?, ?)",
+      [question_text, program_id, competency_id]
+    );
 
     const question_id = result.insertId;
-    res.json({
-      success: true,
-      message: 'Data saved successfully',
-      question_id: question_id,
-    });
+
+    // Insert choices into the database
+    for (const choice of choices) {
+      await queryAsync(
+        "INSERT INTO choices (choiceText, question_id, is_correct) VALUES (?, ?, ?)",
+        [choice.choice_text, question_id, choice.is_correct]
+      );
+    }
+
+    res.json({ message: "Question created successfully", question_id });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Error creating question:", error);
+    res.status(500).json({ error: "Failed to create question" });
   }
 });
 

@@ -67,13 +67,15 @@
   
 
     const programOptions = [
-      { value: 'social_work', label: 'Social Work' },
-      { value: 'option', label: 'Option' },
+      { value: 'Social Work', label: 'Social Work' },
+      { value: 'Option', label: 'Option' },
     ];
-
+    
     const competencyOptions = [
-      { value: 'human_behavior', label: 'Human Behavior and Social Environment' },
-      { value: 'social_case_work', label: 'Social Case Work' },
+      { value: 'All', label: 'All' },
+      { value: 'SWPPS', label: 'SWPPS' },
+      { value: 'Casework', label: 'Casework' },
+      { value: 'HBSE', label: 'HBSE' },
     ];
 
     return (
@@ -151,9 +153,11 @@
             ))}
           </div>
           <div className="flex mb-4 items-center">
-            <span className="font-bold mr-3 text-lg dark:text-white">Answer: </span>
-            <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">{question.answer}</span>
-          </div>
+  <span className="font-bold mr-3 text-lg dark:text-white">Answer:</span>
+  <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
+    {question.choices.find(choice => choice.is_correct)?.choiceText || 'N/A'}
+  </span>
+</div>
         </div>
       </li>
     ))}

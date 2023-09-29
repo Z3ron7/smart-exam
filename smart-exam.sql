@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 14, 2023 at 04:58 AM
+-- Generation Time: Sep 29, 2023 at 11:25 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -24,18 +24,63 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `choices`
+--
+
+CREATE TABLE `choices` (
+  `choice_id` int(200) NOT NULL,
+  `question_id` int(200) NOT NULL,
+  `choiceText` varchar(200) NOT NULL,
+  `is_correct` tinyint(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `choices`
+--
+
+INSERT INTO `choices` (`choice_id`, `question_id`, `choiceText`, `is_correct`) VALUES
+(1, 3, 'chocie', 0),
+(2, 3, 'choice2', 1),
+(3, 4, 'choisc', 0),
+(4, 4, 'choice', 1),
+(5, 4, 'sdsd', 0),
+(6, 5, 'choice112', 0),
+(7, 5, 'choice', 1),
+(8, 5, 'choice232', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `competency`
+--
+
+CREATE TABLE `competency` (
+  `competency_id` int(200) NOT NULL,
+  `competency_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `competency`
+--
+
+INSERT INTO `competency` (`competency_id`, `competency_name`) VALUES
+(1, 'SWPPS'),
+(2, 'Casework'),
+(3, 'HBSE');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `exam`
 --
 
 CREATE TABLE `exam` (
   `exam_id` int(200) NOT NULL,
+  `user_id` int(200) NOT NULL,
   `program_id` int(100) NOT NULL,
   `competency_id` int(220) NOT NULL,
-  `question_id` int(100) NOT NULL,
-  `time_duration` int(200) NOT NULL,
-  `date_started` date NOT NULL,
-  `date_completed` date NOT NULL,
-  `user_id` int(200) NOT NULL
+  `question_id` int(200) NOT NULL,
+  `total_score` int(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -82,27 +127,44 @@ CREATE TABLE `log-in` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `program`
+--
+
+CREATE TABLE `program` (
+  `program_id` int(200) NOT NULL,
+  `program_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `program`
+--
+
+INSERT INTO `program` (`program_id`, `program_name`) VALUES
+(1, 'Social Work');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `question`
 --
 
 CREATE TABLE `question` (
   `question_id` int(200) NOT NULL,
-  `program` varchar(50) NOT NULL,
-  `competency` varchar(50) NOT NULL,
-  `questionText` text NOT NULL,
-  `choices` varchar(200) NOT NULL,
-  `answer` varchar(200) NOT NULL,
-  `is_correct` tinyint(1) NOT NULL
+  `program_id` int(200) NOT NULL,
+  `competency_id` int(200) NOT NULL,
+  `questionText` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `question`
 --
 
-INSERT INTO `question` (`question_id`, `program`, `competency`, `questionText`, `choices`, `answer`, `is_correct`) VALUES
-(32, 'social_work', 'human_behavior', 'question', 'choices,choices1', 'answer', 0),
-(33, 'social_work', 'human_behavior', 'question', 'choices,choices1', 'answer', 0),
-(34, 'social_work', 'Human Behavior and Social Environment', 'question', 'choices,choices1', 'answer', 0);
+INSERT INTO `question` (`question_id`, `program_id`, `competency_id`, `questionText`) VALUES
+(1, 1, 2, 'sdsad'),
+(2, 1, 1, 'sdsad'),
+(3, 1, 1, 'sdsad'),
+(4, 1, 3, 'question'),
+(5, 1, 2, 'question121');
 
 -- --------------------------------------------------------
 
@@ -149,37 +211,41 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `username`, `password`, `status`, `role`) VALUES
-(1, 'Zoren', 'zoren.panilagao1@gmail.com', '$2b$05$.zEAOYtKchnR6ejmhN80Vu6cR1PXC1wVbPRMcz2pQvBU8hxaEDVwm', '', '0'),
-(2, 'Renzo', 'zoren.panilagao7@gmail.com', '$2b$05$okrD2VHBqSxYE4ZEGKWGUOoSBfJfjysPcFbcFvynPsiggWUUk5UfG', '', '0'),
-(3, 'Neroz', 'zoren.panilagao74@gmail.com', '$2b$05$Ew3//KaVO.YMl1mbNq43luZ7WNAnGEEdWT5wDQwTMDAG4QKxIrv8O', '', '0'),
-(4, 'Renz', 'zoren.panilagaow74@gmail.com', '$2b$05$tZw7RDprNm96TXlWuPZiw.BpfVsP56X8WhiTyG76.QR4cxtNNHSbO', '', '0'),
-(5, 'Zero', 'zoren.panilagao71@gmail.com', '$2b$05$6zbMEComGrvjIf23cjVs6eOMqdOL/10pB6H4V1nB4tyf7f0ts.YBq', '', '0'),
-(6, 'sada', 'dsadsadas@gmail.com', '$2b$05$5fY/SpXqjCgbgOcey1zgJulbivpb4GcaGKImZMCS5OOX/11mQYylS', '', '0'),
-(7, 'sadas', 'zoren.panilagao74s@gmail.com', '$2b$05$awm/OOFsp/6sNAjmXKAGKOY79xxMV5RxwYEDuNy5Q7BSSzMynx7qu', '', '0'),
-(8, 'Zeron', 'zoren.panilagao722@gmail.com', '$2b$05$IwTfGL/7Dy5.mRt860gk0ucHNQRhK8UfFZM/6oM17qL/y3v7YAFrW', '', '0'),
-(9, 'Renzs', 'zoren.panilagaos1@gmail.com', '$2b$05$jw1GWo5OI0FhRcSqZHP0He4ksf9Aw7/CssC6cewRtAuD2WGseSMrS', '', '0'),
-(10, 'Zorens', 'zoren.panilagaoss7@gmail.com', '$2b$05$d87Bk.hFtx1Bm4XwbQ7Nsuo.jDdx5/k3cLsLI5tu6YbuAIq18o7zu', '', '0'),
-(11, 'dsad', 'dasdsa@sdad', '$2b$05$2j5OXEExarFBa1fd.OCHQOJcN1gEc19GEUdFJ1bueDYEkh3xCtPx6', '', '0'),
-(12, 'Renzos', 'zoren.panilagao11@gmail.com', '$2b$05$nCfErpF4Z9uAn6aBYe0tH.Y.ndS1nBvbOA/sgjmCuogvA3UZmPhPC', '', '0'),
-(13, 'Zorensz', 'zorenn.panilagao1@gmail.com', '$2b$05$Mqc2EDujQagJAWCMlpg5negGfMLD/6T9rpy/FhujJQd0S8/jLYiOC', '', '0'),
 (14, 'Neroz', 'zoren.panilagao111@gmail.com', '$2b$05$7atidkUi7xuSpPzClbKPzum4tFvJNeeLuyuVoEvpi/9FAjU//kgiW', 'admin', 'Admin'),
 (15, 'guelexort', 'guelexort12@gmail.com', '$2b$05$9GEUXNMbeC2MXm0X1v3J1uO6HoDSFlnAL4fS3/L7bTlNE.Xn0/xXe', '', '0'),
 (16, 'Zoren', 'zoren12@gmail.com', '$2b$05$G/p/T/XuebuTaBYooDq9ZunpwNRLGuXHUPmSPhkZ31MpaZhiC5lxm', '', '0'),
 (17, 'john', 'john1@gmail.com', '$2b$05$cUSXnniFAO1uJdq4nfW9AOUT4lwVF/dVAxYpiQlM7HLBSPWfUgN1e', '', '0'),
 (18, 'Enzo', 'student1@gmail.com', '$2b$05$rROpGVIeX1wOvq51rxO1x.xF2T.thIAVEnJaFLyTCnp4Iu.5YqVDi', 'student', 'Exam-taker'),
-(19, 'Dre', 'student2@gmail.com', '$2b$05$ZbmsfioIJgUBRiu2uOw0IOsfooksew4V9/a6rAn2wp9Mpm2.CfpI6', 'student', 'Exam-taker');
+(19, 'Dre', 'student2@gmail.com', '$2b$05$ZbmsfioIJgUBRiu2uOw0IOsfooksew4V9/a6rAn2wp9Mpm2.CfpI6', 'student', 'Exam-taker'),
+(20, 'Student', 'student@gmail.com', '$2b$05$6T6.E17oU2P2FDUwtKHjNOGq2pMKQkJX2WlTEP/wvQ/Eegqrl7Zka', 'student', 'Exam-taker');
 
 --
 -- Indexes for dumped tables
 --
 
 --
+-- Indexes for table `choices`
+--
+ALTER TABLE `choices`
+  ADD PRIMARY KEY (`choice_id`),
+  ADD UNIQUE KEY `choice_id` (`choice_id`),
+  ADD KEY `choices` (`question_id`);
+
+--
+-- Indexes for table `competency`
+--
+ALTER TABLE `competency`
+  ADD PRIMARY KEY (`competency_id`);
+
+--
 -- Indexes for table `exam`
 --
 ALTER TABLE `exam`
   ADD PRIMARY KEY (`exam_id`),
-  ADD KEY `Test` (`program_id`),
-  ADD KEY `Test1` (`competency_id`);
+  ADD KEY `programm` (`program_id`),
+  ADD KEY `competencyy` (`competency_id`),
+  ADD KEY `question` (`question_id`),
+  ADD KEY `user` (`user_id`);
 
 --
 -- Indexes for table `exam_room`
@@ -204,10 +270,18 @@ ALTER TABLE `log-in`
   ADD KEY `Test6` (`user_id`);
 
 --
+-- Indexes for table `program`
+--
+ALTER TABLE `program`
+  ADD PRIMARY KEY (`program_id`);
+
+--
 -- Indexes for table `question`
 --
 ALTER TABLE `question`
-  ADD PRIMARY KEY (`question_id`);
+  ADD PRIMARY KEY (`question_id`),
+  ADD KEY `program` (`program_id`),
+  ADD KEY `competency` (`competency_id`);
 
 --
 -- Indexes for table `roles`
@@ -225,6 +299,18 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `choices`
+--
+ALTER TABLE `choices`
+  MODIFY `choice_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `competency`
+--
+ALTER TABLE `competency`
+  MODIFY `competency_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `exam`
@@ -251,10 +337,16 @@ ALTER TABLE `log-in`
   MODIFY `session_id` int(220) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `program`
+--
+ALTER TABLE `program`
+  MODIFY `program_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `question`
 --
 ALTER TABLE `question`
-  MODIFY `question_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `question_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -266,25 +358,26 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- Constraints for dumped tables
 --
 
 --
+-- Constraints for table `choices`
+--
+ALTER TABLE `choices`
+  ADD CONSTRAINT `choices` FOREIGN KEY (`question_id`) REFERENCES `question` (`question_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `exam`
 --
 ALTER TABLE `exam`
-  ADD CONSTRAINT `Test` FOREIGN KEY (`program_id`) REFERENCES `programs` (`program_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `Test1` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`);
-
---
--- Constraints for table `exam_room`
---
-ALTER TABLE `exam_room`
-  ADD CONSTRAINT `competency` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`),
-  ADD CONSTRAINT `program_data` FOREIGN KEY (`program_id`) REFERENCES `programs` (`program_id`);
+  ADD CONSTRAINT `competencyy` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `programm` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `question` FOREIGN KEY (`question_id`) REFERENCES `question` (`question_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `exam_scores`
@@ -297,6 +390,13 @@ ALTER TABLE `exam_scores`
 --
 ALTER TABLE `log-in`
   ADD CONSTRAINT `Test6` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `question`
+--
+ALTER TABLE `question`
+  ADD CONSTRAINT `competency` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`),
+  ADD CONSTRAINT `program` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
