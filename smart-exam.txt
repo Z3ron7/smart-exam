@@ -19,6 +19,8 @@ CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    role VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     -- Other user-related columns (e.g., name, email, etc.)
@@ -52,8 +54,8 @@ CREATE TABLE questions (
 CREATE TABLE choices (
     choice_id INT PRIMARY KEY AUTO_INCREMENT,
     choiceText TEXT NOT NULL,
-    question_id INT,
-    is_correct boolean,
+    question_id INT NOT NULL,
+    is_correct BOOLEAN,
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
 );
 
@@ -66,22 +68,11 @@ CREATE TABLE user_exams (
     duration_minutes INT NOT NULL,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
+    score INT DEFAULT 0,
+    total_duration_minutes INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (program_id) REFERENCES programs(program_id),
     FOREIGN KEY (competency_id) REFERENCES competencies(competency_id)
 );
-
--- Total Scores Table
-CREATE TABLE total_scores (
-    total_score_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    total_score INT DEFAULT 0,
-    total_duration_minutes INT DEFAULT 0,
-    exam_count INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
-

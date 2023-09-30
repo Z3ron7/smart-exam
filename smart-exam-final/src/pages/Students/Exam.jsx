@@ -1,16 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Select from 'react-select';
-import EndExitExam from './EndExam'; 
 import axios from 'axios';
 import Countdown from './Countdown';
-
+import EndExam from './EndExam';
 
 function Exam() {
   const [currentExams, setcurrentExams] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userScore, setUserScore] = useState(0);
   const [maxQuestions, setMaxQuestions] = useState(10);
-  const [currentExam, setcurrentExam] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
@@ -19,12 +17,7 @@ function Exam() {
     questions: [],
     selectedChoices: [],
   });
-  const initialChoices = Array(currentExams.length).fill(null).map(() => ({
-    choiceText: "", // Add other properties as needed
-    isUsed: false,  // Initialize isUsed to false
-  }));
-  const [selectedChoices, setSelectedChoices] = useState(initialChoices);
-
+  const [selectedChoices, setSelectedChoices] = useState("");
   const countdownRef = useRef();
   const questionsPerPage = 5;
 
@@ -46,18 +39,49 @@ function Exam() {
   
   useEffect(() => {
     getExamData();
-  }, [getExamData, currentExam]);
+  }, [getExamData, currentExams]);
 
-  const handleChoiceClick = (questionIndex, choiceIndex, startIndex) => {
-    // Make a copy of selectedChoices to avoid mutating the state directly
-    const newSelectedChoices = [...selectedChoices];
-    newSelectedChoices[startIndex + questionIndex] = choiceIndex;
-    setExamData({
-      ...examData,
-      selectedChoices: newSelectedChoices,
-    });
-  };
+  const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
+    try {
+      const user_id = localStorage.getItem('user_id');
+      const exam_id = userExamId; // Assuming you have userExamId state
+      const question_id = currentExams[startIndex + questionIndex].question_id;
+      const isCorrect = currentExams[startIndex + questionIndex].choices[choiceIndex].is_correct;
   
+      // Send the user's choice to the server
+      await axios.post('http://localhost:3001/exams/user-exam-records', {
+        userId: user_id,
+        examId: exam_id,
+        questionId: question_id,
+        choiceId: choiceIndex, // or you can send choiceId if you have it
+        isCorrect: isCorrect,
+      });
+  
+      // Update the selectedChoices state
+      const newSelectedChoices = [...selectedChoices];
+      newSelectedChoices[startIndex + questionIndex] = choiceIndex;
+      setSelectedChoices(newSelectedChoices);
+    } catch (error) {
+      console.error('Error recording user choice:', error);
+    }
+  };
+
+  function calculateScore(questions, selectedChoices) {
+    let score = 0;
+  
+    for (let i = 0; i < questions.length; i++) {
+      const correctChoiceIndex = questions[i].choices.findIndex(
+        (choice) => choice.is_correct
+      );
+  
+      if (selectedChoices[i] === correctChoiceIndex) {
+        // Increment the score for a correct answer
+        score += 1; // You can adjust the scoring logic as needed
+      }
+    }
+  
+    return score;
+  }
 
   const EndExam = () => {
     return (
@@ -215,6 +239,8 @@ function Exam() {
     }
   };
   
+// Add this at the top of your Exam.jsx file, where you define your other state variables
+const [endExamSummary, setEndExamSummary] = useState(null);
 
   
   // Helper function to calculate the user's score based on selectedChoices and correct answers
@@ -243,7 +269,9 @@ function Exam() {
   const handleEndExamButtonClick = () => {
     // You can add any additional logic here if needed
     // Call the handleEndExam function in Countdown.jsx
+    const userScore = calculateScore(currentExams, selectedChoices);
     countdownRef.current.handleEndExam();
+    setEndExamSummary({ userScore });
   };
   
   return (
@@ -343,9 +371,11 @@ function Exam() {
               </li>
             </ul>
           </div>
+          <EndExam />
         </>
       ) : (
         EndExam()
+        
       )}
     </div>
   );

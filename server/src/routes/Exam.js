@@ -111,6 +111,25 @@ router.delete('/user-exams/:user_exam_id', async (req, res) => {
   }
 });
 
+router.post('/record_exam_choices', async (req, res) => {
+  try {
+    const { userId, examId, questionId, choiceId, isCorrect } = req.body;
+
+    // Insert a record into the user_exam_records table
+    const insertQuery = `
+      INSERT INTO user_exam_records (user_id, exam_id, question_id, choice_id, is_correct)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    await queryAsync(insertQuery, [userId, examId, questionId, choiceId, isCorrect]);
+
+    res.status(200).json({ message: 'Exam choices recorded successfully' });
+  } catch (error) {
+    console.error('Error recording exam choices:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.post('/total-scores', async (req, res) => {
   try {
     const { user_id } = req.body;
