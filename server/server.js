@@ -43,7 +43,7 @@ const verifyUser = (req, res, next) => {
         return res.json({ Error: "Token is not valid" });
       } else {
         req.user = {
-          user_id: decoded.user_id, // Attach user_id to req.user
+          id: decoded.user_id, // Attach user_id to req.user
           name: decoded.name, // Attach other user data if needed
         };
         next();
@@ -122,17 +122,18 @@ app.post("/login", (req, res) => {
           const name = data[0].name;
           let role = data[0].role; // Get the role from the database
           const status = data[0].status; // Get the status from the database
+          const user_id = data[0].user_id;
 
           // Check if the status is "student" or "alumni" and set the role accordingly
           if (status === "student" || status === "alumni") {
             role = "Exam-taker";
           }
 
-          const token = jwt.sign({ user_id: data[0].id, name, role }, "jwt-secret-key", {
+          const token = jwt.sign({ user_id, name, role }, "jwt-secret-key", {
             expiresIn: "1d",
           });
           res.cookie("token", token);
-          return res.json({ Status: "Login Successful", role });
+          return res.json({ Status: "Login Successful", user_id, role });
         } else {
           return res.json({ Error: "Password error!" });
         }

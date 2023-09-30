@@ -1,6 +1,6 @@
 import React from 'react';
 
-const EndExamExam = ({ playerScore, questions, onClose }) => {
+const EndExam = ({ playerScore, questions, onClose }) => {
   // Calculate the percentage score
   const percentageScore = (playerScore / questions.length) * 100;
 
@@ -37,4 +37,4 @@ const EndExamExam = ({ playerScore, questions, onClose }) => {
   );
 };
 
-export default EndExamExam;
+export default EndExam;

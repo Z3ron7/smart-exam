@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Select from 'react-select';
-import EndExitExam from './EndExitExam'; 
+import EndExitExam from './EndExam'; 
 import axios from 'axios';
 import Countdown from './Countdown';
 
@@ -14,13 +14,18 @@ function Exam() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
+  const [userExamId, setUserExamId] = useState(null);
+  const [examData, setExamData] = useState({
+    questions: [],
+    selectedChoices: [],
+  });
   const initialChoices = Array(currentExams.length).fill(null).map(() => ({
     choiceText: "", // Add other properties as needed
     isUsed: false,  // Initialize isUsed to false
   }));
   const [selectedChoices, setSelectedChoices] = useState(initialChoices);
 
-
+  const countdownRef = useRef();
   const questionsPerPage = 5;
 
 
@@ -43,34 +48,20 @@ function Exam() {
     getExamData();
   }, [getExamData, currentExam]);
 
-  const updateScore = (answer_index, question_index, el) => {
-    if (question_index >= maxQuestions || !currentExams || question_index >= currentExams.length) {
-      return; // Handle or display end game logic here
-    }
-  
-    const question = currentExams[question_index];
-  
-    // Check if the selected answer is correct
-    if (answer_index === question.correct) {
-      // Increment the player's score
-      setUserScore(userScore + 1);
-    }
-  
-    // Update the selected choice for the current question
-    setSelectedChoices((prevChoices) => {
-      const updatedChoices = [...prevChoices];
-      updatedChoices[question_index] = {
-        ...updatedChoices[question_index],
-        isUsed: true, // Set isUsed to true for the selected choice
-      };
-      return updatedChoices;
+  const handleChoiceClick = (questionIndex, choiceIndex, startIndex) => {
+    // Make a copy of selectedChoices to avoid mutating the state directly
+    const newSelectedChoices = [...selectedChoices];
+    newSelectedChoices[startIndex + questionIndex] = choiceIndex;
+    setExamData({
+      ...examData,
+      selectedChoices: newSelectedChoices,
     });
   };
   
 
   const EndExam = () => {
     return (
-      <EndExitExam
+      <EndExam
         userScore={userScore}
         questions={currentExams}
         onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
@@ -118,48 +109,46 @@ function Exam() {
   
 
   const renderQuestions = () => {
-    const startIndex = (currentPage - 1) * questionsPerPage;
-    const endIndex = Math.min(
-      startIndex + questionsPerPage,
-      maxQuestions
+  const startIndex = (currentPage - 1) * questionsPerPage;
+  const endIndex = Math.min(startIndex + questionsPerPage, maxQuestions);
+  const { questions, selectedChoices } = examData;
+
+  if (!filteredQuestions || filteredQuestions.length === 0) {
+    // Handle the case when filteredQuestions is empty or not yet loaded
+    return (
+      <div className="text-center">
+        Loading questions...
+      </div>
     );
-  
-    if (!filteredQuestions || filteredQuestions.length === 0) {
-      // Handle the case when filteredQuestions is empty or not yet loaded
-      return (
-        <div className="text-center">
-          Loading questions...
-        </div>
-      );
-    }
+  }
   
     return filteredQuestions
       .slice(startIndex, endIndex)
-      .map((question, index) => (
+      .map((question, questionIndex) => (
         <div
-          key={index}
+          key={questionIndex}
           className="border-2 shadow-lg items-center justify-center my-2"
         >
           {/* Render each question component */}
           <div className="text-xl text-center dark:text-white btn-primary">
-            Question {startIndex + index + 1}/{maxQuestions}
+            Question {startIndex + questionIndex + 1}/{maxQuestions}
           </div>
           <div className="p-3 dark:text-white text-2xl text-center">
             {question.questionText}
           </div>
           <div id="answers-container" className="p-3">
-            {question.choices.map((choice, answerIndex) => (
+            {question.choices.map((choice, choiceIndex) => (
                 <div
-                key={answerIndex}
+                key={choiceIndex}
                 className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
-                  selectedChoices[startIndex + index] === answerIndex // Check if the choice index matches the selected choice
+                  selectedChoices[startIndex + questionIndex] === choiceIndex // Check if the choice index matches the selected choice
                     ? "bg-blue-500 text-white" // Apply bg-blue-500 and text-white when selected
                     : ""
                 }`}
-                onClick={(el) => updateScore(answerIndex, index, el)}
+                onClick={() => handleChoiceClick(questionIndex, choiceIndex)}
               >
                 <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
-                  {String.fromCharCode(65 + answerIndex)}
+                  {String.fromCharCode(65 + choiceIndex)}
                 </div>
                 <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
                   {choice.choiceText}
@@ -203,10 +192,60 @@ function Exam() {
     { value: 'HBSE', label: 'HBSE' },
   ];
   
-  const handleStartExam = () => {
+  const user_id = localStorage.getItem('user_id');
+
+  const handleStartExam = (selectedTimeInMinutes) => {
     const currentStartTime = new Date(); // Capture the current date and time
-    // Other code to start the exam
+
+    // Create a user_exam entry in the database
+    axios
+      .post('http://localhost:3001/exams/user-exams', {
+        user_id, // Use the user_id from localStorage
+        program_id: selectedProgram ? selectedProgram.value : null, // Use the selected program ID
+        competency_id: selectedCompetency ? selectedCompetency.value : null, // Use the selected competency ID
+        duration_minutes: selectedTimeInMinutes, // Use the selected time in minutes
+        start_time: currentStartTime,
+        end_time: null, // Set end_time to null initially
+      })
+      .then((response) => {
+        setUserExamId(response.data.user_exam_id);
+        // Start your exam logic here, maybe using userExamId
+      })
+      .catch((error) => {
+        console.error('Error starting exam:', error);
+      });
   };
+
+  
+  // Helper function to calculate the user's score based on selectedChoices and correct answers
+  const calculateUserScore = (selectedChoices, choices) => {
+    let userScore = 0;
+  
+    for (let i = 0; i < selectedChoices.length; i++) {
+      const selectedChoiceIndex = selectedChoices[i];
+  
+      // Check if the selected choice is correct based on the 'is_correct' field
+      if (selectedChoiceIndex >= 0 && choices[i].is_correct) {
+        userScore++;
+      }
+    }
+  
+    return userScore;
+  };
+  
+  // Helper function to calculate the duration in minutes
+  const calculateDurationInMinutes = (startTime, endTime) => {
+    const timeDifference = endTime - startTime; // Time difference in milliseconds
+    const durationMinutes = Math.floor(timeDifference / (1000 * 60)); // Convert to minutes
+  
+    return durationMinutes;
+  };
+  const handleEndExamButtonClick = () => {
+    // You can add any additional logic here if needed
+    // Call the handleEndExam function in Countdown.jsx
+    countdownRef.current.handleEndExam();
+  };
+  
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
@@ -232,7 +271,16 @@ function Exam() {
         options={competencyOptions}
       />
     </div>
-      <Countdown handleStartExam={handleStartExam}/> 
+    <Countdown
+      ref={countdownRef} // Pass the ref
+      handleStartExam={handleStartExam}
+      selectedChoices={selectedChoices}
+      choices={currentExams.map((question) => question.choices)}
+      userId={user_id}
+      calculateUserScore={calculateUserScore}
+      calculateDurationInMinutes={calculateDurationInMinutes} // Pass the duration calculation function
+      handleEndExamButtonClick={handleEndExamButtonClick} // Pass the end exam button click handler
+    />
   </div>
 </div>
 
@@ -242,11 +290,11 @@ function Exam() {
           <div className="container text-center header-bg p-2 text-gray-800 mt-auto">
           <div className="flex justify-center mx-auto dark:text-white">
           <button
-            className="relative block rounded bg-blue-700 px-3 py-1.5 text-xl font-medium text-gray-700 transition-all duration-300"
-
-          >
-            Submit
-          </button>
+              onClick={handleEndExamButtonClick}
+              className="relative block rounded bg-blue-700 px-3 py-1.5 text-xl font-medium text-gray-700 transition-all duration-300"
+            >
+              End Exam
+            </button>
           </div>
             <h2 className="text-2xl pb-1 border-b text-gray-900 dark:text-white border-gray-500">
               Questions remaining: 

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import Select from 'react-select';
+import axios from "axios";
 
 export default function Countdown(props) {
   const [num, setNum] = useState(0);
@@ -33,12 +34,12 @@ export default function Countdown(props) {
 
   const handleStart = () => {
     if (selectedTime > 0) {
-      setNum(selectedTime * 3600); // Convert selected time to seconds
+      const selectedTimeInMinutes = selectedTime * 60; // Convert selected time to minutes
+      props.handleStartExam(selectedTimeInMinutes); // Convert selected time to seconds
       setCountdownStarted(true);
       const currentStartTime = new Date(); // Capture the start time
       setStartTime(currentStartTime); // Set the start time in your state
       // Call the handleStartExam function from props
-      props.handleStartExam();
     }
   };
 
@@ -56,7 +57,28 @@ export default function Countdown(props) {
     { value: 4, label: '4 hours' },
     { value: 5, label: '5 hours' },
   ];
+  const handleEndExam = () => {
+    // Calculate the user's score based on selectedChoices and choices
+    const userScore = props.calculateUserScore(props.selectedChoices, props.choices);
 
+    // Calculate the duration in minutes using the passed function
+    const durationMinutes = props.calculateDurationInMinutes(startTime, new Date());
+
+    // Update the total_scores table with the user's score and duration
+    axios
+      .post('http://localhost:3001/total-scores', {
+        user_id: props.userId,
+        total_score: userScore,
+        total_duration_minutes: durationMinutes,
+        exam_count: 1,
+      })
+      .then((response) => {
+        // Handle the end of the exam, show results, etc.
+      })
+      .catch((error) => {
+        console.error('Error ending exam:', error);
+      });
+  };
   return (
     <div>
       <div className="mb-4 lg:w-72">
@@ -73,8 +95,10 @@ export default function Countdown(props) {
           <button onClick={handleStart} disabled={selectedTime === 0 || countdownStarted}>
             Start
           </button>
+          <button onClick={props.handleEndExamButtonClick}>End Exam</button>
         </div>
       )}
     </div>
+    
   );
 }

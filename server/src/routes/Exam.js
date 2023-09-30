@@ -1,158 +1,154 @@
-const express = require("express");
+const { promisify } = require('util');
+const express = require('express');
+const Database = require('../configs/Database');
 const router = express.Router();
-const { promisify } = require("util");
-const Database = require("../configs/Database");
 
 const db = new Database();
 const conn = db.connection;
 
-// Promisify database query functions
-const query = promisify(conn.query).bind(conn);
+const queryAsync = promisify(conn.query).bind(conn);
 
-// Fetch all exams
-router.get("/exams", async (req, res) => {
+// Create a user exam record
+// Handle starting an exam for a user
+router.post('/user-exams', async (req, res) => {
   try {
-    const exams = await query("SELECT * FROM exam");
-    res.json({ exams });
-  } catch (error) {
-    console.error("Error fetching exams:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    const { user_id, program_id, competency_id, duration_minutes } = req.body;
 
-// Fetch an exam by ID
-router.get("/exams/:exam_id", async (req, res) => {
-  const examId = req.params.exam_id;
-  try {
-    const exam = await query("SELECT * FROM exam WHERE exam_id = ?", [examId]);
-    if (exam.length === 0) {
-      res.status(404).json({ error: "Exam not found" });
-    } else {
-      res.json({ exam: exam[0] });
-    }
-  } catch (error) {
-    console.error("Error fetching exam by ID:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    // Insert the user exam record
+    const createExamQuery = `
+      INSERT INTO user_exams (user_id, program_id, competency_id, duration_minutes, start_time, end_time)
+      VALUES (?, ?, ?, ?, NOW(), NOW() + INTERVAL ? MINUTE)
+    `;
 
-router.post("/exams/submit", async (req, res) => {
-  const { examResults, totalScore } = req.body;
+    const createExamResult = await queryAsync(createExamQuery, [
+      user_id,
+      program_id,
+      competency_id,
+      duration_minutes,
+      duration_minutes,
+    ]);
 
-  try {
-    // Create an array to hold the promises for database queries
-    const databasePromises = examResults.map(async (result) => {
-      try {
-        // Get the 'question_id' and 'is_correct' from the 'choices' table
-        const queryResult = await query(
-          "SELECT question_id, is_correct FROM choices WHERE choice_id = ?",
-          [result.selected_choice]
-        );
+    const userExamId = createExamResult.insertId;
 
-        if (queryResult.length === 0) {
-          // Handle the case where the choice is not found in the database
-          console.error(`Choice not found in database for choice_id: ${result.selected_choice}`);
-          return null;
-        }
+    // Calculate the user's total score and total duration_minutes
+    const { totalScore, totalDurationMinutes } = await calculateUserScore(user_id);
 
-        const { question_id, is_correct } = queryResult[0];
-
-        if (!question_id) {
-          // Handle the case where question_id is not defined
-          console.error(`question_id is undefined for choice_id: ${result.selected_choice}`);
-          return null;
-        }
-
-        if (typeof result.selected_choice !== 'number') {
-          // Handle the case where selected_choice is not a valid number
-          console.error(`Invalid selected_choice: ${result.selected_choice}`);
-          return null;
-        }
-
-        // Insert the result into the 'exam' table
-        await query(
-          "INSERT INTO exam (users_id, program_id, competency_id, question_id, total_score) VALUES (?, ?, ?, ?, ?)",
-          [req.user.id, req.user.program_id, req.user.competency_id, question_id, totalScore]
-        );
-
-        // Update the 'choices' table to mark the selected choice as 'used'
-        await query(
-          "UPDATE choices SET is_used = 1 WHERE choice_id = ?",
-          [result.selected_choice]
-        );
-
-        return true; // Indicate success for this entry
-      } catch (error) {
-        // Handle the error for this entry
-        console.error(`Error processing exam result for choice_id: ${result.selected_choice}`, error);
-        return false; // Indicate failure for this entry
-      }
+    res.json({
+      user_exam_id: userExamId,
+      total_score: totalScore,
+      total_duration_minutes: totalDurationMinutes,
     });
-
-    // Wait for all database operations to complete
-    const results = await Promise.all(databasePromises);
-
-    if (results.every((result) => result === true)) {
-      // All database operations were successful
-      res.json({ message: "Exam results submitted successfully" });
-    } else {
-      // Some operations failed, return an error response
-      res.status(500).json({ error: "Some exam results could not be processed" });
-    }
   } catch (error) {
-    console.error("Error submitting exam results:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error creating user exam:', error);
+    res.status(500).json({ message: 'Failed to create user exam' });
   }
 });
 
-// Create a new exam
-router.post("/exams", async (req, res) => {
-  const { users_id, program_id, competency_id, start_time, end_time, total_score } = req.body;
+
+// Retrieve user exams for a specific user
+router.get('/user-exams/:user_id', async (req, res) => {
   try {
-    const result = await query(
-      "INSERT INTO exam (users_id, program_id, competency_id, start_time, end_time, total_score) VALUES (?, ?, ?, ?, ?, ?)",
-      [users_id, program_id, competency_id, start_time, end_time, total_score]
-    );
-    res.json({ message: "Exam created", exam_id: result.insertId });
+    const { user_id } = req.params;
+
+    const getUserExamsQuery = `
+      SELECT * FROM exam WHERE user_id = ?
+    `;
+
+    const userExams = await queryAsync(getUserExamsQuery, [user_id]);
+
+    res.json({ exam });
   } catch (error) {
-    console.error("Error creating exam:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error retrieving user exams:', error);
+    res.status(500).json({ message: 'Failed to retrieve user exams' });
   }
 });
 
-// Update an exam by ID
-router.put("/exams/:exam_id", async (req, res) => {
-  const examId = req.params.exam_id;
-  const { users_id, program_id, competency_id, start_time, end_time, total_score } = req.body;
+// Update the is_correct field for a user exam
+router.put('/user-exams/:user_exam_id', async (req, res) => {
   try {
-    const result = await query(
-      "UPDATE exam SET users_id = ?, program_id = ?, competency_id = ?, start_time = ?, end_time = ?, total_score = ? WHERE exam_id = ?",
-      [users_id, program_id, competency_id, start_time, end_time, total_score, examId]
-    );
-    if (result.affectedRows === 0) {
-      res.status(404).json({ error: "Exam not found" });
-    } else {
-      res.json({ message: "Exam updated" });
-    }
+    const { user_exam_id } = req.params;
+    const { is_correct } = req.body;
+
+    const updateIsCorrectQuery = `
+      UPDATE exam SET is_correct = ? WHERE user_exam_id = ?
+    `;
+
+    await queryAsync(updateIsCorrectQuery, [is_correct, user_exam_id]);
+
+    res.json({ message: 'Is_correct updated successfully' });
   } catch (error) {
-    console.error("Error updating exam:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error updating is_correct:', error);
+    res.status(500).json({ message: 'Failed to update is_correct' });
   }
 });
 
-// Delete an exam by ID
-router.delete("/exams/:exam_id", async (req, res) => {
-  const examId = req.params.exam_id;
+// Delete a user exam
+router.delete('/user-exams/:user_exam_id', async (req, res) => {
   try {
-    const result = await query("DELETE FROM exam WHERE exam_id = ?", [examId]);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ error: "Exam not found" });
-    } else {
-      res.json({ message: "Exam deleted" });
-    }
+    const { user_exam_id } = req.params;
+
+    const deleteExamQuery = `
+      DELETE FROM exam WHERE user_exam_id = ?
+    `;
+
+    await queryAsync(deleteExamQuery, [user_exam_id]);
+
+    res.json({ message: 'User exam deleted successfully' });
   } catch (error) {
-    console.error("Error deleting exam:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error deleting user exam:', error);
+    res.status(500).json({ message: 'Failed to delete user exam' });
+  }
+});
+
+router.post('/submit-answers', async (req, res) => {
+  try {
+    const { answers, user_exam_id } = req.body;
+
+    // Calculate the user's score for the completed exam
+    let totalScore = 0;
+
+    for (const answer of answers) {
+      // Assume answers contain { question_id, choice_id, is_correct }
+      if (answer.is_correct) {
+        // Increase the total score when the answer is correct
+        totalScore++;
+      }
+    }
+
+    // Update the `user_exams` table with the user's score
+    const updateExamQuery = `
+      UPDATE user_exams SET is_correct = ? WHERE user_exam_id = ?
+    `;
+
+    for (const answer of answers) {
+      await queryAsync(updateExamQuery, [answer.is_correct, user_exam_id]);
+    }
+
+    // Calculate the total duration of all exams taken by the user
+    const totalDurationQuery = `
+      SELECT SUM(duration_minutes) AS total_duration_minutes FROM user_exams WHERE user_id = ?
+    `;
+
+    // Retrieve the user_id from localStorage
+    const user_id = localStorage.getItem('user_id'); // Replace with your actual localStorage key
+
+    const totalDurationResult = await queryAsync(totalDurationQuery, [user_id]);
+    const totalDurationMinutes = totalDurationResult[0].total_duration_minutes || 0;
+
+    // Update the `total_scores` table with the calculated total score, total duration, and exam count
+    const updateTotalScoreQuery = `
+      UPDATE total_scores
+      SET total_score = ?, total_duration_minutes = ?, exam_count = exam_count + 1
+      WHERE user_id = ?
+    `;
+
+    await queryAsync(updateTotalScoreQuery, [totalScore, totalDurationMinutes, user_id]);
+
+    // Return the updated user score to the frontend
+    res.json({ updatedScore: totalScore });
+  } catch (error) {
+    console.error('Error submitting answers:', error);
+    res.status(500).json({ message: 'Failed to submit answers' });
   }
 });
 

@@ -1,6 +1,22 @@
+
+-- Exams Table (with program_id and competency_id)
+CREATE TABLE exams (
+    exam_id INT PRIMARY KEY AUTO_INCREMENT,
+    exam_name VARCHAR(255) NOT NULL,
+    program_id INT,
+    competency_id INT,
+    duration_minutes INT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (program_id) REFERENCES programs(program_id),
+    FOREIGN KEY (competency_id) REFERENCES competencies(competency_id)
+);
+
 -- Users Table
 CREATE TABLE users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -20,20 +36,7 @@ CREATE TABLE competencies (
     competency_name VARCHAR(255) NOT NULL
 );
 
--- Exams Table (with program_id and competency_id)
-CREATE TABLE exams (
-    exam_id INT PRIMARY KEY AUTO_INCREMENT,
-    exam_name VARCHAR(255) NOT NULL,
-    program_id INT,
-    competency_id INT,
-    duration_minutes INT NOT NULL,
-    start_time DATETIME NOT NULL,
-    end_time DATETIME NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (program_id) REFERENCES programs(program_id),
-    FOREIGN KEY (competency_id) REFERENCES competencies(competency_id)
-);
+
 
 -- Questions Table (with program_id and competency_id)
 CREATE TABLE questions (
@@ -54,16 +57,31 @@ CREATE TABLE choices (
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
 );
 
--- User Exams Table 
+-- User Exams Table
 CREATE TABLE user_exams (
     user_exam_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
-    exam_id INT NOT NULL,
-    score INT,
+    program_id INT,
+    competency_id INT,
+    duration_minutes INT NOT NULL,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (exam_id) REFERENCES exams(exam_id)
+    FOREIGN KEY (program_id) REFERENCES programs(program_id),
+    FOREIGN KEY (competency_id) REFERENCES competencies(competency_id)
 );
+
+-- Total Scores Table
+CREATE TABLE total_scores (
+    total_score_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    total_score INT DEFAULT 0,
+    total_duration_minutes INT DEFAULT 0,
+    exam_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
