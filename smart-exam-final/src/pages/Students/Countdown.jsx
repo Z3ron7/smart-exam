@@ -66,11 +66,10 @@ export default function Countdown(props) {
 
     // Update the total_scores table with the user's score and duration
     axios
-      .post('http://localhost:3001/total-scores', {
+      .post('http://localhost:3001/exams/total-scores', {
         user_id: props.userId,
         total_score: userScore,
-        total_duration_minutes: durationMinutes,
-        exam_count: 1,
+        total_duration_minutes: durationMinutes
       })
       .then((response) => {
         // Handle the end of the exam, show results, etc.
@@ -95,7 +94,7 @@ export default function Countdown(props) {
           <button onClick={handleStart} disabled={selectedTime === 0 || countdownStarted}>
             Start
           </button>
-          <button onClick={props.handleEndExamButtonClick}>End Exam</button>
+          <button onClick={handleEndExam}>End Exam</button>
         </div>
       )}
     </div>

@@ -191,30 +191,30 @@ function Exam() {
     { value: 'Casework', label: 'Casework' },
     { value: 'HBSE', label: 'HBSE' },
   ];
-  
+
   const user_id = localStorage.getItem('user_id');
 
-  const handleStartExam = (selectedTimeInMinutes) => {
-    const currentStartTime = new Date(); // Capture the current date and time
-
-    // Create a user_exam entry in the database
-    axios
-      .post('http://localhost:3001/exams/user-exams', {
+  const handleStartExam = async (selectedTimeInMinutes) => {
+    const currentStartTime = new Date();
+  
+    try {
+      // Create a user_exam entry in the database
+      const response = await axios.post('http://localhost:3001/exams/user-exams', {
         user_id, // Use the user_id from localStorage
-        program_id: selectedProgram ? selectedProgram.value : null, // Use the selected program ID
-        competency_id: selectedCompetency ? selectedCompetency.value : null, // Use the selected competency ID
-        duration_minutes: selectedTimeInMinutes, // Use the selected time in minutes
+        program: selectedProgram ? selectedProgram.value : null,
+        competency: selectedCompetency ? selectedCompetency.value : null,
+        duration_minutes: selectedTimeInMinutes,
         start_time: currentStartTime,
-        end_time: null, // Set end_time to null initially
-      })
-      .then((response) => {
-        setUserExamId(response.data.user_exam_id);
-        // Start your exam logic here, maybe using userExamId
-      })
-      .catch((error) => {
-        console.error('Error starting exam:', error);
+        end_time: null,
       });
+  
+      setUserExamId(response.data.user_exam_id);
+      // Start your exam logic here, maybe using userExamId
+    } catch (error) {
+      console.error('Error starting exam:', error);
+    }
   };
+  
 
   
   // Helper function to calculate the user's score based on selectedChoices and correct answers

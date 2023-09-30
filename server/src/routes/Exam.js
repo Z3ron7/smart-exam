@@ -12,7 +12,21 @@ const queryAsync = promisify(conn.query).bind(conn);
 // Handle starting an exam for a user
 router.post('/user-exams', async (req, res) => {
   try {
-    const { user_id, program_id, competency_id, duration_minutes } = req.body;
+    const { user_id, program, competency, duration_minutes } = req.body;
+
+    // Perform lookups to get program_id and competency_id based on names
+    const [programResult] = await queryAsync(
+      "SELECT program_id FROM program WHERE program_name = ?",
+      [program]
+    );
+
+    const [competencyResult] = await queryAsync(
+      "SELECT competency_id FROM competency WHERE competency_name = ?",
+      [competency]
+    );
+
+    const program_id = programResult ? programResult.program_id : null;
+    const competency_id = competencyResult ? competencyResult.competency_id : null;
 
     // Insert the user exam record
     const createExamQuery = `
@@ -30,19 +44,16 @@ router.post('/user-exams', async (req, res) => {
 
     const userExamId = createExamResult.insertId;
 
-    // Calculate the user's total score and total duration_minutes
-    const { totalScore, totalDurationMinutes } = await calculateUserScore(user_id);
-
     res.json({
       user_exam_id: userExamId,
-      total_score: totalScore,
-      total_duration_minutes: totalDurationMinutes,
     });
   } catch (error) {
     console.error('Error creating user exam:', error);
     res.status(500).json({ message: 'Failed to create user exam' });
   }
 });
+
+
 
 
 // Retrieve user exams for a specific user
@@ -100,56 +111,26 @@ router.delete('/user-exams/:user_exam_id', async (req, res) => {
   }
 });
 
-router.post('/submit-answers', async (req, res) => {
+router.post('/total-scores', async (req, res) => {
   try {
-    const { answers, user_exam_id } = req.body;
+    const { user_id } = req.body;
 
-    // Calculate the user's score for the completed exam
-    let totalScore = 0;
+    // Calculate the user's total score and total duration_minutes
+    const { totalScore, totalDurationMinutes } = await calculateUserScore(user_id);
 
-    for (const answer of answers) {
-      // Assume answers contain { question_id, choice_id, is_correct }
-      if (answer.is_correct) {
-        // Increase the total score when the answer is correct
-        totalScore++;
-      }
-    }
+    // Update the total_scores table with the user's score and duration
+    await queryAsync(
+      'UPDATE total_scores SET total_score = ?, total_duration_minutes = ?, updated_at = NOW() WHERE user_id = ?',
+      [totalScore, totalDurationMinutes, user_id]
+    );
 
-    // Update the `user_exams` table with the user's score
-    const updateExamQuery = `
-      UPDATE user_exams SET is_correct = ? WHERE user_exam_id = ?
-    `;
-
-    for (const answer of answers) {
-      await queryAsync(updateExamQuery, [answer.is_correct, user_exam_id]);
-    }
-
-    // Calculate the total duration of all exams taken by the user
-    const totalDurationQuery = `
-      SELECT SUM(duration_minutes) AS total_duration_minutes FROM user_exams WHERE user_id = ?
-    `;
-
-    // Retrieve the user_id from localStorage
-    const user_id = localStorage.getItem('user_id'); // Replace with your actual localStorage key
-
-    const totalDurationResult = await queryAsync(totalDurationQuery, [user_id]);
-    const totalDurationMinutes = totalDurationResult[0].total_duration_minutes || 0;
-
-    // Update the `total_scores` table with the calculated total score, total duration, and exam count
-    const updateTotalScoreQuery = `
-      UPDATE total_scores
-      SET total_score = ?, total_duration_minutes = ?, exam_count = exam_count + 1
-      WHERE user_id = ?
-    `;
-
-    await queryAsync(updateTotalScoreQuery, [totalScore, totalDurationMinutes, user_id]);
-
-    // Return the updated user score to the frontend
-    res.json({ updatedScore: totalScore });
+    res.json({ message: 'Total scores updated successfully' });
   } catch (error) {
-    console.error('Error submitting answers:', error);
-    res.status(500).json({ message: 'Failed to submit answers' });
+    console.error('Error updating total scores:', error);
+    res.status(500).json({ message: 'Failed to update total scores' });
   }
 });
+
+
 
 module.exports = router;
