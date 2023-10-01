@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 14, 2023 at 04:58 AM
+-- Generation Time: Oct 01, 2023 at 05:05 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -20,23 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `smart-exam`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `exam`
---
-
-CREATE TABLE `exam` (
-  `exam_id` int(200) NOT NULL,
-  `program_id` int(100) NOT NULL,
-  `competency_id` int(220) NOT NULL,
-  `question_id` int(100) NOT NULL,
-  `time_duration` int(200) NOT NULL,
-  `date_started` date NOT NULL,
-  `date_completed` date NOT NULL,
-  `user_id` int(200) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -86,23 +69,21 @@ CREATE TABLE `log-in` (
 --
 
 CREATE TABLE `question` (
-  `question_id` int(200) NOT NULL,
-  `program` varchar(50) NOT NULL,
-  `competency` varchar(50) NOT NULL,
-  `questionText` text NOT NULL,
-  `choices` varchar(200) NOT NULL,
-  `answer` varchar(200) NOT NULL,
-  `is_correct` tinyint(1) NOT NULL
+  `question_id` int(50) NOT NULL,
+  `program_id` int(50) NOT NULL,
+  `competency_id` int(50) NOT NULL,
+  `questionText` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `question`
 --
 
-INSERT INTO `question` (`question_id`, `program`, `competency`, `questionText`, `choices`, `answer`, `is_correct`) VALUES
-(32, 'social_work', 'human_behavior', 'question', 'choices,choices1', 'answer', 0),
-(33, 'social_work', 'human_behavior', 'question', 'choices,choices1', 'answer', 0),
-(34, 'social_work', 'Human Behavior and Social Environment', 'question', 'choices,choices1', 'answer', 0);
+INSERT INTO `question` (`question_id`, `program_id`, `competency_id`, `questionText`) VALUES
+(1, 1, 1, 'question ni'),
+(2, 1, 2, 'question nasad'),
+(3, 1, 2, 'question nasad'),
+(4, 1, 3, 'question nasad ni');
 
 -- --------------------------------------------------------
 
@@ -136,7 +117,7 @@ INSERT INTO `roles` (`role_id`, `role_name`) VALUES
 --
 
 CREATE TABLE `users` (
-  `id` int(200) NOT NULL,
+  `user_id` int(200) NOT NULL,
   `name` varchar(100) NOT NULL,
   `username` varchar(80) NOT NULL,
   `password` varchar(220) NOT NULL,
@@ -148,7 +129,7 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `username`, `password`, `status`, `role`) VALUES
+INSERT INTO `users` (`user_id`, `name`, `username`, `password`, `status`, `role`) VALUES
 (1, 'Zoren', 'zoren.panilagao1@gmail.com', '$2b$05$.zEAOYtKchnR6ejmhN80Vu6cR1PXC1wVbPRMcz2pQvBU8hxaEDVwm', '', '0'),
 (2, 'Renzo', 'zoren.panilagao7@gmail.com', '$2b$05$okrD2VHBqSxYE4ZEGKWGUOoSBfJfjysPcFbcFvynPsiggWUUk5UfG', '', '0'),
 (3, 'Neroz', 'zoren.panilagao74@gmail.com', '$2b$05$Ew3//KaVO.YMl1mbNq43luZ7WNAnGEEdWT5wDQwTMDAG4QKxIrv8O', '', '0'),
@@ -172,14 +153,6 @@ INSERT INTO `users` (`id`, `name`, `username`, `password`, `status`, `role`) VAL
 --
 -- Indexes for dumped tables
 --
-
---
--- Indexes for table `exam`
---
-ALTER TABLE `exam`
-  ADD PRIMARY KEY (`exam_id`),
-  ADD KEY `Test` (`program_id`),
-  ADD KEY `Test1` (`competency_id`);
 
 --
 -- Indexes for table `exam_room`
@@ -207,7 +180,9 @@ ALTER TABLE `log-in`
 -- Indexes for table `question`
 --
 ALTER TABLE `question`
-  ADD PRIMARY KEY (`question_id`);
+  ADD PRIMARY KEY (`question_id`),
+  ADD KEY `program` (`program_id`),
+  ADD KEY `competencies` (`competency_id`);
 
 --
 -- Indexes for table `roles`
@@ -219,18 +194,12 @@ ALTER TABLE `roles`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
+  ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `username` (`username`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
-
---
--- AUTO_INCREMENT for table `exam`
---
-ALTER TABLE `exam`
-  MODIFY `exam_id` int(200) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `exam_room`
@@ -254,7 +223,7 @@ ALTER TABLE `log-in`
 -- AUTO_INCREMENT for table `question`
 --
 ALTER TABLE `question`
-  MODIFY `question_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `question_id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -266,37 +235,37 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `user_id` int(200) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- Constraints for dumped tables
 --
 
 --
--- Constraints for table `exam`
---
-ALTER TABLE `exam`
-  ADD CONSTRAINT `Test` FOREIGN KEY (`program_id`) REFERENCES `programs` (`program_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `Test1` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`);
-
---
 -- Constraints for table `exam_room`
 --
 ALTER TABLE `exam_room`
   ADD CONSTRAINT `competency` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`),
-  ADD CONSTRAINT `program_data` FOREIGN KEY (`program_id`) REFERENCES `programs` (`program_id`);
+  ADD CONSTRAINT `program_data` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`);
 
 --
 -- Constraints for table `exam_scores`
 --
 ALTER TABLE `exam_scores`
-  ADD CONSTRAINT `Test5` FOREIGN KEY (`exam_id`) REFERENCES `exam` (`exam_id`);
+  ADD CONSTRAINT `Test5` FOREIGN KEY (`exam_id`) REFERENCES `user_exams` (`exam_id`);
 
 --
 -- Constraints for table `log-in`
 --
 ALTER TABLE `log-in`
-  ADD CONSTRAINT `Test6` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `Test6` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+
+--
+-- Constraints for table `question`
+--
+ALTER TABLE `question`
+  ADD CONSTRAINT `competencies` FOREIGN KEY (`competency_id`) REFERENCES `competency` (`competency_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `program` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

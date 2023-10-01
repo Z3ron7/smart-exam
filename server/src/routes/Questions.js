@@ -17,46 +17,44 @@ const conn = db.connection;
 })();
 const queryAsync = promisify(conn.query).bind(conn);
 
-router.post('/create', async (req, res) => {
-  const { programName, competencyName, questionText, answerText } = req.body;
-
+router.post("/create", async (req, res) => {
   try {
-    // Create the program first
-    const programResult = await queryAsync(
-      'INSERT INTO programs (program_name) VALUES (?)',
-      [programName]
+    const { question_text, program, competency, choices } = req.body;
+
+    // Get program_id and competency_id based on predefined values
+    const [programResult] = await queryAsync(
+      "SELECT program_id FROM program WHERE program_name = ?",
+      [program]
     );
 
-    const programId = programResult.insertId;
-
-    // Create the competency
-    const competencyResult = await queryAsync(
-      'INSERT INTO competency (competency_name) VALUES (?)',
-      [competencyName]
+    const [competencyResult] = await queryAsync(
+      "SELECT competency_id FROM competency WHERE competency_name = ?",
+      [competency]
     );
 
-    const competencyId = competencyResult.insertId;
+    const program_id = programResult ? programResult.program_id : null;
+    const competency_id = competencyResult ? competencyResult.competency_id : null;
 
-    // Now, insert the question into the database with program_id and competency_id
-    const questionQuery =
-      'INSERT INTO question (questionText, program_id, competency_id, answer) VALUES (?, ?, ?, ?)';
-
-    const result = await queryAsync(questionQuery, [
-      questionText,
-      programId,
-      competencyId,
-      answerText,
-    ]);
+    // Insert the question into the database
+    const result = await queryAsync(
+      "INSERT INTO question (questionText, program_id, competency_id) VALUES (?, ?, ?)",
+      [question_text, program_id, competency_id]
+    );
 
     const question_id = result.insertId;
-    res.json({
-      success: true,
-      message: 'Data saved successfully',
-      question_id: question_id,
-    });
+
+    // Insert choices into the database
+    for (const choice of choices) {
+      await queryAsync(
+        "INSERT INTO choices (choiceText, question_id, is_correct) VALUES (?, ?, ?)",
+        [choice.choice_text, question_id, choice.is_correct]
+      );
+    }
+
+    res.json({ message: "Question created successfully", question_id });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Error creating question:", error);
+    res.status(500).json({ error: "Failed to create question" });
   }
 });
 
@@ -85,15 +83,12 @@ router.post('/choices/create/:question_id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-
-// Fetch all questions
 router.get("/fetch", async (req, res) => {
   const db = new Database();
   const conn = db.connection;
   
   const query = `
-    SELECT q.*, c.choiceText, c.is_correct
+    SELECT q.question_id, q.questionText, c.choiceText, c.is_correct
     FROM question AS q
     LEFT JOIN choices AS c ON q.question_id = c.question_id
   `;
@@ -104,36 +99,33 @@ router.get("/fetch", async (req, res) => {
     conn.query(query, (err, result) => {
       if (err) throw err;
 
-      // Organize the data into a more suitable structure
-      const questions = {};
+      // Create an array to hold questions
+      const questions = [];
 
       result.forEach((row) => {
         const questionId = row.question_id;
 
-        // If the question doesn't exist in the questions object, create it
-        if (!questions[questionId]) {
-          questions[questionId] = {
+        // Find the question in the array or create a new one
+        let question = questions.find(q => q.question_id === questionId);
+        if (!question) {
+          question = {
+            question_id: questionId,
             questionText: row.questionText,
-            program: row.program,
-            competency: row.competency,
-            answer: row.answer,
             choices: [],
           };
+          questions.push(question);
         }
 
         // Add choices to the respective question
         if (row.choiceText !== null) {
-          questions[questionId].choices.push({
+          question.choices.push({
             choiceText: row.choiceText,
             is_correct: row.is_correct,
           });
         }
       });
 
-      // Convert the object into an array of questions
-      const questionArray = Object.values(questions);
-
-      res.json(questionArray);
+      res.json(questions);
     });
   } catch (error) {
     console.error(error);
@@ -142,6 +134,7 @@ router.get("/fetch", async (req, res) => {
     conn.end();
   }
 });
+
 
 router.get('/refresh', async (req, res) => {
   const db = new Database();

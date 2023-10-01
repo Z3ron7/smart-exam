@@ -21,28 +21,28 @@ router.get("/filterQuestions", async (req, res) => {
   try {
     const { program, competency } = req.query;
 
-    // Build a SQL query with a LIKE clause to filter questions by program and competency
+    // Build a SQL query to filter questions by program and competency
     let sqlQuery = `
       SELECT q.*
       FROM question AS q
-      INNER JOIN programs AS p ON q.program_id = p.program_id
+      INNER JOIN program AS p ON q.program_id = p.program_id
       INNER JOIN competency AS c ON q.competency_id = c.competency_id
     `;
-
+    
     const queryParams = [];
 
     if (program) {
-      sqlQuery += 'WHERE p.program_name LIKE ?';
+      sqlQuery += ' WHERE p.program_name LIKE ?';
       queryParams.push(`%${program}%`);
     }
 
-    if (competency) {
-      if (program) {
-        sqlQuery += ' AND ';
+    if (competency && competency !== 'All Competency') {
+      if (queryParams.length > 0) {
+        sqlQuery += ' AND';
       } else {
-        sqlQuery += ' WHERE ';
+        sqlQuery += ' WHERE';
       }
-      sqlQuery += 'c.competency_name LIKE ?';
+      sqlQuery += ' c.competency_name LIKE ?';
       queryParams.push(`%${competency}%`);
     }
 
@@ -54,6 +54,7 @@ router.get("/filterQuestions", async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 module.exports = router;

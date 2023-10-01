@@ -1,8 +1,8 @@
 import React from 'react';
 
-const EndExamExam = ({ playerScore, questions, onClose }) => {
+const EndExam = ({ userScore, questions, onClose }) => {
   // Calculate the percentage score
-  const percentageScore = (playerScore / questions.length) * 100;
+  const percentageScore = (userScore / questions.length) * 100;
 
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
@@ -10,9 +10,9 @@ const EndExamExam = ({ playerScore, questions, onClose }) => {
         <h2 className="font-bold text-lg">
           Congratulations! You have completed the exam.
         </h2>
-        {playerScore !== null && (
+        {userScore !== null && (
           <>
-            <p>Your Score: {playerScore} points</p>
+            <p>Your Score: {userScore} points</p>
             <p>Percentage Score: {percentageScore.toFixed(2)}%</p>
           </>
         )}
@@ -37,4 +37,4 @@ const EndExamExam = ({ playerScore, questions, onClose }) => {
   );
 };
 
-export default EndExamExam;
+export default EndExam;

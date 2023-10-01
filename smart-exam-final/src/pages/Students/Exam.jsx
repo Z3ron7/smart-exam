@@ -1,35 +1,33 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Select from 'react-select';
-import EndExitExam from './EndExitExam'; 
 import axios from 'axios';
 import Countdown from './Countdown';
-
+import EndExam from './EndExam';
 
 function Exam() {
-  const [currentGame, setCurrentGame] = useState([]);
+  const [currentExams, setcurrentExams] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [playerScore, setPlayerScore] = useState(0);
+  const [userScore, setUserScore] = useState(0);
   const [maxQuestions, setMaxQuestions] = useState(10);
-  const [currentGamePlaying, setCurrentGamePlaying] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
-  const initialChoices = Array(currentGame.length).fill(null).map(() => ({
-    choiceText: "", // Add other properties as needed
-    isUsed: false,  // Initialize isUsed to false
-  }));
-  const [selectedChoices, setSelectedChoices] = useState(initialChoices);
-
-
+  const [userExamId, setUserExamId] = useState(null);
+  const [examData, setExamData] = useState({
+    questions: [],
+    selectedChoices: [],
+  });
+  const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null));
+  const countdownRef = useRef();
   const questionsPerPage = 5;
 
 
-  const getGameData = useCallback(() => {
+  const getExamData = useCallback(() => {
     axios
       .get('http://localhost:3001/questions/fetch')
       .then((response) => {
         console.log('Response data:', response.data); // Add this line
-        setCurrentGame(response.data);
+        setcurrentExams(response.data);
         setMaxQuestions(response.data.length);
         setCurrentQuestion(0);
         setSelectedChoices(Array(response.data.length).fill(-1));
@@ -40,73 +38,89 @@ function Exam() {
   }, []); // Use an empty dependency array because there are no dependencies
   
   useEffect(() => {
-    getGameData();
-  }, [getGameData, currentGamePlaying]);
+    getExamData();
+  }, [getExamData]);
+console.log('currentExams:', currentExams);
 
-  const updateScore = (answer_index, question_index, el) => {
-    if (question_index >= maxQuestions || !currentGame || question_index >= currentGame.length) {
-      return; // Handle or display end game logic here
-    }
-  
-    const question = currentGame[question_index];
-  
-    // Check if the selected answer is correct
-    if (answer_index === question.correct) {
-      // Increment the player's score
-      setPlayerScore(playerScore + 1);
-    }
-  
-    // Update the selected choice for the current question
-    setSelectedChoices((prevChoices) => {
-      const updatedChoices = [...prevChoices];
-      updatedChoices[question_index] = {
-        ...updatedChoices[question_index],
-        isUsed: true, // Set isUsed to true for the selected choice
-      };
-      return updatedChoices;
-    });
-  
-    // Apply the highlighting class to the selected choice here
-    el.target.classList.toggle("bg-blue-500", true);
-    el.target.classList.toggle("text-white", true);
-  };
-  
-  const submitExam = () => {
-    if (!currentGame || !Array.isArray(currentGame)) {
-      console.error('Current game data is missing or not an array.');
-      return;
-    }
-  
-    const examResults = currentGame.map((question, index) => ({
-      question_id: question.id,
-      selected_choice: selectedChoices[index].isUsed ? selectedChoices[index].choice_id : null,
-      // Other properties...
-    }));
-    console.log('Exam Results:', examResults); // Add this line
+const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
+  try {
+    const user_id = localStorage.getItem('user_id');
+    const exam_id = userExamId; // Assuming you have userExamId state
 
-    // Send the exam results to the backend
-    axios
-      .post("http://localhost:3001/exams/exams/submit", {
-        examResults,
-        totalScore: playerScore,
-      })
-      .then((response) => {
-        // Handle success response if needed
-        console.log("Exam submitted successfully");
-      })
-      .catch((error) => {
-        console.error("Error submitting exam:", error);
-        // Handle error if needed
-      });
-  };
+    // Declare newSelectedChoices here before accessing it
+    const newSelectedChoices = [...selectedChoices];
+
+    // Check if the question exists at the specified index
+    if (startIndex + questionIndex >= 0 && startIndex + questionIndex < currentExams.length) {
+      const question = currentExams[startIndex + questionIndex];
+      const question_id = question.question_id;
+      
+      // Check if 'question' and 'choices' are defined
+      if (question && question.choices) {
+        // Ensure 'choiceIndex' is within bounds
+        if (choiceIndex >= 0 && choiceIndex < question.choices.length) {
+          // Access the isCorrect property
+          const isCorrect = question.choices[choiceIndex].is_correct;
+
+          // Access currentChoice from the newly declared newSelectedChoices
+          const currentChoice = newSelectedChoices[startIndex + questionIndex];
+
+          // If the current choice is already selected, deselect it; otherwise, select it.
+          newSelectedChoices[startIndex + questionIndex] =
+            currentChoice === choiceIndex ? null : choiceIndex;
+
+          setSelectedChoices(newSelectedChoices);
+          console.log(selectedChoices)
+
+          // Send the user's choice to the server
+          await axios.post('http://localhost:3001/exams/user-exam-records', {
+            userId: user_id,
+            examId: exam_id,
+            questionId: question_id,
+            choiceId: currentChoice, // Send the current choice for deselection
+            newChoiceId: newSelectedChoices[startIndex + questionIndex], // Send the new choice for selection
+            isCorrect: isCorrect,
+          });
+
+          // Log the choice and question for debugging
+          console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
+          console.log("Debug - question:", question);
+          console.log("Debug - question.choices:", question.choices);
+        } else {
+          console.error('Invalid choiceIndex:', choiceIndex);
+        }
+      } 
+    }
+  } catch (error) {
+    console.error('Error recording user choice:', error);
+  }
+};
+
+
+
   
+  function calculateScore(questions, selectedChoices) {
+    let score = 0;
   
+    for (let i = 0; i < questions.length; i++) {
+      const correctChoiceIndex = questions[i].choices.findIndex(
+        (choice) => choice.is_correct
+      );
+  
+      if (selectedChoices[i] === correctChoiceIndex) {
+        // Increment the score for a correct answer
+        score += 1; // You can adjust the scoring logic as needed
+      }
+    }
+  
+    return score;
+  }
 
   const EndExam = () => {
     return (
-      <EndExitExam
-        playerScore={playerScore}
-        questions={currentGame}
+      <EndExam
+        userScore={userScore}
+        questions={currentExams}
         onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
       />
     );
@@ -136,7 +150,7 @@ function Exam() {
           `http://localhost:3001/filter/filterQuestions?programs=${selectedProgram?.label || ''}&competency=${selectedCompetency?.label || ''}`
         )
         .then((response) => {
-          setCurrentGame(response.data);
+          setcurrentExams(response.data);
           setMaxQuestions(response.data.length);
           setCurrentQuestion(0);
           setSelectedChoices(Array(response.data.length).fill(-1));
@@ -146,54 +160,56 @@ function Exam() {
         });
     } else {
       // If no program or competency is selected, use all questions
-      getGameData();
+      getExamData();
     }
   }, [selectedProgram, selectedCompetency]);
   
 
   const renderQuestions = () => {
-    const startIndex = (currentPage - 1) * questionsPerPage;
-    const endIndex = Math.min(
-      startIndex + questionsPerPage,
-      maxQuestions
+  const startIndex = (currentPage - 1) * questionsPerPage;
+  const endIndex = Math.min(startIndex + questionsPerPage, maxQuestions);
+  const { questions, selectedChoices } = examData;
+
+  if (!filteredQuestions || filteredQuestions.length === 0) {
+    // Handle the case when filteredQuestions is empty or not yet loaded
+    return (
+      <div className="text-center">
+        Loading questions...
+      </div>
     );
-  
-    if (!filteredQuestions || filteredQuestions.length === 0) {
-      // Handle the case when filteredQuestions is empty or not yet loaded
-      return (
-        <div className="text-center">
-          Loading questions...
-        </div>
-      );
-    }
+  }
   
     return filteredQuestions
       .slice(startIndex, endIndex)
-      .map((question, index) => (
+      .map((question, questionIndex) => (
         <div
-          key={index}
+          key={questionIndex}
           className="border-2 shadow-lg items-center justify-center my-2"
         >
           {/* Render each question component */}
           <div className="text-xl text-center dark:text-white btn-primary">
-            Question {startIndex + index + 1}/{maxQuestions}
+            Question {startIndex + questionIndex + 1}/{maxQuestions}
           </div>
           <div className="p-3 dark:text-white text-2xl text-center">
             {question.questionText}
           </div>
           <div id="answers-container" className="p-3">
-            {question.choices.map((choice, answerIndex) => (
+            {question.choices && question.choices.map((choice, choiceIndex) => (
                 <div
-                key={answerIndex}
-                className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
-                  selectedChoices[startIndex + index] === answerIndex // Check if the choice index matches the selected choice
-                    ? "bg-blue-500 text-white" // Apply bg-blue-500 and text-white when selected
-                    : ""
-                }`}
-                onClick={(el) => updateScore(answerIndex, index, el)}
-              >
+    key={choiceIndex}
+    className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
+      selectedChoices[startIndex + questionIndex] === choiceIndex
+        ? "bg-blue-500 text-white" // Apply bg-blue-500 and text-white when selected
+        : ""
+    }`}
+    onClick={() => {
+      console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
+      console.log("Current question:", question);
+      handleChoiceClick(questionIndex, choiceIndex, startIndex);
+    }}
+  >
                 <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
-                  {String.fromCharCode(65 + answerIndex)}
+                  {String.fromCharCode(65 + choiceIndex)}
                 </div>
                 <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
                   {choice.choiceText}
@@ -226,17 +242,73 @@ function Exam() {
   };
 
   const programOptions = [
-    { value: 'social_work', label: 'Social Work' },
-    { value: 'option', label: 'Option' },
+    { value: 'Social Work', label: 'Social Work' },
+    { value: 'Option', label: 'Option' },
+  ];
+  
+  const competencyOptions = [
+    { value: 'All Competency', label: 'All Competency' },
+    { value: 'SWPPS', label: 'SWPPS' },
+    { value: 'Casework', label: 'Casework' },
+    { value: 'HBSE', label: 'HBSE' },
   ];
 
-  const competencyOptions = [
-    { value: 'human_behavior', label: 'Human Behavior and Social Environment' },
-    { value: 'social_case_work', label: 'Social Case Work' },
-  ];
-  const handleStartExam = () => {
-    const currentStartTime = new Date(); // Capture the current date and time
-    // Other code to start the exam
+  const user_id = localStorage.getItem('user_id');
+
+  const handleStartExam = async (selectedTimeInMinutes) => {
+    const currentStartTime = new Date();
+  
+    try {
+      // Create a user_exam entry in the database
+      const response = await axios.post('http://localhost:3001/exams/user-exams', {
+        user_id, // Use the user_id from localStorage
+        program: selectedProgram ? selectedProgram.value : null,
+        competency: selectedCompetency ? selectedCompetency.value : null,
+        duration_minutes: selectedTimeInMinutes,
+        start_time: currentStartTime,
+        end_time: null,
+      });
+  
+      setUserExamId(response.data.user_exam_id);
+      // Start your exam logic here, maybe using userExamId
+    } catch (error) {
+      console.error('Error starting exam:', error);
+    }
+  };
+  
+// Add this at the top of your Exam.jsx file, where you define your other state variables
+const [endExamSummary, setEndExamSummary] = useState(null);
+
+  
+  // Helper function to calculate the user's score based on selectedChoices and correct answers
+  const calculateUserScore = (selectedChoices, choices) => {
+    let userScore = 0;
+  
+    for (let i = 0; i < selectedChoices.length; i++) {
+      const selectedChoiceIndex = selectedChoices[i];
+  
+      // Check if the selected choice is correct based on the 'is_correct' field
+      if (selectedChoiceIndex >= 0 && choices[i].is_correct) {
+        userScore++;
+      }
+    }
+  
+    return userScore;
+  };
+  
+  // Helper function to calculate the duration in minutes
+  const calculateDurationInMinutes = (startTime, endTime) => {
+    const timeDifference = endTime - startTime; // Time difference in milliseconds
+    const durationMinutes = Math.floor(timeDifference / (1000 * 60)); // Convert to minutes
+  
+    return durationMinutes;
+  };
+  const handleEndExamButtonClick = () => {
+    // You can add any additional logic here if needed
+    // Call the handleEndExam function in Countdown.jsx
+    const userScore = calculateScore(currentExams, selectedChoices);
+    countdownRef.current.handleEndExam();
+    setEndExamSummary({ userScore });
   };
   
   return (
@@ -264,7 +336,16 @@ function Exam() {
         options={competencyOptions}
       />
     </div>
-      <Countdown handleStartExam={handleStartExam}/> 
+    <Countdown
+      ref={countdownRef} // Pass the ref
+      handleStartExam={handleStartExam}
+      selectedChoices={selectedChoices}
+      choices={currentExams.map((question) => question.choices)}
+      userId={user_id}
+      calculateUserScore={calculateUserScore}
+      calculateDurationInMinutes={calculateDurationInMinutes} // Pass the duration calculation function
+      handleEndExamButtonClick={handleEndExamButtonClick} // Pass the end exam button click handler
+    />
   </div>
 </div>
 
@@ -274,11 +355,18 @@ function Exam() {
           <div className="container text-center header-bg p-2 text-gray-800 mt-auto">
           <div className="flex justify-center mx-auto dark:text-white">
           <button
-            className="relative block rounded bg-primary-100 px-3 py-1.5 text-xl font-medium text-primary-700 transition-all duration-300"
-            onClick={submitExam}
-          >
-            Submit
-          </button>
+              onClick={handleEndExamButtonClick}
+              className="relative block rounded bg-blue-700 px-3 py-1.5 text-xl font-medium text-gray-700 transition-all duration-300"
+            >
+              End Exam
+              {endExamSummary && (
+        <EndExam
+          userScore={endExamSummary.userScore}
+          durationMinutes={endExamSummary.durationMinutes}
+          onClose={() => setCurrentQuestion(maxQuestions)}
+        />
+      )}
+            </button>
           </div>
             <h2 className="text-2xl pb-1 border-b text-gray-900 dark:text-white border-gray-500">
               Questions remaining: 
@@ -330,6 +418,7 @@ function Exam() {
         </>
       ) : (
         EndExam()
+        
       )}
     </div>
   );
