@@ -53,43 +53,24 @@ router.post('/user-exams', async (req, res) => {
   }
 });
 
-
-
-
-// Retrieve user exams for a specific user
-router.get('/user-exams/:user_id', async (req, res) => {
+router.put('/user_exams/:exam_id', async (req, res) => {
   try {
-    const { user_id } = req.params;
+    const { exam_id } = req.params;
+    const { score, total_duration_minutes } = req.body;
 
-    const getUserExamsQuery = `
-      SELECT * FROM exam WHERE user_id = ?
+    // Update the score and total_duration_minutes for the specified user exam
+    const updateExamQuery = `
+      UPDATE user_exams
+      SET score = ?, total_duration_minutes = ?
+      WHERE exam_id = ?
     `;
 
-    const userExams = await queryAsync(getUserExamsQuery, [user_id]);
+    await queryAsync(updateExamQuery, [score, total_duration_minutes, exam_id]);
 
-    res.json({ exam });
+    res.json({ message: 'User exam updated successfully' });
   } catch (error) {
-    console.error('Error retrieving user exams:', error);
-    res.status(500).json({ message: 'Failed to retrieve user exams' });
-  }
-});
-
-// Update the is_correct field for a user exam
-router.put('/user-exams/:user_exam_id', async (req, res) => {
-  try {
-    const { user_exam_id } = req.params;
-    const { is_correct } = req.body;
-
-    const updateIsCorrectQuery = `
-      UPDATE exam SET is_correct = ? WHERE user_exam_id = ?
-    `;
-
-    await queryAsync(updateIsCorrectQuery, [is_correct, user_exam_id]);
-
-    res.json({ message: 'Is_correct updated successfully' });
-  } catch (error) {
-    console.error('Error updating is_correct:', error);
-    res.status(500).json({ message: 'Failed to update is_correct' });
+    console.error('Error updating user exam:', error);
+    res.status(500).json({ error: 'Failed to update user exam' });
   }
 });
 

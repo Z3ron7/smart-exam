@@ -1,6 +1,6 @@
 import React from 'react';
 
-const EndExam = ({ userScore, questions, onClose }) => {
+const EndExam = ({ userScore, questions, totalDurationMinutes, onClose }) => {
   // Calculate the percentage score
   const percentageScore = (userScore / questions.length) * 100;
 
@@ -14,6 +14,7 @@ const EndExam = ({ userScore, questions, onClose }) => {
           <>
             <p>Your Score: {userScore} points</p>
             <p>Percentage Score: {percentageScore.toFixed(2)}%</p>
+            <p>Total Duration: {totalDurationMinutes} minutes</p> {/* Display total duration */}
           </>
         )}
         <p>What would you like to do?</p>

@@ -20,7 +20,9 @@ function Exam() {
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null));
   const countdownRef = useRef();
   const questionsPerPage = 5;
-
+  const [examStartTime, setExamStartTime] = useState(null);
+  const [examEndTime, setExamEndTime] = useState(null);
+  
 
   const getExamData = useCallback(() => {
     axios
@@ -81,11 +83,29 @@ const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
             newChoiceId: newSelectedChoices[startIndex + questionIndex], // Send the new choice for selection
             isCorrect: isCorrect,
           });
-
+            
           // Log the choice and question for debugging
           console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
           console.log("Debug - question:", question);
           console.log("Debug - question.choices:", question.choices);
+          if (!examStartTime) {
+            setExamStartTime(new Date());
+          }
+      
+          // Check if the student has finished the exam (all questions answered)
+          const isExamFinished = newSelectedChoices.every((choice) => choice !== null);
+      
+          // If the exam is finished, calculate the total_duration_minutes
+          if (isExamFinished) {
+            const endTime = new Date();
+            const durationMilliseconds = endTime - examStartTime;
+            const total_duration_minutes = Math.floor(durationMilliseconds / 60000);
+      
+            // Send the total_duration_minutes to the server for updating the user exam
+            await axios.put(`http://localhost:3001/exams/user-exams/${exam_id}`, {
+              total_duration_minutes,
+            });
+          }
         } else {
           console.error('Invalid choiceIndex:', choiceIndex);
         }
@@ -99,22 +119,23 @@ const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
 
 
   
-  function calculateScore(questions, selectedChoices) {
-    let score = 0;
-  
-    for (let i = 0; i < questions.length; i++) {
-      const correctChoiceIndex = questions[i].choices.findIndex(
-        (choice) => choice.is_correct
-      );
-  
-      if (selectedChoices[i] === correctChoiceIndex) {
-        // Increment the score for a correct answer
-        score += 1; // You can adjust the scoring logic as needed
-      }
+  const calculateScore = (questions, selectedChoices) => {
+  let score = 0;
+
+  for (let i = 0; i < questions.length; i++) {
+    const correctChoiceIndex = questions[i].choices.findIndex(
+      (choice) => choice.is_correct
+    );
+
+    if (selectedChoices[i] === correctChoiceIndex) {
+      // Increment the score for a correct answer
+      score += 1; // You can adjust the scoring logic as needed
     }
-  
-    return score;
   }
+
+  return score;
+};
+
 
   const EndExam = () => {
     return (
@@ -337,15 +358,15 @@ const [endExamSummary, setEndExamSummary] = useState(null);
       />
     </div>
     <Countdown
-      ref={countdownRef} // Pass the ref
-      handleStartExam={handleStartExam}
-      selectedChoices={selectedChoices}
-      choices={currentExams.map((question) => question.choices)}
-      userId={user_id}
-      calculateUserScore={calculateUserScore}
-      calculateDurationInMinutes={calculateDurationInMinutes} // Pass the duration calculation function
-      handleEndExamButtonClick={handleEndExamButtonClick} // Pass the end exam button click handler
-    />
+  ref={countdownRef} // Pass the ref
+  handleStartExam={handleStartExam}
+  selectedChoices={selectedChoices}
+  choices={currentExams.map((question) => question.choices)}
+  userId={user_id}
+  calculateUserScore={calculateUserScore}
+  calculateDurationInMinutes={calculateDurationInMinutes} // Pass the duration calculation function
+/>
+
   </div>
 </div>
 

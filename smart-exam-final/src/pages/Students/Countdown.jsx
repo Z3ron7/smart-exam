@@ -60,16 +60,15 @@ export default function Countdown(props) {
   const handleEndExam = () => {
     // Calculate the user's score based on selectedChoices and choices
     const userScore = props.calculateUserScore(props.selectedChoices, props.choices);
-
+  
     // Calculate the duration in minutes using the passed function
     const durationMinutes = props.calculateDurationInMinutes(startTime, new Date());
-
-    // Update the total_scores table with the user's score and duration
+  
+    // Send the user's score and duration to the server for updating the user exam
     axios
-      .post('http://localhost:3001/exams/total-scores', {
-        user_id: props.userId,
-        total_score: userScore,
-        total_duration_minutes: durationMinutes
+      .put(`http://localhost:3001/exams/user-exams/${props.examId}`, {
+        score: userScore,
+        total_duration_minutes: durationMinutes,
       })
       .then((response) => {
         // Handle the end of the exam, show results, etc.
@@ -78,6 +77,7 @@ export default function Countdown(props) {
         console.error('Error ending exam:', error);
       });
   };
+  
   return (
     <div>
       <div className="mb-4 lg:w-72">
