@@ -14,163 +14,205 @@ const competencyOptions = [
 ];
 
 const QuestionModal = ({isOpen, onClose}) => {
-  const [selectedProgram, setSelectedProgram] = useState(null);
-  const [selectedCompetency, setSelectedCompetency] = useState(null);
-  const [questionText, setQuestionText] = useState('');
+  const [formData, setFormData] = useState({
+    question_text: "",
+    program: null,
+    competency: null,
+    choices: [""],
+    answer: null,
+  });
   const [alertMessage, setAlertMessage] = useState('');
-  const [choiceText, setChoiceText] = useState([{ choiceText: '', isCorrect: false }]);
+
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleAddChoice = () => {
-    setChoiceText([...choiceText, { choiceText: '', isCorrect: false }]);
+    setFormData({
+      ...formData,
+      choices: [...formData.choices, ""],
+    });
   };
-
+  
   const handleRemoveChoice = (index) => {
-    const updatedChoices = [...choiceText];
-    updatedChoices.splice(index, 1);
-    setChoiceText(updatedChoices);
+    const newChoices = [...formData.choices];
+    newChoices.splice(index, 1);
+    setFormData({
+      ...formData,
+      choices: newChoices,
+    });
   };
 
-  const handleChoiceChange = (index, field, value) => {
-    const updatedChoices = [...choiceText];
-    updatedChoices[index][field] = value;
-    setChoiceText(updatedChoices);
+  const handleCheckboxChange = (index) => {
+    setFormData({
+      ...formData,
+      answer: index,
+    });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Construct the request body
-    const requestBody = {
-      question_text: questionText,
-      program: selectedProgram ? selectedProgram.value : null,
-      competency: selectedCompetency ? selectedCompetency.value : null,
-      choices: choiceText.map(choice => ({
-      choice_text: choice.choiceText,
-      is_correct: choice.isCorrect,
-    })),
-    };
-
-    // Send a POST request to create the question
-    axios
-      .post('http://localhost:3001/questions/create', requestBody)
-      .then((response) => {
+    try {
+      // Include the correct answer in both the choices array and the answer field
+      const choicesArray = [...formData.choices];
+      choicesArray[formData.answer] = formData.answer;
+  
+      // Create the request body
+      const requestBody = {
+        question_text: formData.question_text,
+        program: formData.program.value,
+        competency: formData.competency.value,
+        choices: choicesArray,
+        answer: formData.answer,
+      };
+  
+      // Send the POST request
+      const response = await axios.post("http://localhost:3001/questions/create", requestBody);
+  
+      // Check the response status
+      if (response.status === 200) {
         setAlertMessage('Question created successfully');
-        setQuestionText('');
-        setSelectedProgram(null);
-        setSelectedCompetency(null);
-        setChoiceText([{ choiceText: '', isCorrect: false }]);
-      })
-      .catch((error) => {
-        console.error('Error creating question:', error);
+        // Clear the form or perform any other necessary actions on success
+        setFormData({
+          question_text: "",
+          program: null,
+          competency: null,
+          choices: ["", ""],
+          answer: null,
+          answer: "",
+        });
+      } else {
         setAlertMessage('Failed to create question');
-      });
+      }
+  
+      console.log("Question created successfully");
+    } catch (error) {
+      console.error("Error creating question:", error);
+      setAlertMessage('Failed to create question');
+    }
   };
+  
+  
+  
 
   return (
+    <div className={`fixed inset-0 flex items-center justify-center z-50 ${
+      isOpen ? 'block' : 'hidden'
+    } bg-opacity-50 bg-gray-900`}
+    onClick={onClose}
+  >
     <div
-      className={`fixed inset-0 flex items-center justify-center z-50 ${
-        isOpen ? 'block' : 'hidden'
-      } bg-opacity-50 bg-gray-900`}
-      onClick={onClose}
+      className="modal-container bg-white w-3/5 p-4 border border-gray-700 mb-2 rounded-3xl"
+      onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className="modal-container bg-white w-3/5 p-4 border border-gray-700 mb-2 rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-    <form onSubmit={handleSubmit}>
+      <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      <form onSubmit={handleSubmit} className="bg-white p-4 shadow-md">
       {alertMessage && (
         <div className="mb-2 text-blue-600 mx-auto justify-center">{alertMessage}</div>
       )}
-      <div className="mb-4">
-        <label htmlFor="program" className="block font-bold text-gray-700">
-          Program
-        </label>
-        <Select
-          id="program"
-          name="program"
-          value={selectedProgram}
-          onChange={(selectedOption) => setSelectedProgram(selectedOption)}
-          options={programOptions}
-        />
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="competency" className="block font-bold text-gray-700">
-          Competency
-        </label>
-        <Select
-          id="competency"
-          name="competency"
-          value={selectedCompetency}
-          onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-          options={competencyOptions}
-        />
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="questionText" className="block font-bold text-gray-700">
-          Question Text
-        </label>
-        <textarea
-          id="questionText"
-          name="questionText"
-          value={questionText}
-          onChange={(e) => setQuestionText(e.target.value)}
-          className="block w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-indigo-500"
-          required
-        />
-      </div>
-
-      {choiceText.map((choice, index) => (
-        <div className="flex items-center mb-2" key={index}>
-          <input
+        
+        <div className="mb-4">
+          <label htmlFor="program" className="block font-bold text-gray-700">
+            Program
+          </label>
+          <Select
+            id="program"
+            name="program"
+            value={formData.program}
+            onChange={(selectedOption) => setFormData({ ...formData, program: selectedOption })}
+            options={programOptions}
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="competency" className="block font-bold text-gray-700">
+            Competency
+          </label>
+          <Select
+            id="competency"
+            name="competency"
+            value={formData.competency}
+            onChange={(selectedOption) => setFormData({ ...formData, competency: selectedOption })}
+            options={competencyOptions}
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="question_text" className="block font-medium mb-2">
+            Question Text
+          </label>
+          <textarea
             type="text"
-            value={choice.choiceText}
-            onChange={(e) => handleChoiceChange(index, 'choiceText', e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-700 rounded-3xl focus:outline-none focus:border-indigo-500"
+            id="question_text"
+            name="question_text"
+            value={formData.question_text}
+            onChange={handleChange}
+            className="w-full p-2 border rounded-md"
             required
           />
-          <input
-            type="checkbox"
-            checked={choice.isCorrect}
-            onChange={(e) => handleChoiceChange(index, 'isCorrect', e.target.checked)}
-          />
-          <button
-            type="button"
-            onClick={() => handleRemoveChoice(index)}
-            className="ml-2 text-red-600 focus:outline-none"
-          >
-            Remove
-          </button>
         </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={handleAddChoice}
-        className="mb-2 text-indigo-600 underline focus:outline-none"
-      >
-        Add Choice
-      </button>
-
-      <div className="flex justify-end">
+        <div className="mb-4">
+          <label htmlFor="choices" className="block font-medium mb-2">
+            Choices
+          </label>
+          <div className="space-y-2">
+            {formData.choices.map((choice, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`answer${index}`}
+                  name={`answer${index}`}
+                  checked={formData.answer === index}
+                  onChange={() => handleCheckboxChange(index)}
+                  className="h-5 w-5"
+                />
+                <input
+                  type="text"
+                  id={`choices${index}`}
+                  name={`choices${index}`}
+                  value={choice}
+                  onChange={(e) => {
+                    const newChoices = [...formData.choices];
+                    newChoices[index] = e.target.value;
+                    setFormData({ ...formData, choices: newChoices });
+                  }}
+                  className="w-full p-2 border rounded-md"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveChoice(index)}
+                  className="text-red-600 hover:text-red-800 focus:outline-none"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddChoice}
+              className="mb-2 text-indigo-600 underline focus:outline-none"
+            >
+              Add Choice
+            </button>
+          </div>
+        </div>
         <button
           type="submit"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none"
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300"
         >
-          Add Question
+          Create Question
         </button>
-      </div>
-    </form>
+      </form>
     </div>
     </div>
   );

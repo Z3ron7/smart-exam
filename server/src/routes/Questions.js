@@ -19,7 +19,7 @@ const queryAsync = promisify(conn.query).bind(conn);
 
 router.post("/create", async (req, res) => {
   try {
-    const { question_text, program, competency, choices } = req.body;
+    const { question_text, program, competency, choices, answer } = req.body;
 
     // Get program_id and competency_id based on predefined values
     const [programResult] = await queryAsync(
@@ -37,19 +37,11 @@ router.post("/create", async (req, res) => {
 
     // Insert the question into the database
     const result = await queryAsync(
-      "INSERT INTO question (questionText, program_id, competency_id) VALUES (?, ?, ?)",
-      [question_text, program_id, competency_id]
+      "INSERT INTO question (questionText, program_id, competency_id, choices, answer) VALUES (?, ?, ?, ?, ?)",
+      [question_text, program_id, competency_id, JSON.stringify(choices), answer]
     );
 
     const question_id = result.insertId;
-
-    // Insert choices into the database
-    for (const choice of choices) {
-      await queryAsync(
-        "INSERT INTO choices (choiceText, question_id, is_correct) VALUES (?, ?, ?)",
-        [choice.choice_text, question_id, choice.is_correct]
-      );
-    }
 
     res.json({ message: "Question created successfully", question_id });
   } catch (error) {
@@ -57,6 +49,7 @@ router.post("/create", async (req, res) => {
     res.status(500).json({ error: "Failed to create question" });
   }
 });
+
 
 router.post('/choices/create/:question_id', async (req, res) => {
   const { question_id } = req.params;

@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Select from 'react-select';
 import axios from 'axios';
-import Countdown from './Countdown';
 import EndExam from './EndExam';
 
 function Exam() {
@@ -10,7 +9,7 @@ function Exam() {
   const [userScore, setUserScore] = useState(0);
   const [maxQuestions, setMaxQuestions] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState(null);
   const [userExamId, setUserExamId] = useState(null);
   const [examData, setExamData] = useState({
@@ -18,134 +17,216 @@ function Exam() {
     selectedChoices: [],
   });
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null));
-  const countdownRef = useRef();
   const questionsPerPage = 5;
   const [examStartTime, setExamStartTime] = useState(null);
-  const [examEndTime, setExamEndTime] = useState(null);
+  const [num, setNum] = useState(0);
+  const [selectedTime, setSelectedTime] = useState(1);
+  const [countdownStarted, setCountdownStarted] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  let intervalRef = useRef();
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
+  };
+
+  const decreaseNum = () => setNum((prev) => prev - 1);
+
+  useEffect(() => {
+    if (countdownStarted && selectedTime > 0 && num > 0) {
+      intervalRef.current = setInterval(decreaseNum, 1000);
+    } else {
+      clearInterval(intervalRef.current);
+      if (num === 0) {
+        // Call the handleEndExam function when the timer reaches 0
+      }
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [countdownStarted, selectedTime, num]);
+
+
+  const handleTimeChange = (selectedOption) => {
+    setSelectedTime(selectedOption.value);
+    setNum(selectedOption.value * 3600);
+    setCountdownStarted(false);
+  };
   
 
-  const getExamData = useCallback(() => {
-    axios
-      .get('http://localhost:3001/questions/fetch')
-      .then((response) => {
-        console.log('Response data:', response.data); // Add this line
-        setcurrentExams(response.data);
-        setMaxQuestions(response.data.length);
-        setCurrentQuestion(0);
-        setSelectedChoices(Array(response.data.length).fill(-1));
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  const getExamData = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/questions/fetch');
+      console.log('Response data:', response.data);
+      setcurrentExams(response.data);
+      setMaxQuestions(response.data.length);
+      setCurrentQuestion(0);
+      setSelectedChoices(Array(response.data.length).fill(-1));
+      setDataLoaded(true);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   }, []); // Use an empty dependency array because there are no dependencies
   
   useEffect(() => {
     getExamData();
-  }, [getExamData]);
-console.log('currentExams:', currentExams);
+  }, []);
+  
 
-const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
-  try {
-    const user_id = localStorage.getItem('user_id');
-    const exam_id = userExamId; // Assuming you have userExamId state
-
-    // Declare newSelectedChoices here before accessing it
-    const newSelectedChoices = [...selectedChoices];
-
-    // Check if the question exists at the specified index
-    if (startIndex + questionIndex >= 0 && startIndex + questionIndex < currentExams.length) {
-      const question = currentExams[startIndex + questionIndex];
-      const question_id = question.question_id;
-      
-      // Check if 'question' and 'choices' are defined
-      if (question && question.choices) {
-        // Ensure 'choiceIndex' is within bounds
-        if (choiceIndex >= 0 && choiceIndex < question.choices.length) {
-          // Access the isCorrect property
-          const isCorrect = question.choices[choiceIndex].is_correct;
-
-          // Access currentChoice from the newly declared newSelectedChoices
-          const currentChoice = newSelectedChoices[startIndex + questionIndex];
-
-          // If the current choice is already selected, deselect it; otherwise, select it.
-          newSelectedChoices[startIndex + questionIndex] =
-            currentChoice === choiceIndex ? null : choiceIndex;
-
-          setSelectedChoices(newSelectedChoices);
-          console.log(selectedChoices)
-
-          // Send the user's choice to the server
-          await axios.post('http://localhost:3001/exams/user-exam-records', {
-            userId: user_id,
-            examId: exam_id,
-            questionId: question_id,
-            choiceId: currentChoice, // Send the current choice for deselection
-            newChoiceId: newSelectedChoices[startIndex + questionIndex], // Send the new choice for selection
-            isCorrect: isCorrect,
-          });
-            
-          // Log the choice and question for debugging
-          console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
-          console.log("Debug - question:", question);
-          console.log("Debug - question.choices:", question.choices);
-          if (!examStartTime) {
-            setExamStartTime(new Date());
-          }
-      
-          // Check if the student has finished the exam (all questions answered)
-          const isExamFinished = newSelectedChoices.every((choice) => choice !== null);
-      
-          // If the exam is finished, calculate the total_duration_minutes
-          if (isExamFinished) {
-            const endTime = new Date();
-            const durationMilliseconds = endTime - examStartTime;
-            const total_duration_minutes = Math.floor(durationMilliseconds / 60000);
-      
-            // Send the total_duration_minutes to the server for updating the user exam
-            await axios.put(`http://localhost:3001/exams/user-exams/${exam_id}`, {
-              total_duration_minutes,
-            });
-          }
-        } else {
-          console.error('Invalid choiceIndex:', choiceIndex);
+  const handleChoiceClick = async (questionIndex, choiceIndex, startIndex, el) => {
+    try {
+      // Check if the exam has started
+      if (examStartTime) {
+        if (!dataLoaded) {
+          console.log('Data is not loaded yet. Please wait.');
+          return; // Do not process choices until data is loaded
         }
-      } 
+        const question = currentExams[startIndex + questionIndex];
+
+        // Ensure question is defined
+        if (question) {
+          // Extract relevant data from the question
+          const choices = question.choices;
+  
+          // Ensure choices is defined
+          if (choices) {
+            // Ensure choiceIndex is within bounds
+            if (choiceIndex >= 0 && choiceIndex < choices.length) {
+              // Access the isCorrect property
+              const isCorrect = choices[choiceIndex].is_correct;
+  
+              // Get the current choice
+              const currentChoice = selectedChoices[startIndex + questionIndex];
+  
+              // Toggle the choice (deselect if already selected, select if not)
+              selectedChoices[startIndex + questionIndex] =
+                currentChoice === choiceIndex ? null : choiceIndex;
+  
+              setSelectedChoices([...selectedChoices]); // Update the state
+  
+              // Check if the selected choice is correct and increment the score
+              if (isCorrect) {
+                setUserScore((prevScore) => prevScore + 1);
+              }
+  
+              // Log the choice and question for debugging
+              console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
+              console.log("Current question:", question);
+  
+              // If the exam is finished, calculate the total_duration_minutes
+            } else {
+              console.error('Invalid choiceIndex:', choiceIndex);
+            }
+          } 
+        } else {
+          console.error('Question is not defined.');
+        }
+      } else {
+        console.log('The exam has not started yet.');
+        // You can display a message to the user indicating that the exam has not started.
+      }
+    } catch (error) {
+      console.error('Error recording user choice:', error);
     }
-  } catch (error) {
-    console.error('Error recording user choice:', error);
-  }
-};
-
-
-
+    el.target.classList.toggle("bg-blue-500", true);
+    el.target.classList.toggle("text-white", true);
+  };
+  
+  
+  const handleStartExam = async () => {
+    const currentStartTime = new Date();
+  
+    try {
+      // Validate selectedProgram and selectedCompetency
+      const programValue = selectedProgram ? selectedProgram.value : null;
+      const competencyValue = selectedCompetency ? selectedCompetency.value : null;
+  
+      if (programValue === null || competencyValue === null) {
+        // Handle the case where program or competency is not selected
+        console.error('Program or competency is not selected.');
+        // You can display an error message to the user or handle it as needed.
+        return;
+      }
+  
+      // Get the user_id from localStorage
+      const user_id = localStorage.getItem('user_id');
+  
+      // Create a user_exam entry in the database
+      const response = await axios.post('http://localhost:3001/exams/user-exams', {
+        user_id,
+        program: programValue,
+        competency: competencyValue,
+        duration_minutes: selectedTime * 60, // Convert selectedTime to minutes
+        start_time: currentStartTime,
+        end_time: null,
+      });
+  
+      // Store the user_exam_id and other relevant data in your frontend state
+      setUserExamId(response.data.user_exam_id);
+      setCountdownStarted(true);
+      setNum(selectedTime * 3600); // Set the countdown time in seconds
+      setExamStartTime(currentStartTime);
+    } catch (error) {
+      console.error('Error starting exam:', error);
+    }
+  };
+  
   
   const calculateScore = (questions, selectedChoices) => {
-  let score = 0;
-
-  for (let i = 0; i < questions.length; i++) {
-    const correctChoiceIndex = questions[i].choices.findIndex(
-      (choice) => choice.is_correct
-    );
-
-    if (selectedChoices[i] === correctChoiceIndex) {
-      // Increment the score for a correct answer
-      score += 1; // You can adjust the scoring logic as needed
+    let score = 0;
+  
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
+  
+      // Check if 'question' and 'choices' are defined
+      if (question && question.choices) {
+        const correctChoiceIndex = question.choices.findIndex(
+          (choice) => choice.is_correct
+        );
+  
+        if (selectedChoices[i] === correctChoiceIndex) {
+          // Increment the score for a correct answer
+          score += 1; // You can adjust the scoring logic as needed
+        }
+      }
     }
-  }
+  console.log("score: ", score)
+    return score;
+  };
+  
+const handleEndExamButtonClick = async () => {
+  try {
+    // Calculate the user's score
+    const userScore = calculateScore(currentExams, selectedChoices);
 
-  return score;
+    // Calculate total_duration_minutes
+    const endTime = new Date();
+    const durationMilliseconds = endTime - examStartTime;
+    const total_duration_minutes = Math.floor(durationMilliseconds / 60000);
+
+    // Reset the exam timer
+    const user_exam_id = userExamId;
+
+    await axios.put(`http://localhost:3001/exams/user-exams/${user_exam_id}`, {
+      score: userScore,
+      total_duration_minutes,
+    });
+    // Display the exam summary to the user
+  } catch (error) {
+    console.error('Error ending exam:', error);
+  }
 };
 
-
-  const EndExam = () => {
-    return (
-      <EndExam
-        userScore={userScore}
-        questions={currentExams}
-        onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
-      />
-    );
-  };
+const EndExamComponent = () => {
+  return (
+    <EndExam
+      userScore={userScore}
+      questions={currentExams}
+      onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
+    />
+  );
+};
   
   const [filteredQuestions, setFilteredQuestions] = useState([]);
 
@@ -164,28 +245,49 @@ const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
   }, [refresh]);  
 
   useEffect(() => {
-    // Fetch questions based on selected program and competency
-    if (selectedProgram || selectedCompetency) {
-      axios
-        .get(
-          `http://localhost:3001/filter/filterQuestions?programs=${selectedProgram?.label || ''}&competency=${selectedCompetency?.label || ''}`
-        )
-        .then((response) => {
+    const fetchData = async () => {
+      try {
+        if (selectedProgram) {
+          let response;
+  
+          if (selectedCompetency?.value === 'All Competency') {
+            // If "All Competency" is selected, fetch questions for all available competencies
+            const competencies = ['SWPPS', 'Casework', 'HBSE']; // Replace with your predefined competencies
+            const allQuestions = [];
+  
+            // Fetch questions for each competency and merge the results
+            for (const competency of competencies) {
+              const competencyResponse = await axios.get(
+                `http://localhost:3001/filter/filterQuestions?programs=${selectedProgram.label || ''}&competency=${competency}`
+              );
+              allQuestions.push(...competencyResponse.data);
+            }
+  
+            response = { data: allQuestions };
+          } else if (selectedCompetency) {
+            // Fetch questions for the selected competency
+            response = await axios.get(
+              `http://localhost:3001/filter/filterQuestions?programs=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
+            );
+          } else {
+            // If no competency is selected, use all questions
+            await getExamData();
+            return; // Exit early to avoid setting state again
+          }
+  
           setcurrentExams(response.data);
           setMaxQuestions(response.data.length);
           setCurrentQuestion(0);
           setSelectedChoices(Array(response.data.length).fill(-1));
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    } else {
-      // If no program or competency is selected, use all questions
-      getExamData();
-    }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+  
+    fetchData();
   }, [selectedProgram, selectedCompetency]);
   
-
   const renderQuestions = () => {
   const startIndex = (currentPage - 1) * questionsPerPage;
   const endIndex = Math.min(startIndex + questionsPerPage, maxQuestions);
@@ -223,10 +325,10 @@ const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
         ? "bg-blue-500 text-white" // Apply bg-blue-500 and text-white when selected
         : ""
     }`}
-    onClick={() => {
+    onClick={(el) => {
       console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
       console.log("Current question:", question);
-      handleChoiceClick(questionIndex, choiceIndex, startIndex);
+      handleChoiceClick(questionIndex, choiceIndex, startIndex, el);
     }}
   >
                 <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
@@ -243,9 +345,29 @@ const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
       ));
   };
   
-  // ...
   
+
+  const programOptions = [
+    { value: 'Social Work', label: 'Social Work' },
+    { value: 'Option', label: 'Option' },
+  ];
   
+  const competencyOptions = [
+    { value: 'All Competency', label: 'All Competency' },
+    { value: 'SWPPS', label: 'SWPPS' },
+    { value: 'Casework', label: 'Casework' },
+    { value: 'HBSE', label: 'HBSE' },
+  ];
+
+  const countdownOptions = [
+    { value: 0, label: '0' },
+    { value: 1, label: '1 hour' },
+    { value: 2, label: '2 hours' },
+    { value: 3, label: '3 hours' },
+    { value: 4, label: '4 hours' },
+    { value: 5, label: '5 hours' },
+  ];
+
   const totalPages = Math.ceil(maxQuestions / questionsPerPage);
 
   const goToPage = (page) => {
@@ -261,77 +383,6 @@ const handleChoiceClick = async (questionIndex, choiceIndex, startIndex) => {
   const nextPage = () => {
     goToPage(currentPage + 1);
   };
-
-  const programOptions = [
-    { value: 'Social Work', label: 'Social Work' },
-    { value: 'Option', label: 'Option' },
-  ];
-  
-  const competencyOptions = [
-    { value: 'All Competency', label: 'All Competency' },
-    { value: 'SWPPS', label: 'SWPPS' },
-    { value: 'Casework', label: 'Casework' },
-    { value: 'HBSE', label: 'HBSE' },
-  ];
-
-  const user_id = localStorage.getItem('user_id');
-
-  const handleStartExam = async (selectedTimeInMinutes) => {
-    const currentStartTime = new Date();
-  
-    try {
-      // Create a user_exam entry in the database
-      const response = await axios.post('http://localhost:3001/exams/user-exams', {
-        user_id, // Use the user_id from localStorage
-        program: selectedProgram ? selectedProgram.value : null,
-        competency: selectedCompetency ? selectedCompetency.value : null,
-        duration_minutes: selectedTimeInMinutes,
-        start_time: currentStartTime,
-        end_time: null,
-      });
-  
-      setUserExamId(response.data.user_exam_id);
-      // Start your exam logic here, maybe using userExamId
-    } catch (error) {
-      console.error('Error starting exam:', error);
-    }
-  };
-  
-// Add this at the top of your Exam.jsx file, where you define your other state variables
-const [endExamSummary, setEndExamSummary] = useState(null);
-
-  
-  // Helper function to calculate the user's score based on selectedChoices and correct answers
-  const calculateUserScore = (selectedChoices, choices) => {
-    let userScore = 0;
-  
-    for (let i = 0; i < selectedChoices.length; i++) {
-      const selectedChoiceIndex = selectedChoices[i];
-  
-      // Check if the selected choice is correct based on the 'is_correct' field
-      if (selectedChoiceIndex >= 0 && choices[i].is_correct) {
-        userScore++;
-      }
-    }
-  
-    return userScore;
-  };
-  
-  // Helper function to calculate the duration in minutes
-  const calculateDurationInMinutes = (startTime, endTime) => {
-    const timeDifference = endTime - startTime; // Time difference in milliseconds
-    const durationMinutes = Math.floor(timeDifference / (1000 * 60)); // Convert to minutes
-  
-    return durationMinutes;
-  };
-  const handleEndExamButtonClick = () => {
-    // You can add any additional logic here if needed
-    // Call the handleEndExam function in Countdown.jsx
-    const userScore = calculateScore(currentExams, selectedChoices);
-    countdownRef.current.handleEndExam();
-    setEndExamSummary({ userScore });
-  };
-  
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
@@ -357,17 +408,26 @@ const [endExamSummary, setEndExamSummary] = useState(null);
         options={competencyOptions}
       />
     </div>
-    <Countdown
-  ref={countdownRef} // Pass the ref
-  handleStartExam={handleStartExam}
-  selectedChoices={selectedChoices}
-  choices={currentExams.map((question) => question.choices)}
-  userId={user_id}
-  calculateUserScore={calculateUserScore}
-  calculateDurationInMinutes={calculateDurationInMinutes} // Pass the duration calculation function
-/>
+      <div className="mb-4 lg:w-72">
+        <Select
+          options={countdownOptions}
+          value={countdownOptions.find(option => option.value === selectedTime)}
+          onChange={handleTimeChange}
+          placeholder="Select Time"
+        />
+      </div>
+      {selectedTime > 0 && (
+          <div>
+            {formatTime(num)}
+            {!countdownStarted ? (
+              <button onClick={handleStartExam}>Start</button>
+            ) : (
+              <button disabled>Counting Down</button>
+            )}
+          </div>
+        )}
+    </div>
 
-  </div>
 </div>
 
       {currentQuestion !== maxQuestions ? (
@@ -380,13 +440,7 @@ const [endExamSummary, setEndExamSummary] = useState(null);
               className="relative block rounded bg-blue-700 px-3 py-1.5 text-xl font-medium text-gray-700 transition-all duration-300"
             >
               End Exam
-              {endExamSummary && (
-        <EndExam
-          userScore={endExamSummary.userScore}
-          durationMinutes={endExamSummary.durationMinutes}
-          onClose={() => setCurrentQuestion(maxQuestions)}
-        />
-      )}
+
             </button>
           </div>
             <h2 className="text-2xl pb-1 border-b text-gray-900 dark:text-white border-gray-500">
@@ -438,8 +492,7 @@ const [endExamSummary, setEndExamSummary] = useState(null);
           </div>
         </>
       ) : (
-        EndExam()
-        
+        <EndExamComponent />
       )}
     </div>
   );

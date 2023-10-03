@@ -44,6 +44,8 @@ router.post('/user-exams', async (req, res) => {
 
     const userExamId = createExamResult.insertId;
 
+    console.log('Inserted user_exam_id:', userExamId);
+
     res.json({
       user_exam_id: userExamId,
     });
@@ -53,7 +55,7 @@ router.post('/user-exams', async (req, res) => {
   }
 });
 
-router.put('/user_exams/:exam_id', async (req, res) => {
+router.put('/user-exams/:exam_id', async (req, res) => {
   try {
     const { exam_id } = req.params;
     const { score, total_duration_minutes } = req.body;
@@ -92,7 +94,7 @@ router.delete('/user-exams/:user_exam_id', async (req, res) => {
   }
 });
 
-router.post('/record_exam_choices', async (req, res) => {
+router.post('/user-exam-records', async (req, res) => {
   try {
     const { userId, examId, questionId, choiceId, isCorrect } = req.body;
 
