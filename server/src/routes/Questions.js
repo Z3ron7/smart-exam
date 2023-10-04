@@ -19,7 +19,7 @@ const queryAsync = promisify(conn.query).bind(conn);
 
 router.post("/create", async (req, res) => {
   try {
-    const { question_text, program, competency, choices, answer } = req.body;
+    const { question_text, program, competency } = req.body;
 
     // Get program_id and competency_id based on predefined values
     const [programResult] = await queryAsync(
@@ -37,8 +37,8 @@ router.post("/create", async (req, res) => {
 
     // Insert the question into the database
     const result = await queryAsync(
-      "INSERT INTO question (questionText, program_id, competency_id, choices, answer) VALUES (?, ?, ?, ?, ?)",
-      [question_text, program_id, competency_id, JSON.stringify(choices), answer]
+      "INSERT INTO question (questionText, program_id, competency_id,) VALUES ( ?, ?, ?)",
+      [question_text, program_id, competency_id]
     );
 
     const question_id = result.insertId;
@@ -81,7 +81,7 @@ router.get("/fetch", async (req, res) => {
   const conn = db.connection;
   
   const query = `
-    SELECT q.question_id, q.questionText, c.choiceText, c.is_correct
+    SELECT q.question_id, q.questionText, c.choiceText, c.isCorrect
     FROM question AS q
     LEFT JOIN choices AS c ON q.question_id = c.question_id
   `;
@@ -113,7 +113,7 @@ router.get("/fetch", async (req, res) => {
         if (row.choiceText !== null) {
           question.choices.push({
             choiceText: row.choiceText,
-            is_correct: row.is_correct,
+            isCorrect: row.isCorrect,
           });
         }
       });
@@ -134,7 +134,7 @@ router.get('/refresh', async (req, res) => {
   const conn = db.connection;
 
   const query = `
-    SELECT q.*, c.choiceText, c.is_correct
+    SELECT q.*, c.choiceText, c.isCorrect
     FROM question AS q
     LEFT JOIN choices AS c ON q.question_id = c.question_id
   `;

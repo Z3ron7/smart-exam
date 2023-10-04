@@ -9,6 +9,8 @@ const Questionnaire = () => {
   const [questionToEdit, setQuestionToEdit] = useState(null);
   const [selectedProgram, setSelectedProgram] = useState(null); // Track selected program
   const [selectedCompetency, setSelectedCompetency] = useState(null); // Track selected competency
+  const [loading, setLoading] = useState(true);
+
 
   const openModal = (question) => {
     setIsModalOpen(true);
@@ -21,20 +23,20 @@ const Questionnaire = () => {
   };
 
   
-  const fetchQuestions = useCallback(() => {
-    axios
-      .get('http://localhost:3001/questions/fetch')
-      .then((response) => {
-        setQuestionsData(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
-
   useEffect(() => {
-    fetchQuestions(); 
-  }, [fetchQuestions]);
+    const fetchQuestions = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/questions/fetch');
+        setQuestionsData(response.data.questions);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   // Function to generate letters (A, B, C, ...) based on the index
   const generateLetter = (index) => {
@@ -97,7 +99,6 @@ const Questionnaire = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
         questionToEdit={questionToEdit}
-        fetchQuestions={fetchQuestions}
       />
 
       {/* Render the list of questions */}
@@ -140,7 +141,7 @@ const Questionnaire = () => {
         </div>
         <div className="p-3 dark:text-white text-2xl text-center">{question.questionText}</div>
         <div id="answers-container" className="p-3">
-          {question.choices.map((choice, choiceIndex) => (
+          {JSON.parse(question.choices).map((choice, choiceIndex) => (
             <div
               className="container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer"
               key={`${choice.choice_id}-${choiceIndex}`}
@@ -148,14 +149,14 @@ const Questionnaire = () => {
               <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                 {generateLetter(choiceIndex)}
               </div>
-              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice.choiceText}</div>
+              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice}</div>
             </div>
           ))}
         </div>
         <div className="flex mb-4 items-center">
 <span className="font-bold mr-3 text-lg dark:text-white">Answer:</span>
 <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
-  {question.choices.find(choice => choice.is_correct)?.choiceText || 'N/A'}
+  {question.answer || 'N/A'}
 </span>
 </div>
       </div>

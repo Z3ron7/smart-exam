@@ -30,8 +30,8 @@ router.post('/user-exams', async (req, res) => {
 
     // Insert the user exam record
     const createExamQuery = `
-      INSERT INTO user_exams (user_id, program_id, competency_id, duration_minutes, start_time, end_time)
-      VALUES (?, ?, ?, ?, NOW(), NOW() + INTERVAL ? MINUTE)
+      INSERT INTO user_exams (user_id, program_id, competency_id, duration_minutes, start_time)
+      VALUES (?, ?, ?, ?, NOW())
     `;
 
     const createExamResult = await queryAsync(createExamQuery, [
@@ -39,12 +39,9 @@ router.post('/user-exams', async (req, res) => {
       program_id,
       competency_id,
       duration_minutes,
-      duration_minutes,
     ]);
 
     const userExamId = createExamResult.insertId;
-
-    console.log('Inserted user_exam_id:', userExamId);
 
     res.json({
       user_exam_id: userExamId,
@@ -55,7 +52,23 @@ router.post('/user-exams', async (req, res) => {
   }
 });
 
-router.put('/user-exams/:exam_id', async (req, res) => {
+router.post('/end-exam', async (req, res) => {
+  try {
+    const { exam_id, score, total_duration_minutes, endTime } = req.body;
+
+    // Update the exam record in the database, including the score, total_duration_minutes, and endTime
+    const updateExamQuery = 'UPDATE user_exams SET end_time = ?, total_duration_minutes = ?, score = ? WHERE exam_id = ?';
+    await queryAsync(updateExamQuery, [endTime, total_duration_minutes, score, exam_id]);
+
+    res.status(200).json({ message: 'Exam ended successfully' });
+  } catch (error) {
+    console.error('Error ending exam:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+router.put('/user_exams/:exam_id', async (req, res) => {
   try {
     const { exam_id } = req.params;
     const { score, total_duration_minutes } = req.body;
@@ -94,7 +107,7 @@ router.delete('/user-exams/:user_exam_id', async (req, res) => {
   }
 });
 
-router.post('/user-exam-records', async (req, res) => {
+router.post('/record_exam_choices', async (req, res) => {
   try {
     const { userId, examId, questionId, choiceId, isCorrect } = req.body;
 

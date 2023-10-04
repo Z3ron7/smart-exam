@@ -1,248 +1,32 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import axios from "axios";
+import classNames from "classnames";
 import Select from 'react-select';
-import axios from 'axios';
-import EndExam from './EndExam';
 
 function Exam() {
-  const [currentExams, setcurrentExams] = useState([]);
+  const [showResults, setShowResults] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [userScore, setUserScore] = useState(0);
-  const [maxQuestions, setMaxQuestions] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [score, setScore] = useState(0);
+  const [userExamId, setUserExamId] = useState(null);
+  const [questionData, setQuestionData] = useState([]);
+  const [selectedChoices, setSelectedChoices] = useState(Array(3).fill(null)); // Adjust the number of questions
+  const questionsPerPage = 2; // Adjust the number of questions per page
   const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState(null);
-  const [userExamId, setUserExamId] = useState(null);
-  const [examData, setExamData] = useState({
-    questions: [],
-    selectedChoices: [],
-  });
-  const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null));
-  const questionsPerPage = 5;
-  const [examStartTime, setExamStartTime] = useState(null);
-  const [num, setNum] = useState(0);
-  const [selectedTime, setSelectedTime] = useState(1);
-  const [countdownStarted, setCountdownStarted] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
-
-  let intervalRef = useRef();
-
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
-  };
-
-  const decreaseNum = () => setNum((prev) => prev - 1);
-
-  useEffect(() => {
-    if (countdownStarted && selectedTime > 0 && num > 0) {
-      intervalRef.current = setInterval(decreaseNum, 1000);
-    } else {
-      clearInterval(intervalRef.current);
-      if (num === 0) {
-        // Call the handleEndExam function when the timer reaches 0
-      }
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [countdownStarted, selectedTime, num]);
-
-
-  const handleTimeChange = (selectedOption) => {
-    setSelectedTime(selectedOption.value);
-    setNum(selectedOption.value * 3600);
-    setCountdownStarted(false);
-  };
-  
 
   const getExamData = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:3001/questions/fetch');
-      console.log('Response data:', response.data);
-      setcurrentExams(response.data);
-      setMaxQuestions(response.data.length);
-      setCurrentQuestion(0);
-      setSelectedChoices(Array(response.data.length).fill(-1));
-      setDataLoaded(true);
+      const response = await axios.get("http://localhost:3001/questions/fetch"); // Adjust the URL
+      console.log("Response data:", response.data);
+      setQuestionData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
-  }, []); // Use an empty dependency array because there are no dependencies
-  
+  }, []);
+
   useEffect(() => {
     getExamData();
-  }, []);
-  
-
-  const handleChoiceClick = async (questionIndex, choiceIndex, startIndex, el) => {
-    try {
-      // Check if the exam has started
-      if (examStartTime) {
-        if (!dataLoaded) {
-          console.log('Data is not loaded yet. Please wait.');
-          return; // Do not process choices until data is loaded
-        }
-        const question = currentExams[startIndex + questionIndex];
-
-        // Ensure question is defined
-        if (question) {
-          // Extract relevant data from the question
-          const choices = question.choices;
-  
-          // Ensure choices is defined
-          if (choices) {
-            // Ensure choiceIndex is within bounds
-            if (choiceIndex >= 0 && choiceIndex < choices.length) {
-              // Access the isCorrect property
-              const isCorrect = choices[choiceIndex].is_correct;
-  
-              // Get the current choice
-              const currentChoice = selectedChoices[startIndex + questionIndex];
-  
-              // Toggle the choice (deselect if already selected, select if not)
-              selectedChoices[startIndex + questionIndex] =
-                currentChoice === choiceIndex ? null : choiceIndex;
-  
-              setSelectedChoices([...selectedChoices]); // Update the state
-  
-              // Check if the selected choice is correct and increment the score
-              if (isCorrect) {
-                setUserScore((prevScore) => prevScore + 1);
-              }
-  
-              // Log the choice and question for debugging
-              console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
-              console.log("Current question:", question);
-  
-              // If the exam is finished, calculate the total_duration_minutes
-            } else {
-              console.error('Invalid choiceIndex:', choiceIndex);
-            }
-          } 
-        } else {
-          console.error('Question is not defined.');
-        }
-      } else {
-        console.log('The exam has not started yet.');
-        // You can display a message to the user indicating that the exam has not started.
-      }
-    } catch (error) {
-      console.error('Error recording user choice:', error);
-    }
-    el.target.classList.toggle("bg-blue-500", true);
-    el.target.classList.toggle("text-white", true);
-  };
-  
-  
-  const handleStartExam = async () => {
-    const currentStartTime = new Date();
-  
-    try {
-      // Validate selectedProgram and selectedCompetency
-      const programValue = selectedProgram ? selectedProgram.value : null;
-      const competencyValue = selectedCompetency ? selectedCompetency.value : null;
-  
-      if (programValue === null || competencyValue === null) {
-        // Handle the case where program or competency is not selected
-        console.error('Program or competency is not selected.');
-        // You can display an error message to the user or handle it as needed.
-        return;
-      }
-  
-      // Get the user_id from localStorage
-      const user_id = localStorage.getItem('user_id');
-  
-      // Create a user_exam entry in the database
-      const response = await axios.post('http://localhost:3001/exams/user-exams', {
-        user_id,
-        program: programValue,
-        competency: competencyValue,
-        duration_minutes: selectedTime * 60, // Convert selectedTime to minutes
-        start_time: currentStartTime,
-        end_time: null,
-      });
-  
-      // Store the user_exam_id and other relevant data in your frontend state
-      setUserExamId(response.data.user_exam_id);
-      setCountdownStarted(true);
-      setNum(selectedTime * 3600); // Set the countdown time in seconds
-      setExamStartTime(currentStartTime);
-    } catch (error) {
-      console.error('Error starting exam:', error);
-    }
-  };
-  
-  
-  const calculateScore = (questions, selectedChoices) => {
-    let score = 0;
-  
-    for (let i = 0; i < questions.length; i++) {
-      const question = questions[i];
-  
-      // Check if 'question' and 'choices' are defined
-      if (question && question.choices) {
-        const correctChoiceIndex = question.choices.findIndex(
-          (choice) => choice.is_correct
-        );
-  
-        if (selectedChoices[i] === correctChoiceIndex) {
-          // Increment the score for a correct answer
-          score += 1; // You can adjust the scoring logic as needed
-        }
-      }
-    }
-  console.log("score: ", score)
-    return score;
-  };
-  
-const handleEndExamButtonClick = async () => {
-  try {
-    // Calculate the user's score
-    const userScore = calculateScore(currentExams, selectedChoices);
-
-    // Calculate total_duration_minutes
-    const endTime = new Date();
-    const durationMilliseconds = endTime - examStartTime;
-    const total_duration_minutes = Math.floor(durationMilliseconds / 60000);
-
-    // Reset the exam timer
-    const user_exam_id = userExamId;
-
-    await axios.put(`http://localhost:3001/exams/user-exams/${user_exam_id}`, {
-      score: userScore,
-      total_duration_minutes,
-    });
-    // Display the exam summary to the user
-  } catch (error) {
-    console.error('Error ending exam:', error);
-  }
-};
-
-const EndExamComponent = () => {
-  return (
-    <EndExam
-      userScore={userScore}
-      questions={currentExams}
-      onClose={() => setCurrentQuestion(maxQuestions)} // Close the end screen and show the end of exam summary
-    />
-  );
-};
-  
-  const [filteredQuestions, setFilteredQuestions] = useState([]);
-
-  // Use a separate useEffect to refresh the data
-  const refresh = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:3001/questions/refresh');
-      setFilteredQuestions(response.data);
-    } catch (error) {
-      console.error('Error fetching data for refresh:', error);
-    }
-  }, []);
-  
-  useEffect(() => {
-    refresh();
-  }, [refresh]);  
+  }, [getExamData]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -275,10 +59,10 @@ const EndExamComponent = () => {
             return; // Exit early to avoid setting state again
           }
   
-          setcurrentExams(response.data);
-          setMaxQuestions(response.data.length);
+          // setcurrentExams(response.data);
+          // setMaxQuestions(response.data.length);
           setCurrentQuestion(0);
-          setSelectedChoices(Array(response.data.length).fill(-1));
+          // setSelectedChoices(Array(response.data.length).fill(-1));
         }
       } catch (error) {
         console.error('Error:', error);
@@ -287,76 +71,97 @@ const EndExamComponent = () => {
   
     fetchData();
   }, [selectedProgram, selectedCompetency]);
-  
-  const renderQuestions = () => {
-  const startIndex = (currentPage - 1) * questionsPerPage;
-  const endIndex = Math.min(startIndex + questionsPerPage, maxQuestions);
-  const { questions, selectedChoices } = examData;
 
-  if (!filteredQuestions || filteredQuestions.length === 0) {
-    // Handle the case when filteredQuestions is empty or not yet loaded
+  const nextPage = () => {
+    const nextQuestion = currentQuestion + questionsPerPage;
+    setCurrentQuestion(nextQuestion);
+  };
+
+  const prevPage = () => {
+    const prevQuestion = currentQuestion - questionsPerPage;
+    setCurrentQuestion(prevQuestion);
+  };
+
+  const handleChoiceClick = (choiceIndex, choice) => {
+    const updatedSelectedChoices = [...selectedChoices];
+    updatedSelectedChoices[choiceIndex] = choice;
+    setSelectedChoices(updatedSelectedChoices);
+  };
+
+  const calculateScore = () => {
+    let score = 0;
+    for (let i = 0; i < selectedChoices.length; i++) {
+      const selectedChoice = selectedChoices[i];
+      if (selectedChoice && selectedChoice.isCorrect) {
+        score++;
+      }
+    }
+    return score;
+  };
+
+  const resetGame = () => {
+    setSelectedChoices(Array(3).fill(null)); // Reset selected answers
+    setScore(0); // Reset the score
+    setCurrentQuestion(0);
+    setShowResults(false);
+    setCountdownStarted(false);
+  };
+
+  const isLastPage = currentQuestion + questionsPerPage >= questionData.length;
+  const isFirstPage = currentQuestion === 0;
+
+  const renderResult = () => {
     return (
-      <div className="text-center">
-        Loading questions...
-      </div>
-    );
-  }
-  
-    return filteredQuestions
-      .slice(startIndex, endIndex)
-      .map((question, questionIndex) => (
-        <div
-          key={questionIndex}
-          className="border-2 shadow-lg items-center justify-center my-2"
-        >
-          {/* Render each question component */}
-          <div className="text-xl text-center dark:text-white btn-primary">
-            Question {startIndex + questionIndex + 1}/{maxQuestions}
-          </div>
-          <div className="p-3 dark:text-white text-2xl text-center">
-            {question.questionText}
-          </div>
-          <div id="answers-container" className="p-3">
-            {question.choices && question.choices.map((choice, choiceIndex) => (
-                <div
-    key={choiceIndex}
-    className={`container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer ${
-      selectedChoices[startIndex + questionIndex] === choiceIndex
-        ? "bg-blue-500 text-white" // Apply bg-blue-500 and text-white when selected
-        : ""
-    }`}
-    onClick={(el) => {
-      console.log("Choice clicked: questionIndex =", questionIndex, "choiceIndex =", choiceIndex);
-      console.log("Current question:", question);
-      handleChoiceClick(questionIndex, choiceIndex, startIndex, el);
-    }}
-  >
-                <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Final Results</h1>
+        {questionData.map((question, index) => (
+          <div key={index} className="mb-4">
+            <h2 className="text-xl text-center dark:text-white btn-primary">Question {index + 1}</h2>
+            <p className="mb-2">{question.questionText}</p>
+            <ul>
+              {question.choices.map((choice, choiceIndex) => (
+                <li
+                  key={choiceIndex}
+                  className={classNames("container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer", {
+                    "bg-green-400": choice.isCorrect && selectedChoices[index] === choice,
+                    "bg-red-600": !choice.isCorrect && selectedChoices[index] === choice,
+                  })}
+                >
+                  <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                   {String.fromCharCode(65 + choiceIndex)}
                 </div>
                 <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
                   {choice.choiceText}
                 </div>
-              </div>
-            ))}
+                </li>
+              ))}
+            </ul>
           </div>
-          
-        </div>
-      ));
+        ))}
+        <h2 className="flex mb-4 mx-auto justify-center">
+          Score: {calculateScore()} out of {questionData.length} correct - ({((calculateScore() / questionData.length) * 100).toFixed(2)}%)
+        </h2>
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+          onClick={resetGame}
+        >
+          Restart Game
+        </button>
+      </div>
+    );
   };
-  
-  
 
+  // Define your Select options
   const programOptions = [
-    { value: 'Social Work', label: 'Social Work' },
+    { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
     { value: 'Option', label: 'Option' },
   ];
-  
+
   const competencyOptions = [
     { value: 'All Competency', label: 'All Competency' },
-    { value: 'SWPPS', label: 'SWPPS' },
-    { value: 'Casework', label: 'Casework' },
-    { value: 'HBSE', label: 'HBSE' },
+    { value: 'SWPPS', label: 'Math' },
+    { value: 'Casework', label: 'Science' },
+    { value: 'HBSE', label: 'English' },
   ];
 
   const countdownOptions = [
@@ -368,132 +173,227 @@ const EndExamComponent = () => {
     { value: 5, label: '5 hours' },
   ];
 
-  const totalPages = Math.ceil(maxQuestions / questionsPerPage);
+  // Add your state variables for selected options
+  const [num, setNum] = useState(0);
+  const [selectedTime, setSelectedTime] = useState(1);
+  const [countdownStarted, setCountdownStarted] = useState(false);
+  const [examStartTime, setExamStartTime] = useState(null);
 
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  let intervalRef = useRef();
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
+  };
+
+  const decreaseNum = () => setNum((prev) => prev - 1);
+
+  useEffect(() => {
+    if (countdownStarted && selectedTime > 0 && num > 0) {
+      intervalRef.current = setInterval(decreaseNum, 1000);
+    } else {
+      clearInterval(intervalRef.current);
+      if (num === 0) {
+        // Call the handleEndExam function when the timer reaches 0
+      }
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [countdownStarted, selectedTime, num]);
+
+
+  const handleTimeChange = (selectedOption) => {
+    setSelectedTime(selectedOption.value);
+    setNum(selectedOption.value * 3600);
+    setCountdownStarted(false);
+  };
+  const startExam = async () => {
+    const currentStartTime = new Date();
+  
+    try {
+      // Validate selectedProgram and selectedCompetency
+      const programValue = selectedProgram ? selectedProgram.value : null;
+      const competencyValue = selectedCompetency ? selectedCompetency.value : null;
+  
+      if (programValue === null || competencyValue === null) {
+        // Handle the case where program or competency is not selected
+        console.error('Program or competency is not selected.');
+        // You can display an error message to the user or handle it as needed.
+        return;
+      }
+  
+      // Get the user_id from localStorage
+      const user_id = localStorage.getItem('user_id');
+  
+      // Create a user_exam entry in the database
+      const response = await axios.post('http://localhost:3001/exams/user-exams', {
+        user_id,
+        program: programValue,
+        competency: competencyValue,
+        duration_minutes: selectedTime * 60, // Convert selectedTime to minutes
+        start_time: currentStartTime,
+      });
+  
+      // Store the user_exam_id and other relevant data in your frontend state
+      setUserExamId(response.data.user_exam_id);
+      setCountdownStarted(true);
+      setNum(selectedTime * 3600); // Set the countdown time in seconds
+      setExamStartTime(currentStartTime);
+    } catch (error) {
+      console.error('Error starting exam:', error);
     }
   };
 
-  const previousPage = () => {
-    goToPage(currentPage - 1);
+  const endExam = async () => {
+    try {
+      const user_exam_id = userExamId;
+      const endTime = new Date();
+      const startTime = examStartTime;
+      const durationMilliseconds = endTime - startTime;
+      const total_duration_minutes = durationMilliseconds % 60;
+  
+      const response = await axios.post('http://localhost:3001/exams/end-exam', {
+        exam_id: user_exam_id, // Replace with the actual exam ID
+        score: calculateScore(), // Replace with your score calculation logic
+        total_duration_minutes,
+        endTime, // Send the endTime to the backend
+      });
+  
+      if (response.status === 200) {
+        // The exam has ended successfully, and you can handle any further actions here.
+        console.log('Exam ended successfully');
+      }
+    } catch (error) {
+      console.error('Error ending exam:', error);
+    }
+  };
+  
+  const handleFinishExam = () => {
+    setShowResults(true);
+    setCountdownStarted(false);
+    endExam(); // Call the endExam function when the Finish button is clicked
   };
 
-  const nextPage = () => {
-    goToPage(currentPage + 1);
-  };
+
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
-  <div className="flex flex-col lg:flex-row gap-8 justify-center items-center mx-auto dark:text-white">
-    <div className="mb-4 lg:w-72">
-      <Select
-        placeholder="Program"
-        id="program"
-        name="program"
-        value={selectedProgram}
-        onChange={(selectedOption) => setSelectedProgram(selectedOption)}
-        options={programOptions}
-      />
-    </div>
+          <div className="flex flex-col lg:flex-row md:col-4 sm:col-2 gap-5 justify-center items-center mx-auto dark:text-white">
+            <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
+              <Select
+                placeholder="Program"
+                id="program"
+                name="program"
+                value={selectedProgram}
+                onChange={(selectedOption) => setSelectedProgram(selectedOption)}
+                options={programOptions}
+              />
+            </div>
 
-    <div className="mb-4 lg:w-72">
-      <Select
-        placeholder="Competency"
-        id="competency"
-        name="competency"
-        value={selectedCompetency}
-        onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-        options={competencyOptions}
-      />
-    </div>
-      <div className="mb-4 lg:w-72">
-        <Select
-          options={countdownOptions}
-          value={countdownOptions.find(option => option.value === selectedTime)}
-          onChange={handleTimeChange}
-          placeholder="Select Time"
-        />
-      </div>
-      {selectedTime > 0 && (
-          <div>
-            {formatTime(num)}
-            {!countdownStarted ? (
-              <button onClick={handleStartExam}>Start</button>
-            ) : (
-              <button disabled>Counting Down</button>
+            <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
+              <Select
+                placeholder="Competency"
+                id="competency"
+                name="competency"
+                value={selectedCompetency}
+                onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+                options={competencyOptions}
+              />
+            </div>
+
+            <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
+              <Select
+                options={countdownOptions}
+                value={countdownOptions.find(option => option.value === selectedTime)}
+                onChange={handleTimeChange}
+                placeholder="Select Time"
+              />
+            </div>
+
+            {selectedTime > 0 && (
+            <div>
+                {formatTime(num)}
+                {!countdownStarted ? (
+                <button
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                onClick={startExam}
+                disabled={!selectedProgram || !selectedCompetency || !selectedTime}
+              >
+                Start
+              </button>
+              
+                ) : (
+                <button disabled>Counting Down</button>
+                )}
+            </div>
             )}
           </div>
+        </div>
+
+        <h1 className="text-2xl font-bold mb-4 mx-auto justify-center">Pre-board Exam</h1>
+
+        {!showResults && (
+          <div>
+            {questionData.slice(currentQuestion, currentQuestion + questionsPerPage).map((question, index) => (
+              <div key={index} className="border-2 dark:border-0 shadow-lg items-center justify-center my-2 mb-4">
+                <h2 className="text-xl text-center dark:text-white btn-primary">Question {currentQuestion + index + 1}</h2>
+                <p className="p-3 dark:text-white text-2xl text-center">{question.questionText}</p>
+                <ul>
+                  {question.choices.map((choice, choiceIndex) => (
+                    <li
+                      key={choiceIndex}
+                      onClick={() => handleChoiceClick(currentQuestion + index, choice)}
+                      className={classNames(
+                        "container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer",
+                        {
+                          "bg-blue-300": selectedChoices[currentQuestion + index] === choice,
+                        }
+                      )}
+                      disabled={!countdownStarted}
+                    >
+                      <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
+                  {String.fromCharCode(65 + choiceIndex)}
+                </div>
+                <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
+                  {choice.choiceText}
+                </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+
+            <div className="flex justify-between">
+              {!isFirstPage && (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                  onClick={prevPage}
+                >
+                  Back
+                </button>
+              )}
+
+              {isLastPage ? (
+                <button
+                    className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                    onClick={handleFinishExam}
+                  >
+                    Finish
+                  </button>
+              ) : (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                  onClick={nextPage}
+                >
+                  Next
+                </button>
+              )}
+            </div>
+          </div>
         )}
-    </div>
 
-</div>
-
-      {currentQuestion !== maxQuestions ? (
-        <>
-          {renderQuestions()}
-          <div className="container text-center header-bg p-2 text-gray-800 mt-auto">
-          <div className="flex justify-center mx-auto dark:text-white">
-          <button
-              onClick={handleEndExamButtonClick}
-              className="relative block rounded bg-blue-700 px-3 py-1.5 text-xl font-medium text-gray-700 transition-all duration-300"
-            >
-              End Exam
-
-            </button>
-          </div>
-            <h2 className="text-2xl pb-1 border-b text-gray-900 dark:text-white border-gray-500">
-              Questions remaining: 
-            </h2>
-          </div>
-          <div className="container flex justify-center p-4 header-bg dark:text-white">
-          <ul className="list-style-none flex">
-              <li>
-                {currentPage > 1 && (
-                  <button
-                    className="relative block rounded bg-primary-100 px-3 py-1.5 text-sm font-medium text-primary-700 transition-all duration-300"
-                    onClick={previousPage}
-                  >
-                    Previous
-                  </button>
-                )}
-              </li>
-              {Array.from({ length: totalPages }, (v, i) => (
-                <li key={i}>
-                  <button
-                    className={`relative block rounded bg-transparent px-3 py-1.5 text-sm ${
-                      i + 1 === currentPage
-                        ? "font-medium text-primary-700 bg-primary-100"
-                        : "text-neutral-600"
-                    } transition-all duration-300`}
-                    onClick={() => goToPage(i + 1)}
-                  >
-                    {i + 1}
-                    {i + 1 === currentPage && (
-                      <span className="absolute -m-px h-px w-px overflow-hidden whitespace-nowrap border-0 p-0 [clip:rect(0,0,0,0)]">
-                        (current)
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
-              <li>
-                {currentPage < totalPages && (
-                  <button
-                    className="relative block rounded bg-primary-100 dark:text-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-all duration-300"
-                    onClick={nextPage}
-                  >
-                    Next
-                  </button>
-                )}
-              </li>
-            </ul>
-          </div>
-        </>
-      ) : (
-        <EndExamComponent />
-      )}
+        {showResults && renderResult()}
     </div>
   );
 }

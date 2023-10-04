@@ -13,13 +13,13 @@ const competencyOptions = [
   { value: 'HBSE', label: 'HBSE' },
 ];
 
-const QuestionModal = ({isOpen, onClose}) => {
+const QuestionModal = ({isOpen, onClose, fetchQuestions }) => {
   const [formData, setFormData] = useState({
     question_text: "",
     program: null,
     competency: null,
-    choices: [""],
-    answer: null,
+    choices: [''],
+    answer: '',
   });
   const [alertMessage, setAlertMessage] = useState('');
 
@@ -45,10 +45,10 @@ const QuestionModal = ({isOpen, onClose}) => {
     });
   };
 
-  const handleCheckboxChange = (index) => {
+  const handleCheckboxChange = (choice) => {
     setFormData({
       ...formData,
-      answer: index,
+      answer: choice, // Set the exact choice text as the correct answer
     });
   };
 
@@ -57,8 +57,8 @@ const QuestionModal = ({isOpen, onClose}) => {
     try {
       // Include the correct answer in both the choices array and the answer field
       const choicesArray = [...formData.choices];
-      choicesArray[formData.answer] = formData.answer;
-  
+      choicesArray[choicesArray.indexOf(formData.answer)] = formData.answer;
+
       // Create the request body
       const requestBody = {
         question_text: formData.question_text,
@@ -79,14 +79,13 @@ const QuestionModal = ({isOpen, onClose}) => {
           question_text: "",
           program: null,
           competency: null,
-          choices: ["", ""],
-          answer: null,
-          answer: "",
+          choices: [''],
+          answer: '',
         });
       } else {
         setAlertMessage('Failed to create question');
       }
-  
+      await fetchQuestions();
       console.log("Question created successfully");
     } catch (error) {
       console.error("Error creating question:", error);
@@ -169,10 +168,10 @@ const QuestionModal = ({isOpen, onClose}) => {
               <div key={index} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  id={`answer${index}`}
-                  name={`answer${index}`}
-                  checked={formData.answer === index}
-                  onChange={() => handleCheckboxChange(index)}
+                  id={`answer${choice}`}
+                  name="answer"
+                  checked={formData.answer === choice}
+                  onChange={() => handleCheckboxChange(choice)}
                   className="h-5 w-5"
                 />
                 <input
@@ -191,9 +190,9 @@ const QuestionModal = ({isOpen, onClose}) => {
                 <button
                   type="button"
                   onClick={() => handleRemoveChoice(index)}
-                  className="text-red-600 hover:text-red-800 focus:outline-none"
+                  className="text-red-600 hover:text-red-800 font-bold focus:outline-none"
                 >
-                  Remove
+                  X
                 </button>
               </div>
             ))}
