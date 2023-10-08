@@ -7,6 +7,16 @@ module.exports = {
 
     theme: {
         extend: {
+            screens: {
+                'tablet': '640px',
+                // => @media (min-width: 640px) { ... }
+          
+                'laptop': '1024px',
+                // => @media (min-width: 1024px) { ... }
+          
+                'desktop': '1280px',
+                // => @media (min-width: 1280px) { ... }
+              },
             colors: {
                 black: '#09090c',
                 darkGray: '#121212',
@@ -19,6 +29,13 @@ module.exports = {
                 darkGrayishBlue: 'hsl(227, 12%, 61%)',
                 veryDarkBlue: 'hsl(233, 12%, 13%)',
             },
+            transitionProperty: {
+                'height': 'height',
+                'spacing': 'margin, padding',
+              },
+            animation: {
+                'spin-slow': 'spin 3s linear infinite',
+              },
         },
     },
     plugins: [],

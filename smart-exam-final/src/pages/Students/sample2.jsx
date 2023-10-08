@@ -74,17 +74,10 @@ function Exam() {
   }, []);
   
 
-  const handleChoiceClick = async (is_correct, el) => {
-    try {
-        if  (is_correct) {
-
-        }
-        
-    } catch (error) {
-      console.error('Error recording user choice:', error);
-    }
-    el.target.classList.toggle("bg-blue-500", true);
-    el.target.classList.toggle("text-white", true);
+  const handleChoiceClick = (choiceIndex, choice) => {
+    const updatedSelectedChoices = [...selectedChoices];
+    updatedSelectedChoices[choiceIndex] = choice;
+    setSelectedChoices(updatedSelectedChoices);
   };
   
   

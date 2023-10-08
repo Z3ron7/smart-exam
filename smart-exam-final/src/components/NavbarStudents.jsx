@@ -24,7 +24,7 @@ const NavbarStudents = () => {
     navigate("/");
   };
   return (
-    <div className="navbar">
+    <div className="navbar dark:bg-slate-900">
       {/* <div className="logo">
         <img src="logo.svg" alt="" />
         <span className="dark:text-white">Admin</span>

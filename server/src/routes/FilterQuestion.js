@@ -21,12 +21,13 @@ router.get("/filterQuestions", async (req, res) => {
   try {
     const { program, competency } = req.query;
 
-    // Build a SQL query to filter questions by program and competency
+    // Build a SQL query to filter questions by program and competency, including choices
     let sqlQuery = `
-      SELECT q.*
+      SELECT q.question_id, q.questionText, c.choiceText, c.isCorrect
       FROM question AS q
+      LEFT JOIN choices AS c ON q.question_id = c.question_id
       INNER JOIN program AS p ON q.program_id = p.program_id
-      INNER JOIN competency AS c ON q.competency_id = c.competency_id
+      INNER JOIN competency AS comp ON q.competency_id = comp.competency_id
     `;
     
     const queryParams = [];
@@ -42,7 +43,7 @@ router.get("/filterQuestions", async (req, res) => {
       } else {
         sqlQuery += ' WHERE';
       }
-      sqlQuery += ' c.competency_name LIKE ?';
+      sqlQuery += ' comp.competency_name LIKE ?';
       queryParams.push(`%${competency}%`);
     }
 

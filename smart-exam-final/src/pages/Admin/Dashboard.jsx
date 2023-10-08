@@ -64,17 +64,16 @@ const Dashboard = () => {
     return (
         <div className='dash dark:bg-slate-800'>
             <div className='flex items-center justify-between'>
-                <h1 className='text-[28px] leading-[34px] font-normal text-[#5a5c69] cursor-pointer dark:text-white'>Dashboard</h1>
             </div>
-            <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 lg:grid-cols-4 lg:grid-rows-1 gap-4'>
             
                 <div className=' dark:bg-slate-800 border-2 h-[100px] rounded-[8px] bg-white border-l-[6px] border-[#4E73DF] flex items-center px-[30px] cursor-pointer hover:shadow-lg transform hover:scale-[103%] transition duration-300 ease-out'>
                 <div className="rounded-full h-12 w-12 flex items-center justify-center bg-orange-600">
                     <FaRegCalendarMinus fontSize={28} color="" />
 				</div>
                     <div>
-                        <h2 className='text-[#B589DF] text-[11px] leading-[17px] px-[10px] font-bold'>Total (Students)</h2>
-                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] mt-[5px] px-[10px] dark:text-white'>260</h1>
+                        <h2 className='text-[#B589DF] text-[20px] leading-[17px] px-[10px] font-bold'>Total (Students)</h2>
+                        <h1 className='text-[30px] leading-[24px] font-bold text-[#5a5c69] mt-[5px] px-[10px] dark:text-white'>260</h1>
                     </div>
 
                 </div>
@@ -108,8 +107,8 @@ const Dashboard = () => {
                 </div>
 
             </div>
-            <div className='flex flex-col md:flex-row md:gap-6 mt-[22px] w-full'>
-            <div className='basis-[53%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
+            <div className='flex flex-col md:flex-row md:gap-6 mt-[16px] w-full'>
+            <div className='basis-[54%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED] mb-[20px]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold '>Students task chart</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
@@ -140,7 +139,7 @@ const Dashboard = () => {
                     </div>
 
                 </div>
-                <div className='basis-[30%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
+                <div className='basis-[43%] w-96 border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Categories</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
@@ -189,7 +188,7 @@ const Dashboard = () => {
 
 
                 </div>
-                <div className='basis-[45%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
+                <div className='basis-[44%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'> Task</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />

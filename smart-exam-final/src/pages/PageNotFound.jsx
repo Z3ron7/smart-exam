@@ -1,8 +1,26 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function PageNotFound() {
+  const [userRole, setUserRole] = useState(null);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const role = localStorage.getItem('role');
+    setUserRole(role);
+  }, []);
+
   const goBack = () => {
-    window.history.back();
+    // Check the user's role and navigate accordingly
+    if (userRole === 'Admin') {
+      navigate('/dashboard'); // Redirect admin to /dashboard
+    } else if (userRole === 'Exam-taker') {
+      navigate('/student-dashboard'); // Redirect student to /student-dashboard
+    } else {
+      // Handle other roles or default behavior
+      navigate('/'); // Redirect to the default page
+    }
   };
 
   return (

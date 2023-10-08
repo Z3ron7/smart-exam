@@ -27,7 +27,7 @@ const Questionnaire = () => {
     const fetchQuestions = async () => {
       try {
         const response = await axios.get('http://localhost:3001/questions/fetch');
-        setQuestionsData(response.data.questions);
+        setQuestionsData(response.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching questions:', error);
@@ -134,30 +134,33 @@ const Questionnaire = () => {
         <div className="grid grid-cols-1 gap-4 mt-4">
 <ul>
   {questionsData.map((question, index) => (
-    <li key={`${question.question_id}-${index}`}>
+    <li key={question.question_id}>
       <div className="border-2 shadow-lg items-center justify-center my-2">
         <div className="text-xl text-center dark:text-white btn-primary">
           Question
         </div>
         <div className="p-3 dark:text-white text-2xl text-center">{question.questionText}</div>
         <div id="answers-container" className="p-3">
-          {JSON.parse(question.choices).map((choice, choiceIndex) => (
+          {question.choices.map((choice, choiceIndex) => (
             <div
               className="container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer"
-              key={`${choice.choice_id}-${choiceIndex}`}
+              key={choiceIndex}
             >
               <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                 {generateLetter(choiceIndex)}
               </div>
-              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice}</div>
+              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice.choiceText}</div>
             </div>
           ))}
         </div>
         <div className="flex mb-4 items-center">
 <span className="font-bold mr-3 text-lg dark:text-white">Answer:</span>
 <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
-  {question.answer || 'N/A'}
+  {question.choices.filter((choice) => choice.isCorrect).map((choice) => choice.choiceText).join(', ')}
 </span>
+
+
+
 </div>
       </div>
     </li>

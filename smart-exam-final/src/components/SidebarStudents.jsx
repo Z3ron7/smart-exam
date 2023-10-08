@@ -27,7 +27,7 @@ const SidebarStudents = () => {
       <div
         className={`${
           open ? 'w-60' : 'w-fit'
-        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 p-5 dark:bg-darkBlue `}
+        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 pt-4 dark:bg-slate-900 `}
         style={{
           position: 'sticky',
           top: 0,
@@ -54,13 +54,13 @@ const SidebarStudents = () => {
           {Menus.map((menu, index) => (
             <Link to={menu.path} key={index}>
               <li
-                className={`flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700
+                className={`flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer dark:text-white hover:bg-slate-800 dark:hover:bg-indigo-700
                         ${menu.gap ? 'mt-9' : 'mt-2'} ${
                   location.pathname === menu.path &&
-                  'bg-gray-200 dark:bg-gray-700'
+                  'bg-indigo-800 dark:bg-indigo-700'
                 }`}
               >
-                <span className='text-2xl'>{menu.src}</span>
+                <span className='text-2xl mx-2 py-1'>{menu.src}</span>
                 <span
                   className={`${
                     !open && 'hidden'

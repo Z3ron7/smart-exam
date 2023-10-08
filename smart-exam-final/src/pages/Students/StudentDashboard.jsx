@@ -62,14 +62,14 @@ const StudentDashboard = () => {
 
 
     return (
-        <div className='dash dark:bg-darkBlue'>
+        <div className='dash'>
             <div className='flex items-center justify-between'>
                 <h1 className='text-[28px] leading-[34px] font-normal text-[#5a5c69] cursor-pointer dark:text-white'>Dashboard</h1>
             </div>
             
             <div className='flex flex-col md:flex-row md:gap-6 mt-[22px] w-full'>
-            <div className='basis-[60%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-darkBlue mb-4 md:w-80 h-4/5 lg:mb-0 lg:mr-4'>
-                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue border-[#EDEDED] mb-[20px]'>
+            <div className='basis-[60%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-900 mb-4 md:w-80 h-4/5 lg:mb-0 lg:mr-4'>
+                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED] mb-[20px]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold '>Students task chart</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>
@@ -99,8 +99,8 @@ const StudentDashboard = () => {
                     </div>
 
                 </div>
-                <div className='basis-[30%] border bg-white shadow-md cursor-pointer rounded-[4px] h-4/5 dark:bg-darkBlue'>
-                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue border-[#EDEDED]'>
+                <div className='basis-[30%] border bg-white shadow-md cursor-pointer rounded-[4px] h-4/5 dark:bg-slate-900'>
+                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Categories</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>
@@ -115,8 +115,8 @@ const StudentDashboard = () => {
                 </div>
             </div>
             <div className='flex flex-col md:flex-row lg:flex-row md:gap-6 lg:gap-6 mt-[22px] w-full'>
-            <div className='basis-[55%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-darkBlue mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
-                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue border-[#EDEDED]'>
+            <div className='basis-[55%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-900 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
+                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Pending Students</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>
@@ -148,8 +148,8 @@ const StudentDashboard = () => {
 
 
                 </div>
-                <div className='basis-[45%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-darkBlue'>
-                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue border-[#EDEDED]'>
+                <div className='basis-[45%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-900'>
+                    <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'> Task</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>

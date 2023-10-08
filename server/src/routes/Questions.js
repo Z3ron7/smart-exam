@@ -37,7 +37,7 @@ router.post("/create", async (req, res) => {
 
     // Insert the question into the database
     const result = await queryAsync(
-      "INSERT INTO question (questionText, program_id, competency_id,) VALUES ( ?, ?, ?)",
+      "INSERT INTO question (questionText, program_id, competency_id) VALUES ( ?, ?, ?)",
       [question_text, program_id, competency_id]
     );
 
@@ -61,7 +61,7 @@ router.post('/choices/create/:question_id', async (req, res) => {
         const { choiceText, isCorrect } = choice;
 
         await queryAsync(
-          'INSERT INTO choices (question_id, choiceText, is_correct) VALUES (?, ?, ?)',
+          'INSERT INTO choices (question_id, choiceText, isCorrect) VALUES (?, ?, ?)',
           [question_id, choiceText, isCorrect]
         );
       }
@@ -132,49 +132,67 @@ router.get("/fetch", async (req, res) => {
 router.get('/refresh', async (req, res) => {
   const db = new Database();
   const conn = db.connection;
+  const { program, competency } = req.query;
 
-  const query = `
-    SELECT q.*, c.choiceText, c.isCorrect
+  // Define the base query to fetch questions and choices
+  let query = `
+    SELECT q.question_id, q.questionText, c.choiceText, c.isCorrect
     FROM question AS q
     LEFT JOIN choices AS c ON q.question_id = c.question_id
   `;
 
+  // Add filters for program and competency if provided
+  const queryParams = [];
+  if (program || competency) {
+    query += ' WHERE';
+
+    if (program) {
+      query += ' q.program_id IN (SELECT program_id FROM program WHERE program_name LIKE ?)';
+      queryParams.push(`%${program}%`);
+    }
+
+    if (competency) {
+      if (program) {
+        query += ' AND';
+      }
+      query += ' q.competency_id IN (SELECT competency_id FROM competency WHERE competency_name LIKE ?)';
+      queryParams.push(`%${competency}%`);
+    }
+  }
+
   try {
     await conn.connect();
 
-    conn.query(query, (err, result) => {
+    conn.query(query, queryParams, (err, result) => {
       if (err) throw err;
 
-      // Organize the data into a more suitable structure
-      const questions = {};
+      // Create an array to hold questions
+      const questions = [];
 
       result.forEach((row) => {
         const questionId = row.question_id;
 
-        // If the question doesn't exist in the questions object, create it
-        if (!questions[questionId]) {
-          questions[questionId] = {
+        // Find the question in the array or create a new one
+        let question = questions.find(q => q.question_id === questionId);
+        if (!question) {
+          question = {
+            question_id: questionId,
             questionText: row.questionText,
-            program: row.program,
-            competency: row.competency,
-            answer: row.answer,
             choices: [],
           };
+          questions.push(question);
         }
 
         // Add choices to the respective question
         if (row.choiceText !== null) {
-          questions[questionId].choices.push({
+          question.choices.push({
             choiceText: row.choiceText,
-            is_correct: row.is_correct,
+            isCorrect: row.isCorrect,
           });
         }
       });
 
-      // Convert the object into an array of questions
-      const questionArray = Object.values(questions);
-
-      res.json(questionArray);
+      res.json(questions);
     });
   } catch (error) {
     console.error(error);
@@ -183,6 +201,7 @@ router.get('/refresh', async (req, res) => {
     conn.end();
   }
 });
+
 
 
 module.exports = router;
