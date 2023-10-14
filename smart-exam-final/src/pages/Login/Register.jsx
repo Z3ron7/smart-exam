@@ -125,7 +125,7 @@ export default function Register() {
                       </label>
                     )}
                   </RadioGroup.Option>
-                  <RadioGroup.Option value="admin">
+                  <RadioGroup.Option value="alumni">
                     {({ checked }) => (
                       <label className="flex items-center space-x-2 cursor-pointer">
                         <div

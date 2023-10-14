@@ -88,6 +88,9 @@ app.post('/register', async (req, res) => {
     if (status === 'admin') {
       role = 'Admin'; // If status is admin
     }
+    if (status === 'alumni') {
+      role = 'Exam-taker'; // If status is admin
+    }
   
     // Insert user into the database
     const insertQuery = 'INSERT INTO users (name, username, password, role, status) VALUES (?, ?, ?, ?, ?)';

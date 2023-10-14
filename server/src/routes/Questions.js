@@ -79,64 +79,11 @@ router.post('/choices/create/:question_id', async (req, res) => {
 router.get("/fetch", async (req, res) => {
   const db = new Database();
   const conn = db.connection;
-  
-  const query = `
-    SELECT q.question_id, q.questionText, c.choiceText, c.isCorrect
-    FROM question AS q
-    LEFT JOIN choices AS c ON q.question_id = c.question_id
-  `;
-
-  try {
-    await conn.connect();
-
-    conn.query(query, (err, result) => {
-      if (err) throw err;
-
-      // Create an array to hold questions
-      const questions = [];
-
-      result.forEach((row) => {
-        const questionId = row.question_id;
-
-        // Find the question in the array or create a new one
-        let question = questions.find(q => q.question_id === questionId);
-        if (!question) {
-          question = {
-            question_id: questionId,
-            questionText: row.questionText,
-            choices: [],
-          };
-          questions.push(question);
-        }
-
-        // Add choices to the respective question
-        if (row.choiceText !== null) {
-          question.choices.push({
-            choiceText: row.choiceText,
-            isCorrect: row.isCorrect,
-          });
-        }
-      });
-
-      res.json(questions);
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  } finally {
-    conn.end();
-  }
-});
-
-
-router.get('/refresh', async (req, res) => {
-  const db = new Database();
-  const conn = db.connection;
   const { program, competency } = req.query;
 
-  // Define the base query to fetch questions and choices
+  // Define the base query to fetch questions and choices, including competency_id
   let query = `
-    SELECT q.question_id, q.questionText, c.choiceText, c.isCorrect
+    SELECT q.question_id, q.competency_id, q.questionText, c.choiceText, c.isCorrect
     FROM question AS q
     LEFT JOIN choices AS c ON q.question_id = c.question_id
   `;
@@ -171,12 +118,14 @@ router.get('/refresh', async (req, res) => {
 
       result.forEach((row) => {
         const questionId = row.question_id;
+        const competencyId = row.competency_id;
 
         // Find the question in the array or create a new one
         let question = questions.find(q => q.question_id === questionId);
         if (!question) {
           question = {
             question_id: questionId,
+            competency_id: competencyId,
             questionText: row.questionText,
             choices: [],
           };
@@ -201,6 +150,83 @@ router.get('/refresh', async (req, res) => {
     conn.end();
   }
 });
+
+
+router.get('/refresh', async (req, res) => {
+  const db = new Database();
+  const conn = db.connection;
+  const { program, competency } = req.query;
+
+  // Define the base query to fetch questions and choices, including competency_id
+  let query = `
+    SELECT q.question_id, q.competency_id, q.questionText, c.choiceText, c.isCorrect
+    FROM question AS q
+    LEFT JOIN choices AS c ON q.question_id = c.question_id
+  `;
+
+  // Add filters for program and competency if provided
+  const queryParams = [];
+  if (program || competency) {
+    query += ' WHERE';
+
+    if (program) {
+      query += ' q.program_id IN (SELECT program_id FROM program WHERE program_name LIKE ?)';
+      queryParams.push(`%${program}%`);
+    }
+
+    if (competency) {
+      if (program) {
+        query += ' AND';
+      }
+      query += ' q.competency_id IN (SELECT competency_id FROM competency WHERE competency_name LIKE ?)';
+      queryParams.push(`%${competency}%`);
+    }
+  }
+
+  try {
+    await conn.connect();
+
+    conn.query(query, queryParams, (err, result) => {
+      if (err) throw err;
+
+      // Create an array to hold questions
+      const questions = [];
+
+      result.forEach((row) => {
+        const questionId = row.question_id;
+        const competencyId = row.competency_id;
+
+        // Find the question in the array or create a new one
+        let question = questions.find(q => q.question_id === questionId);
+        if (!question) {
+          question = {
+            question_id: questionId,
+            competency_id: competencyId,
+            questionText: row.questionText,
+            choices: [],
+          };
+          questions.push(question);
+        }
+
+        // Add choices to the respective question
+        if (row.choiceText !== null) {
+          question.choices.push({
+            choiceText: row.choiceText,
+            isCorrect: row.isCorrect,
+          });
+        }
+      });
+
+      res.json(questions);
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    conn.end();
+  }
+});
+
 
 
 

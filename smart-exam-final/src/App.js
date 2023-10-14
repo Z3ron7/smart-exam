@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
+import LayoutSuper from './components/LayoutSuper';
 import Layout from './components/Layout';
 import LayoutStudents from './components/LayoutStudents';
 import LandingPage from './pages/LandingPage';
@@ -16,6 +17,9 @@ import Exam from './pages/Students/Exam'
 import Result from './pages/Students/Result'
 import ProtectedRoute from './pages/ProtectedRoute';
 import AddQuestion from './pages/Admin/AddQuestion'
+
+import DashboardSuper from './pages/SuperAdmin/Dashboard'
+import QuestionnaireSuper from './pages/SuperAdmin/Questionnaire'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -36,6 +40,29 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/Log-in" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
 
+        {/* Routes for super admin */}
+        <Route
+          path="/super-dashboard"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><DashboardSuper /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/questionnaire"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><QuestionnaireSuper /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
         {/* Routes for admin */}
         <Route
           path="/dashboard"

@@ -7,7 +7,7 @@ function LoginPage() {
     username: '',
     password: '',
   });
-  const [error, setError] = useState(null); // State for displaying error messages
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = (event) => {
@@ -19,8 +19,17 @@ function LoginPage() {
           localStorage.setItem('token', res.data.token);
           localStorage.setItem('role', res.data.role);
           localStorage.setItem('user_id', res.data.user_id);
-          const userRole = res.data.role; // Use the role from the response
-          const dashboardURL = userRole === 'Admin' ? '/dashboard' : '/student-dashboard';
+          const userRole = res.data.role;
+          let dashboardURL = '/dashboard'; // Default URL
+
+          if (userRole === 'Admin') {
+            dashboardURL = '/dashboard';
+          } else if (userRole === 'Super Admin') {
+            dashboardURL = '/super-dashboard';
+          } else if (userRole === 'Exam-taker') {
+            dashboardURL = '/student-dashboard';
+          }
+
           navigate(dashboardURL);
           alert('Login successfully.');
         } else {
