@@ -3,6 +3,7 @@ import Add from "../../components/add/Add";
 import { userRows } from "../../data";
 import DataTable from "../../components/dataTable/DataTable";
 import "./users.scss";
+import VerifyUser from '../SuperAdmin/VerifyUser'
 // import { useQuery } from "@tanstack/react-query";
 
 const columns = [
@@ -47,6 +48,18 @@ const columns = [
 
 const Users = () => {
   const [open, setOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [questionToEdit, setQuestionToEdit] = useState(null);
+
+  const openModal = (question) => {
+    setIsModalOpen(true);
+    setQuestionToEdit(question);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setQuestionToEdit(null);
+  };
 
   // TEST THE API
 
@@ -62,8 +75,21 @@ const Users = () => {
     <div className="users">
       <div className="info">
         <h1 className="dark:text-white">Students</h1>
+        <div className="flex justify-end">
+        <button
+          onClick={() => openModal()}
+          className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+        >
+          New Question
+        </button>
+      </div>
         {/* <button className="dark:text-white border-2 bg-blue-600 hover:bg-fuchsia-300" onClick={() => setOpen(true)}>Add New User</button> */}
       </div>
+      <VerifyUser
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        questionToEdit={questionToEdit}
+      />
       <DataTable slug="users" columns={columns} rows={userRows} />
       {/* TEST THE API */}
 

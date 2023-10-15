@@ -2,18 +2,34 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { RadioGroup } from "@headlessui/react";
+import Select from 'react-select';
 
 export default function Register() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [registrationStatus, setRegistrationStatus] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
 
   const [values, setValues] = useState({
-    name: '',
-    username: '', // Assuming username maps to email
-    password: '',
-    status: 'student', // Set a default status
+    name: "",
+    username: "", // Assuming username maps to email
+    password: "",
+    status: "student", // Set a default status
+    gender: "",
+    image: null, // Use null initially
   });
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSelectedImage(e.target.result);
+        setValues({ ...values, image: file }); // Update the 'image' property with the File object
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -24,12 +40,27 @@ export default function Register() {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/register', values);
+      // Create a FormData object and append the image file
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("username", values.username);
+      formData.append("password", values.password);
+      formData.append("status", values.status);
+      formData.append("gender", values.gender);
+      formData.append("profileImage", values.image); // Append the File object
 
-      if (response.data.Status === "Success") {  
+      console.log("FormData:", formData);
+
+      const response = await axios.post("http://localhost:3001/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Set the content type to multipart/form-data
+        },
+      });
+
+      if (response.data.Status === "Success") {
         setRegistrationStatus("success");
         setTimeout(() => {
-          navigate('/Log-in');
+          navigate("/Log-in");
         }, 2000);
       } else {
         setRegistrationStatus("error");
@@ -39,10 +70,21 @@ export default function Register() {
       setRegistrationStatus("error");
     }
   };
-    
-  
+
+  const genderOptions = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" },
+  ];
+
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      width: 170, // Adjust the width as needed
+    }),
+  };
   return (
-    <div>
+    <div className="flex flex-col items-center justify-center mx-auto">
       {registrationStatus === "success" && (
         <div
           className=" flex w-1/2 mx-auto rounded-lg bg-green-100 px-6 py-5 text-base text-green-500 justify-center items-center"
@@ -53,20 +95,20 @@ export default function Register() {
       )}
       {registrationStatus === "error" && (
         <div
-          className="mb-4 rounded-lg bg-error-100 px-6 py-5 text-base text-error-700"
+          className="mb-4 rounded-lg bg-error-100 px-6 py-5 text-base text-red-500"
           role="alert"
         >
           Registration failed. Please try again.
         </div>
       )}
-      <div className="flex flex-col items-center min-h-screen pt-6 sm:justify-center sm:pt-0 bg-gray-50">
-        <div>
+      <div className="flex flex-col pt-6 w-full items-center sm:justify-center sm:pt-0 bg-gray-50">
+      <div className="items-center mx-auto justify-center">
           <a href="/">
             <h3 className="text-4xl font-bold text-purple-600">Logo</h3>
           </a>
         </div>
-        <div className="w-full px-6 py-4 mt-6 overflow-hidden bg-white shadow-md sm:max-w-lg sm:rounded-lg">
-          <form onSubmit={handleRegister}>
+        <div className="w-1/2 px-6 py-4 mt-6 overflow-hidden items-center bg-white shadow-md sm:max-w-lg sm:rounded-lg">
+      <form onSubmit={handleRegister} encType="multipart/form-data">
             <div>
               <label
                 htmlFor="name"
@@ -84,6 +126,7 @@ export default function Register() {
                 />
               </div>
             </div>
+            
             <div className="mt-4">
               <label
                 htmlFor="email"
@@ -94,13 +137,27 @@ export default function Register() {
               <div className="flex flex-col items-start">
                 <input
                   type="email"
-                  name="email"
+                  name="username"
                   value={values.username} // Use values.username
                   onChange={e => setValues({ ...values, username: e.target.value })} // Update values.username
                   className="block w-full rounded-md py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
+            <div className="flex items-start mt-4">
+            <div className="flex flex-col items-start mr-9">
+  <Select
+    id="gender"
+    name="gender"
+    value={genderOptions.find((option) => option.value === values.gender)} // Set the value based on the 'value' property
+    onChange={(selectedOption) => setValues({ ...values, gender: selectedOption.value })} // Update values.gender
+    options={genderOptions}
+    styles={customStyles}
+    isSearchable
+    placeholder="Select Gender"
+  />
+</div>
+
             <RadioGroup value={values.status} onChange={status => setValues({ ...values, status })}>
               <div className="flex items-start mt-3 mb-3">
                 <RadioGroup.Label className="block text-sm font-medium text-gray-700">
@@ -146,6 +203,7 @@ export default function Register() {
                 </div>
               </div>
             </RadioGroup>
+            </div>
             <div className="mt-4">
               <label
                 htmlFor="password"
@@ -191,6 +249,35 @@ export default function Register() {
                 Register
               </button>
             </div>
+            <div className="md:w-2/5 m-5 bg-white p-8">
+        {/* Image upload UI */}
+        <div className="mb-4 text-gray-700 text-lg">
+          Upload Profile Picture
+        </div>
+        <div className="mb-8">
+          <input
+            type="file"
+            accept="image/*"
+            id="profileImage"
+            name="profileImage"
+            className="s"
+            onChange={handleImageChange}
+          />
+          <label
+            htmlFor="profileImage"
+            className="w-32 h-32 rounded-full overflow-hidden cursor-pointer"
+          >
+            <img
+              src={selectedImage || "default-profile-image.jpg"}
+              alt="Profile Image"
+              className="w-1/2 h-1/2 object-cover"
+            />
+          </label>
+        </div>
+        <div className="text-gray-700 text-sm">
+          Click on the profile picture to upload your image.
+        </div>
+      </div>
           </form>
           <div className="mt-4 text-grey-600">
             Already have an account?{" "}
@@ -235,6 +322,7 @@ export default function Register() {
             </button>
           </div>
         </div>
+        
       </div>
     </div>
   );

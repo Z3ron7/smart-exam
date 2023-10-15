@@ -9,7 +9,9 @@ import Dashboard from './pages/Admin/Dashboard';
 import Questionnaire from './pages/Admin/Questionnaire';
 import Room from './pages/Admin/Room';
 import Users from './pages/users/Users';
+import User from './pages/user/User';
 import LoginPage from './pages/Login/LoginPage';
+import Verification from './pages/Login/Verification';
 import Register from './pages/Login/Register';
 import PageNotFound from './pages/PageNotFound';
 import StudentDashboard from './pages/Students/StudentDashboard';
@@ -24,12 +26,16 @@ import QuestionnaireSuper from './pages/SuperAdmin/Questionnaire'
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     setIsLoggedIn(token !== null);
     setUserRole(role);
+
+    const verificationStatus = localStorage.getItem('isVerified');
+    setIsVerified(verificationStatus === 'true'); 
   }, []);
 
   return (
@@ -39,6 +45,8 @@ function App() {
 
         <Route path="/register" element={<Register />} />
         <Route path="/Log-in" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/verification" element={<Verification />} />
+
 
         {/* Routes for super admin */}
         <Route
@@ -46,6 +54,28 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutSuper><DashboardSuper /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><Users /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/users/:id"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><User /></LayoutSuper>}
               allowedRoles={['Super Admin']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
@@ -122,16 +152,24 @@ function App() {
 
         {/* Routes for student */}
         <Route
-          path="/student-dashboard"
-          element={
-            <ProtectedRoute
-              element={<LayoutStudents><StudentDashboard /></LayoutStudents>}
-              allowedRoles={['Exam-taker']}
-              isLoggedIn={isLoggedIn}
-              userRole={userRole}
-            />
-          }
-        />
+  path="/student-dashboard"
+  element={
+    <ProtectedRoute
+      element={
+        isLoggedIn && isVerified ? (
+          <LayoutStudents>
+            <StudentDashboard />
+          </LayoutStudents>
+        ) : (
+          <Verification />
+        )
+      }
+      allowedRoles={['Exam-taker']}
+      isLoggedIn={isLoggedIn}
+      userRole={userRole}
+    />
+  }
+/>
         <Route
           path="/exam"
           element={

@@ -20,17 +20,29 @@ function LoginPage() {
           localStorage.setItem('role', res.data.role);
           localStorage.setItem('user_id', res.data.user_id);
           const userRole = res.data.role;
-          let dashboardURL = '/dashboard'; // Default URL
-
-          if (userRole === 'Admin') {
-            dashboardURL = '/dashboard';
-          } else if (userRole === 'Super Admin') {
-            dashboardURL = '/super-dashboard';
-          } else if (userRole === 'Exam-taker') {
-            dashboardURL = '/student-dashboard';
+  
+          // Access the isVerified status from the response
+          const isVerified = res.data.isVerified;
+  
+          if (userRole === 'Exam-taker') {
+            if (isVerified) {
+              // User is verified, redirect to the student dashboard
+              navigate('/student-dashboard');
+            } else {
+              // User is not verified, redirect to the verification page
+              navigate('/verification');
+            }
+          } else {
+            // Handle different user roles as needed and redirect accordingly
+            let dashboardURL = '/dashboard'; // Default URL
+            if (userRole === 'Admin') {
+              dashboardURL = '/dashboard';
+            } else if (userRole === 'Super Admin') {
+              dashboardURL = '/super-dashboard';
+            }
+            navigate(dashboardURL);
           }
-
-          navigate(dashboardURL);
+  
           alert('Login successfully.');
         } else {
           setError('Login failed. Please check your credentials.');
@@ -41,6 +53,7 @@ function LoginPage() {
         setError('An error occurred during login.');
       });
   };
+  
   return (
     <>
     <div className="flex bg-white min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">

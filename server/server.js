@@ -5,6 +5,9 @@ const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const salt = 5;
+const nodemailer = require('nodemailer');
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -21,17 +24,38 @@ const questionsRouter = require("./src/routes/Questions"); // Add this
 const choicesRouter = require("./src/routes/Choices");
 const programRouter = require("./src/routes/Program");
 const filterRouter = require ("./src/routes/FilterQuestion")
+const verifyRouter = require ("./src/routes/Verification")
 
 app.use("/exams", examsRouter);
 app.use("/questions", questionsRouter); // Add this
 app.use("/choices", choicesRouter); // Add this
 app.use("/category", programRouter); // Add this
 app.use("/filter", filterRouter); // Add this
+app.use("/verify", verifyRouter); // Add this
 
 app.use(cookieParser());
 
 const db = new Database();
 const conn = db.connection;
+
+const storage = multer.diskStorage({
+  destination: function (req, file, callback) {
+    callback(null, 'avatar'); // Save images in the 'avatar' folder within the 'server' folder
+  },
+  filename: function (req, file, callback) {
+    callback(null, file.originalname); // Use the original filename as the stored filename
+  },
+});
+
+const upload = multer({ storage: storage });
+
+const transporter = nodemailer.createTransport({
+  service: 'Gmail', // Replace with your email service provider
+  auth: {
+    user: 'zoren.panilagao1@gmail.com', // Replace with your email
+    pass: 'yvij frwd swws udms', // Replace with your email password
+  },
+});
 
 const verifyUser = (req, res, next) => {
   const token = req.cookies.token;
@@ -55,15 +79,23 @@ app.get("/", verifyUser, (req, res) => {
   return res.json({ Status: "Success", name: req.name });
 });
 
-app.post('/register', async (req, res) => {
-  const { name, username, password, status } = req.body;
-  
+app.post('/register', upload.single('profileImage'), async (req, res) => {
+  const { name, username, password, gender, status } = req.body;
+  let imagePath = ''; // Initialize imagePath as null
+  const serverFolderPath = 'server/';
+
+
+  if (req.file) {
+    // Image has been uploaded
+    imagePath = serverFolderPath + 'avatar/' + req.file.originalname; // Path to the uploaded image
+  }
+
   try {
     // Validate incoming data
-    if (!name || !username || !password || !status) {
+    if (!name || !username || !password || !gender || !status) {
       return res.status(400).json({ Error: "Missing required fields" });
-    }  
-    
+    }
+
     // Check if the username already exists
     const usernameExists = await new Promise((resolve, reject) => {
       const checkQuery = 'SELECT COUNT(*) as count FROM users WHERE username = ?';
@@ -71,36 +103,46 @@ app.post('/register', async (req, res) => {
         if (err) reject(err);
         resolve(result && result[0] && result[0].count > 0);
       });
-    }).catch(error => {
+    }).catch((error) => {
       console.error('Promise rejected:', error);
       throw error;
     });
-  
+
     if (usernameExists) {
       return res.status(400).json({ Error: "Username already exists" });
     }
-  
+
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, salt);
-    
+
     // Set the role based on the status
     let role = 'Exam-taker'; // Default role
     if (status === 'admin') {
       role = 'Admin'; // If status is admin
     }
     if (status === 'alumni') {
-      role = 'Exam-taker'; // If status is admin
+      role = 'Exam-taker'; // If status is alumni
     }
-  
-    // Insert user into the database
-    const insertQuery = 'INSERT INTO users (name, username, password, role, status) VALUES (?, ?, ?, ?, ?)';
-    const values = [name, username, hashedPassword, role, status];
-    
+
+    // Insert user into the database, including the imagePath
+    const insertQuery =
+      'INSERT INTO users (name, username, password, gender, role, status, image) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const values = [name, username, hashedPassword, gender, role, status, imagePath];
+
     conn.query(insertQuery, values, (err, result) => {
       if (err) {
         console.error("Error inserting user:", err);
         return res.status(500).json({ Error: "Failed to insert user" });
       }
+
+      // Send an email to the Super Admin for verification
+      transporter.sendMail({
+        from: 'zoren.panilagao1@gmail.com', // Replace with your email
+        to: 'zoren.panilagao7@gmail.com', // Replace with the Super Admin's email
+        subject: 'New Exam-taker Registration',
+        text: 'A new Exam-taker has registered and requires verification.',
+      });
+
       return res.json({ Status: "Success" });
     });
   } catch (error) {
@@ -108,6 +150,7 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ Error: "Registration process failed" });
   }
 });
+
 
 
 app.post("/login", (req, res) => {
@@ -132,11 +175,16 @@ app.post("/login", (req, res) => {
             role = "Exam-taker";
           }
 
-          const token = jwt.sign({ user_id, name, role }, "jwt-secret-key", {
+          // Here, you can check the verification status from the database
+          const isVerified = data[0].isVerified; // Assuming you have an "isVerified" column
+
+          // Include the isVerified status in the token payload
+          const token = jwt.sign({ user_id, name, role, isVerified }, "jwt-secret-key", {
             expiresIn: "1d",
           });
           res.cookie("token", token);
-          return res.json({ Status: "Login Successful", user_id, role });
+
+          return res.json({ Status: "Login Successful", user_id, role, isVerified });
         } else {
           return res.json({ Error: "Password error!" });
         }
@@ -148,72 +196,8 @@ app.post("/login", (req, res) => {
 });
 
 
-app.get("/logout", (req, res) => {
-  res.clearCookie("token");
-  return res.json({ Status: "Success" });
-});
 
-app.post("/upload", async (req, res) => {
-  try {
-    const db = new Database();
-    const conn = db.connection;
 
-    const { Name } = req.body;
-
-    const query = "INSERT INTO customer_insured (Name) VALUES (?)";
-    const values = [Name];
-
-    await conn.connect((err) => {
-      if (err) throw err;
-      conn.query(query, values, (err, result) => {
-        if (err) throw err;
-        console.log(result);
-        res.json({ data: "Customer added to the database" });
-      });
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Failed to upload customer" });
-  }
-});
-
-app.get("/searchEntry/:name", async (req, res) => {
-  const { name } = req.params;
-  const db = new Database();
-  const conn = db.connection;
-  const query = "SELECT * FROM customer_entry WHERE Name LIKE ?";
-
-  try {
-    await conn.connect();
-
-    conn.query(query, [`%${name}%`], (error, rows) => {
-      if (error) throw error;
-      res.json(rows);
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Failed to fetch data" });
-  }
-});
-
-app.get("/searchInsured/:name", async (req, res) => {
-  const { name } = req.params;
-  const db = new Database();
-  const conn = db.connection;
-  const query = "SELECT * FROM customer_insured WHERE Name LIKE ?";
-
-  try {
-    await conn.connect();
-
-    conn.query(query, [`%${name}%`], (error, rows) => {
-      if (error) throw error;
-      res.json(rows);
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Failed to fetch data" });
-  }
-});
 
 app.listen(3001, function () {
   const db = new Database();
