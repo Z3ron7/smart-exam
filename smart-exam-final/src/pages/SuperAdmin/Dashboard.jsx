@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import { FaRegCalendarMinus, FaEllipsisV } from "react-icons/fa"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Sector } from 'recharts';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, } from 'recharts';
 import PieComponent from './PieComponent';
 // import { Progress } from 'antd';
+import axios from 'axios';
 import error from "../../assets/images/error.png"
 import './dashboard.scss'
 
@@ -59,7 +60,22 @@ const datas = [
 
 const Dashboard = () => {
 
-
+    const [totalStudents, setTotalStudents] = useState(0);
+    const [graduatingStudents, setGraduatingStudents] = useState(0);
+    const [alumni, setAlumni] = useState(0);
+  
+    useEffect(() => {
+      // Fetch the counts from your backend
+      axios.get('http://localhost:3001/users/user-stats') // Adjust the URL accordingly
+        .then((response) => {
+          setTotalStudents(response.data.totalUsers);
+          setGraduatingStudents(response.data.totalStudents);
+          setAlumni(response.data.totalAlumni);
+        })
+        .catch((error) => {
+          console.error('Error fetching user statistics:', error);
+        });
+    }, []);
 
     return (
         <div className='dash dark:bg-slate-800'>
@@ -72,8 +88,8 @@ const Dashboard = () => {
                     <FaRegCalendarMinus fontSize={28} color="" />
 				</div>
                     <div>
-                        <h2 className='text-[#B589DF] text-[20px] leading-[17px] px-[10px] font-bold'>Total (Students)</h2>
-                        <h1 className='text-[30px] leading-[24px] font-bold text-[#5a5c69] mt-[5px] px-[10px] dark:text-white'>260</h1>
+                        <h2 className='text-[#B589DF] text-[11px] leading-[17px] px-[10px] font-bold'>Total (Exam-takers)</h2>
+                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] mt-[5px] px-[10px] dark:text-white'>{totalStudents}</h1>
                     </div>
 
                 </div>
@@ -84,7 +100,7 @@ const Dashboard = () => {
                     <div>
                         <h2 className='text-[#1cc88a] text-[11px] leading-[17px] px-[10px] font-bold'>
                             Graduating (Students)</h2>
-                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] px-[10px] mt-[5px] dark:text-white'>150</h1>
+                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] px-[10px] mt-[5px] dark:text-white'>{graduatingStudents}</h1>
                     </div>
                 </div>
                 <div className='dark:bg-slate-800 border-2 h-[100px] rounded-[8px] bg-white border-l-[6px] border-[#36B9CC] flex items-center px-[30px] cursor-pointer hover:shadow-lg transform hover:scale-[103%] transition duration-300 ease-out'>
@@ -93,7 +109,7 @@ const Dashboard = () => {
 				</div>
                     <div>
                         <h2 className='text-[#1cc88a] text-[11px] leading-[17px] px-[10px] font-bold'>ALUMNI </h2>
-                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] px-[10px] mt-[5px] dark:text-white'>100</h1>
+                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] px-[10px] mt-[5px] dark:text-white'>{alumni}</h1>
                     </div>
                 </div>
                 <div className='dark:bg-slate-800 border-2 h-[100px] rounded-[8px] bg-white border-l-[6px] border-[#F6C23E] flex items-center px-[30px] cursor-pointer hover:shadow-lg transform hover:scale-[103%] transition duration-300 ease-out'>

@@ -1,55 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Add from "../../components/add/Add";
-import { userRows } from "../../data";
 import DataTable from "../../components/dataTable/DataTable";
 import "./users.scss";
-import VerifyUser from '../SuperAdmin/VerifyUser'
-// import { useQuery } from "@tanstack/react-query";
+import VerifyUser from '../SuperAdmin/VerifyUser';
+import axios from "axios";
 
 const columns = [
-  { field: "id", headerName: "ID", width: 50 },
+  { field: "user_id", headerName: "ID", width: 50 },
   {
-    field: "img",
+    field: "image",
     headerName: "Avatar",
     width: 100,
     renderCell: (params) => {
-      return React.createElement("img", {
-        src: params.row.img || "/noavatar.png",
-        alt: "",
-      });
+      return (
+        <img
+          src={params.row.image || "/noavatar.png"}
+          alt=""
+          style={{ width: 40, height: 40 }}
+        />
+      );
     },
   },
   {
-    field: "firstName",
+    field: "name",
     type: "string",
-    headerName: "First name",
+    headerName: "Full name",
     width: 150,
   },
   {
-    field: "lastName",
+    field: "gender",
     type: "string",
-    headerName: "Last name",
+    headerName: "Gender",
     width: 150,
   },
   {
-    field: "email",
+    field: "username",
     type: "string",
     headerName: "Email",
     width: 200,
   },
   {
-    field: "phone",
+    field: "status",
     type: "string",
-    headerName: "Phone",
+    headerName: "Status",
     width: 150,
   },
 ];
-
 
 const Users = () => {
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState(null);
+  const [data, setData] = useState([]); // State to store fetched data
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Function to fetch data from the backend
+  const fetchData = () => {
+    axios.get("http://localhost:3001/users/users")
+      .then((response) => {
+        setData(response.data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setIsLoading(false);
+      });
+  };
 
   const openModal = (question) => {
     setIsModalOpen(true);
@@ -61,43 +77,51 @@ const Users = () => {
     setQuestionToEdit(null);
   };
 
-  // TEST THE API
+  const handleDelete = (user_id) => {
+    axios.delete(`http://localhost:3001/users/users/${user_id}`)
+      .then((response) => {
+        if (response.status === 200) {
+          // User deleted successfully
+          console.log("User deleted successfully");
 
-  // const { isLoading, data } = useQuery({
-  //   queryKey: ["allusers"],
-  //   queryFn: () =>
-  //     fetch("http://localhost:8800/api/users").then(
-  //       (res) => res.json()
-  //     ),
-  // });
+          // Refresh the data after a successful delete
+          fetchData();
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting user:", error);
+      });
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+  }, []);
 
   return (
     <div className="users">
-      <div className="info">
+      <div className="flex info">
         <h1 className="dark:text-white">Students</h1>
-        <div className="flex justify-end">
-        <button
-          onClick={() => openModal()}
-          className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
-        >
-          New Question
-        </button>
-      </div>
-        {/* <button className="dark:text-white border-2 bg-blue-600 hover:bg-fuchsia-300" onClick={() => setOpen(true)}>Add New User</button> */}
+        <div className="flex items-end marker:justify-end">
+          <button
+            onClick={() => openModal()}
+            className="bg-transparent border-2 border-indigo-700 hover:bg-indigo-700 active:bg-indigo-700 hover:text-white active:text-white py-2 px-4 rounded"
+          >
+            Verify User's
+          </button>
+        </div>
       </div>
       <VerifyUser
         isOpen={isModalOpen}
         onClose={closeModal}
         questionToEdit={questionToEdit}
       />
-      <DataTable slug="users" columns={columns} rows={userRows} />
-      {/* TEST THE API */}
 
-      {/* {isLoading ? (
+      {isLoading ? (
         "Loading..."
       ) : (
-        <DataTable slug="users" columns={columns} rows={data} />
-      )} */}
+        <DataTable slug="users" columns={columns} rows={data} handleDelete={handleDelete} />
+      )}
+
       {open && <Add slug="user" columns={columns} setOpen={setOpen} />}
     </div>
   );

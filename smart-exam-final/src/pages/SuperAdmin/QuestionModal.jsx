@@ -18,8 +18,8 @@ const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
     question_text: '',
     program: null,
     competency: null,
-    choices: [],
-    answer: '',
+    choices: [''],
+    isCorrect: '',
   });
   const [alertMessage, setAlertMessage] = useState('');
 
@@ -47,10 +47,20 @@ const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
   const handleCheckboxChange = (choice) => {
     setFormData({
       ...formData,
-      answer: choice,
+      isCorrect: choice,
     });
   };
 
+  const handleChoiceTextChange = (index, value) => {
+    const newChoices = [...formData.choices];
+    newChoices[index] = value;
+    setFormData({
+      ...formData,
+      choices: newChoices,
+    });
+  };
+
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -61,33 +71,30 @@ const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
         competency: formData.competency.value,
         choices: formData.choices.map((choice) => ({
           choiceText: choice,
-          isCorrect: choice === formData.answer, // Set isCorrect based on the answer
+          isCorrect: choice === formData.isCorrect, // Set isCorrect based on the answer
         })),
       };
-
-      // Send a POST request to create the question
+  
+      // Send a POST request to create the question and choices
       const response = await axios.post('http://localhost:3001/questions/create', requestBody);
-
+  
       // Check the response status
       if (response.status === 200) {
-        setAlertMessage('Question created successfully');
+        setAlertMessage('Question and choices created successfully');
         // Clear the form or perform any other necessary actions on success
         setFormData({
-          question_text: '',
           program: null,
           competency: null,
-          choices: [''],
-          answer: '',
         });
       } else {
-        setAlertMessage('Failed to create question');
+        setAlertMessage('Failed to create question and choices');
       }
       await fetchQuestions(); // Refresh the list of questions
     } catch (error) {
-      console.error('Error creating question:', error);
-      setAlertMessage('Failed to create question');
+      console.error('Error creating question and choices:', error);
+      setAlertMessage('Failed to create question and choices');
     }
-  };
+  };  
 
   return (
     <div
@@ -160,35 +167,31 @@ const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
             <div className="space-y-2">
               {formData.choices.map((choice, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`answer${choice}`}
-                    name="answer"
-                    checked={formData.answer === choice}
-                    onChange={() => handleCheckboxChange(choice)}
-                    className="h-5 w-5"
-                  />
-                  <input
-                    type="text"
-                    id={`choices${index}`}
-                    name={`choices${index}`}
-                    value={choice}
-                    onChange={(e) => {
-                      const newChoices = [...formData.choices];
-                      newChoices[index] = e.target.value;
-                      setFormData({ ...formData, choices: newChoices });
-                    }}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveChoice(index)}
-                    className="text-red-600 hover:text-red-800 font-bold focus:outline-none"
-                  >
-                    X
-                  </button>
-                </div>
+                 <input
+  type="checkbox"
+  id={`isCorrect${choice}`}
+  name="isCorrect"
+  checked={formData.isCorrect === choice}
+  onChange={() => handleCheckboxChange(choice)}
+  className="h-5 w-5"
+/>
+    <input
+      type="text"
+      id={`choices${index}`}
+      name={`choices${index}`}
+      value={choice}
+      onChange={(e) => handleChoiceTextChange(index, e.target.value)}
+      className="w-full p-2 border rounded-md"
+      required
+    />
+    <button
+      type="button"
+      onClick={() => handleRemoveChoice(index)}
+      className="text-red-600 hover:text-red-800 font-bold focus:outline-none"
+    >
+      X
+    </button>
+  </div>
               ))}
               <button
                 type="button"
