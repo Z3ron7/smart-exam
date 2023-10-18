@@ -91,7 +91,6 @@ router.get("/fetch", async (req, res) => {
       queryParams.push(`%${competency}%`);
     }
   }
-
   try {
     await conn.connect();
 
@@ -133,6 +132,56 @@ router.get("/fetch", async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   } finally {
     conn.end();
+  }
+});
+
+router.put("/update/:questionId", async (req, res) => {
+  const { questionId } = req.params;
+  const { question_text, program, competency, choices } = req.body;
+
+  try {
+    // Get program_id and competency_id based on predefined values
+    const [programResult] = await queryAsync(
+      "SELECT program_id FROM program WHERE program_name = ?",
+      [program]
+    );
+
+    const [competencyResult] = await queryAsync(
+      "SELECT competency_id FROM competency WHERE competency_name = ?",
+      [competency]
+    );
+
+    const program_id = programResult ? programResult.program_id : null;
+    const competency_id = competencyResult ? competencyResult.competency_id : null;
+
+    // Update the question in the database
+    await queryAsync(
+      "UPDATE question SET questionText = ?, program_id = ?, competency_id = ? WHERE question_id = ?",
+      [question_text, program_id, competency_id, questionId]
+    );
+
+    // Remove existing choices
+    await queryAsync(
+      "DELETE FROM choices WHERE question_id = ?",
+      [questionId]
+    );
+
+    // Insert the updated choices
+    if (choices && choices.length > 0) {
+      for (const choice of choices) {
+        const { choiceText, isCorrect } = choice;
+
+        await queryAsync(
+          'INSERT INTO choices (question_id, choiceText, isCorrect) VALUES (?, ?, ?)',
+          [questionId, choiceText, isCorrect]
+        );
+      }
+    }
+
+    res.json({ message: "Question and choices updated successfully", question_id: questionId });
+  } catch (error) {
+    console.error("Error updating question and choices:", error);
+    res.status(500).json({ error: "Failed to update question and choices" });
   }
 });
 

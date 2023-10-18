@@ -2,91 +2,73 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
 
-const programOptions = [
-  { value: 'Social Work', label: 'Social Work' },
-  { value: 'Option', label: 'Option' },
-];
+  const programOptions = [
+    { value: 'Social Work', label: 'Bachelor Science in Social Work' },
+    { value: 'Option', label: 'Option' },
+  ];
 
-const competencyOptions = [
-  { value: 'SWPPS', label: 'SWPPS' },
-  { value: 'Casework', label: 'Casework' },
-  { value: 'HBSE', label: 'HBSE' },
-];
+  const competencyOptions = [
+    { value: 'SWPPS', label: 'SWPPS' },
+    { value: 'Casework', label: 'Casework' },
+    { value: 'HBSE', label: 'HBSE' },
+    { value: 'CO', label: 'CO' },
+    { value: 'Groupwork', label: 'Groupwork' },
+  ];
 
-const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
-  const [formData, setFormData] = useState({
-    question_text: '',
-    program: null,
-    competency: null,
-    choices: [],
-    answer: '',
-  });
+const QuestionModal = ({isOpen, onClose}) => {
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor Science in Social Work' });
+  const [selectedCompetency, setSelectedCompetency] = useState(null);
+  const [questionText, setQuestionText] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  const [choiceText, setChoiceText] = useState([{ choiceText: '', isCorrect: false }]);
 
   const handleAddChoice = () => {
-    setFormData({
-      ...formData,
-      choices: [...formData.choices, ''],
-    });
+    setChoiceText([...choiceText, { choiceText: '', isCorrect: false }]);
   };
 
   const handleRemoveChoice = (index) => {
-    const newChoices = [...formData.choices];
-    newChoices.splice(index, 1);
-    setFormData({
-      ...formData,
-      choices: newChoices,
-    });
+    const updatedChoices = [...choiceText];
+    updatedChoices.splice(index, 1);
+    setChoiceText(updatedChoices);
   };
-
-  const handleCheckboxChange = (choice) => {
-    setFormData({
-      ...formData,
-      answer: choice,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Create the request body
-      const requestBody = {
-        question_text: formData.question_text,
-        program: formData.program.value,
-        competency: formData.competency.value,
-        choices: formData.choices.map((choice) => ({
-          choiceText: choice,
-          isCorrect: choice === formData.answer, // Set isCorrect based on the answer
-        })),
-      };
-
-      // Send a POST request to create the question
-      const response = await axios.post('http://localhost:3001/questions/create', requestBody);
-
-      // Check the response status
-      if (response.status === 200) {
-        setAlertMessage('Question created successfully');
-        // Clear the form or perform any other necessary actions on success
-        setFormData({
-          question_text: '',
-          program: null,
-          competency: null,
-          choices: [''],
-          answer: '',
-        });
+  
+  const handleChoiceChange = (index, field, value) => {
+    const updatedChoices = choiceText.map((choice, i) => {
+      if (i === index) {
+        return { ...choice, [field]: value };
       } else {
-        setAlertMessage('Failed to create question');
+        return { ...choice };
       }
-      await fetchQuestions(); // Refresh the list of questions
-    } catch (error) {
-      console.error('Error creating question:', error);
-      setAlertMessage('Failed to create question');
-    }
+    });
+  
+    setChoiceText(updatedChoices);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Construct the request body
+    const requestBody = {
+      question_text: questionText,
+      program: selectedProgram ? selectedProgram.value : null,
+      competency: selectedCompetency ? selectedCompetency.value : null,
+      choices: choiceText.map(choice => ({
+      choiceText: choice.choiceText,
+      isCorrect: choice.isCorrect,
+    })),
+    };
+
+    // Send a POST request to create the question
+    axios
+      .post('http://localhost:3001/questions/create', requestBody)
+      .then((response) => {
+        setAlertMessage('Question created successfully');
+        setQuestionText('');
+        setChoiceText([{ choiceText: '', isCorrect: false }]);
+      })
+      .catch((error) => {
+        console.error('Error creating question:', error);
+        setAlertMessage('Failed to create question');
+      });
   };
 
   return (
@@ -110,103 +92,93 @@ const QuestionModal = ({ isOpen, onClose, fetchQuestions }) => {
             />
           </svg>
         </button>
-        <form onSubmit={handleSubmit} className="bg-white p-4 shadow-md">
-          {alertMessage && (
-            <div className="mb-2 text-blue-600 mx-auto justify-center">{alertMessage}</div>
-          )}
-
-          <div className="mb-4">
-            <label htmlFor="program" className="block font-bold text-gray-700">
-              Program
-            </label>
-            <Select
-              id="program"
-              name="program"
-              value={formData.program}
-              onChange={(selectedOption) => setFormData({ ...formData, program: selectedOption })}
-              options={programOptions}
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="competency" className="block font-bold text-gray-700">
-              Competency
-            </label>
-            <Select
-              id="competency"
-              name="competency"
-              value={formData.competency}
-              onChange={(selectedOption) => setFormData({ ...formData, competency: selectedOption })}
-              options={competencyOptions}
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="question_text" className="block font-medium mb-2">
-              Question Text
-            </label>
-            <textarea
-              type="text"
-              id="question_text"
-              name="question_text"
-              value={formData.question_text}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="choices" className="block font-medium mb-2">
-              Choices
-            </label>
-            <div className="space-y-2">
-              {formData.choices.map((choice, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`answer${choice}`}
-                    name="answer"
-                    checked={formData.answer === choice}
-                    onChange={() => handleCheckboxChange(choice)}
-                    className="h-5 w-5"
-                  />
-                  <input
-                    type="text"
-                    id={`choices${index}`}
-                    name={`choices${index}`}
-                    value={choice}
-                    onChange={(e) => {
-                      const newChoices = [...formData.choices];
-                      newChoices[index] = e.target.value;
-                      setFormData({ ...formData, choices: newChoices });
-                    }}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveChoice(index)}
-                    className="text-red-600 hover:text-red-800 font-bold focus:outline-none"
-                  >
-                    X
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={handleAddChoice}
-                className="mb-2 text-indigo-600 underline focus:outline-none"
-              >
-                Add Choice
-              </button>
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300"
-          >
-            Create Question
-          </button>
-        </form>
+    <form onSubmit={handleSubmit}>
+      {alertMessage && (
+        <div className="mb-2 text-blue-600 mx-auto justify-center">{alertMessage}</div>
+      )}
+      <div className="mb-4">
+        <label htmlFor="program" className="block font-bold text-gray-700">
+          Program
+        </label>
+        <Select
+          id="program"
+          name="program"
+          value={selectedProgram}
+          onChange={(selectedOption) => setSelectedProgram(selectedOption)}
+          options={programOptions}
+        />
       </div>
+
+      <div className="mb-4">
+        <label htmlFor="competency" className="block font-bold text-gray-700">
+          Competency
+        </label>
+        <Select
+          id="competency"
+          name="competency"
+          value={selectedCompetency}
+          onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+          options={competencyOptions}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="questionText" className="block font-bold text-gray-700">
+          Question Text
+        </label>
+        <textarea
+          id="questionText"
+          name="questionText"
+          value={questionText}
+          onChange={(e) => setQuestionText(e.target.value)}
+          className="block w-full mt-1 px-3 py-2 border border-blue-600 rounded-lg focus:outline-none focus:border-indigo-500"
+          required
+        />
+      </div>
+
+      {choiceText.map((choice, index) => (
+        <div className="flex items-center mb-2" key={index}>
+          <input
+            type="checkbox"
+            checked={choice.isCorrect} // Use choice.isCorrect here
+            onChange={() => handleChoiceChange(index, 'isCorrect', !choice.isCorrect)}
+            className='w-5 h-5 mr-3'
+          />
+          <input
+            type="text"
+            value={choice.choiceText}
+            onChange={(e) => handleChoiceChange(index, 'choiceText', e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-700 rounded-3xl focus:outline-none focus:border-indigo-500"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => handleRemoveChoice(index)}
+            className="ml-2 text-red-600 font-bold text-2xl focus:outline-none"
+          >
+            X
+          </button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={handleAddChoice}
+        className="mb-2 text-indigo-600 underline focus:outline-none"
+      >
+        Add Choice
+      </button>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none"
+        >
+          Add Question
+        </button>
+      </div>
+    </form>
+    </div>
     </div>
   );
 };

@@ -34,20 +34,21 @@ app.use("/category", programRouter); // Add this
 app.use("/filter", filterRouter); // Add this
 app.use("/verify", verifyRouter); // Add this
 app.use("/users", usersRouter); // Add this
-app.use('/avatar', express.static(path.join(__dirname, 'server', 'avatar')));
 app.use(cookieParser());
 
 const db = new Database();
 const conn = db.connection;
+const publicPath = path.join(__dirname, '..', 'smart-exam-final', 'public', 'avatar');
 
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
-    callback(null, 'avatar'); // Save images in the 'avatar' folder within the 'server' folder
+    callback(null, publicPath); // Use the dynamically determined 'public' directory path
   },
   filename: function (req, file, callback) {
     callback(null, file.originalname); // Use the original filename as the stored filename
   },
 });
+
 
 const upload = multer({ storage: storage });
 
@@ -84,12 +85,11 @@ app.get("/", verifyUser, (req, res) => {
 app.post('/register', upload.single('profileImage'), async (req, res) => {
   const { name, username, password, gender, status } = req.body;
   let imagePath = ''; // Initialize imagePath as null
-  const serverFolderPath = 'server/';
 
 
   if (req.file) {
     // Image has been uploaded
-    imagePath = serverFolderPath + 'avatar/' + req.file.originalname; // Path to the uploaded image
+    imagePath =  './avatar/' + req.file.originalname; // Path to the uploaded image
   }
 
   try {

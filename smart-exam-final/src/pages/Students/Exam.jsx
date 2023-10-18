@@ -10,17 +10,45 @@ function Exam() {
   const [maxQuestions, setMaxQuestions] = useState(10);
   const [score, setScore] = useState(0);
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null)); // Adjust the number of questions
-  const questionsPerPage = 2; // Adjust the number of questions per page
+  const questionsPerPage = 3; // Adjust the number of questions per page
   const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' });
   const [competencyScores, setCompetencyScores] = useState({});
   const [filteredQuestions, setFilteredQuestions] = useState([]);
 
+  function shuffleArray(array) {
+    const shuffledArray = [...array];
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+    return shuffledArray;
+  }
+
+  function shuffleArrayWithCorrectChoice(questions) {
+    const shuffledQuestions = [...questions];
+  
+    for (let i = 0; i < shuffledQuestions.length; i++) {
+      if (shuffledQuestions[i].choices) {
+        const correctChoices = shuffledQuestions[i].choices.filter((choice) => choice.isCorrect);
+        const incorrectChoices = shuffledQuestions[i].choices.filter((choice) => !choice.isCorrect);
+  
+        if (correctChoices.length > 0 && incorrectChoices.length > 2) {
+          // Shuffle the choices, ensuring one correct and three incorrect choices
+          const shuffledCorrectChoice = shuffleArray(correctChoices);
+          const shuffledIncorrectChoices = shuffleArray(incorrectChoices.slice(0, 3));
+          shuffledQuestions[i].choices = [...shuffledCorrectChoice, ...shuffledIncorrectChoices];
+        }
+      }
+    }
+  
+    return shuffledQuestions;
+  }  
+
   const getExamData = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:3001/questions/fetch');
-      console.log('filter: ', response.data)
-      setFilteredQuestions(response.data);
+      setFilteredQuestions(response.data); // Limit to 10 randomized questions
     } catch (error) {
       console.error('Error fetching data for refresh:', error);
     }
@@ -29,15 +57,17 @@ function Exam() {
   useEffect(() => {
     getExamData();
   }, [getExamData]);  
-  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (selectedProgram) {
           let response;
+          const maxQuestionsPerCategory = 100; // Set the maximum questions per category
+          let maxQuestions = 0; // Initialize maxQuestions to zero
   
           if (selectedCompetency?.value === 'All Competency') {
-            // If "All Competency" is selected, fetch questions for all available competencies
+            // Fetch questions for all available competencies
             const competencies = ['SWPPS', 'Casework', 'HBSE']; // Replace with your predefined competencies
             const allQuestions = [];
   
@@ -47,14 +77,25 @@ function Exam() {
                 `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
               );
   
-              // Check if questions already exist in allQuestions array
-              for (const question of competencyResponse.data) {
-                const existingQuestion = allQuestions.find((q) => q.question_id === question.question_id);
-                if (!existingQuestion) {
-                  allQuestions.push(question);
-                }
+              // Limit to maxQuestionsPerCategory questions per category
+              const limitedQuestions = shuffleArray(competencyResponse.data).slice(0, maxQuestionsPerCategory);
+              maxQuestions += limitedQuestions.length; // Increment the total questions count
+  
+              // Check if maxQuestions exceeds 500, and if so, truncate the questions.
+              if (maxQuestions > 500) {
+                const overflow = maxQuestions - 500;
+                limitedQuestions.splice(-overflow);
+                maxQuestions = 500;
+              }
+  
+              allQuestions.push(...limitedQuestions);
+  
+              // If maxQuestions is already 500, break the loop.
+              if (maxQuestions >= 500) {
+                break;
               }
             }
+  
             response = { data: allQuestions };
             localStorage.setItem('selectedCompetencyId', 'All');
           } else if (selectedCompetency) {
@@ -62,19 +103,34 @@ function Exam() {
             response = await axios.get(
               `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
             );
+  
+            // Limit to maxQuestionsPerCategory questions for the selected category
+            response.data = shuffleArray(response.data).slice(0, maxQuestionsPerCategory);
+            maxQuestions = response.data.length; // Set the total questions count
+  
+            // Truncate if maxQuestions exceeds 500
+            if (maxQuestions > 500) {
+              response.data.splice(-maxQuestions + 500);
+              maxQuestions = 500;
+            }
+  
             localStorage.setItem('selectedCompetencyId', selectedCompetency.value);
           } else {
             // If no competency is selected, use all questions
             await getExamData();
             return; // Exit early to avoid setting state again
           }
-          setFilteredQuestions(response.data);
-          setMaxQuestions(response.data.length);
+  
+          const randomizedQuestions = shuffleArray(response.data).slice(0, 500);
+          // Process choices
+          const processedQuestions = shuffleArrayWithCorrectChoice(randomizedQuestions);
+  
+          setFilteredQuestions(processedQuestions);
+          setMaxQuestions(maxQuestions); // Set the total questions count
           setCurrentQuestion(0);
-          setSelectedChoices(Array(response.data.length).fill(-1));
-          console.log('filterereQuestion: ', response.data);
-            console.log('selectedCompetencyId', selectedCompetency.value);
-
+          setSelectedChoices(Array(maxQuestions).fill(-1));
+          console.log('filteredQuestions:', response.data);
+          console.log('selectedCompetencyId', selectedCompetency.value);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -83,6 +139,9 @@ function Exam() {
   
     fetchData();
   }, [selectedProgram, selectedCompetency]);
+  
+  
+  
   
   const nextPage = () => {
     const nextQuestion = currentQuestion + questionsPerPage;
@@ -215,7 +274,6 @@ const competencyOptions = [
                 </ul>
               </div>
             ))}
-
           <div className="container flex justify-center p-4 header-bg dark:text-white">
           <ul className="list-style-none flex">
               <li>
@@ -228,7 +286,6 @@ const competencyOptions = [
                   </button>
                 )}
               </li>
-              
               <li>
                {isLastPage ? (
                 <button
@@ -250,7 +307,6 @@ const competencyOptions = [
           </div>
           </div>
         )}
-
 {showResults && <ExamResult filteredQuestions={filteredQuestions} selectedChoices={selectedChoices} resetGame={resetGame} />}
     </div>
   );

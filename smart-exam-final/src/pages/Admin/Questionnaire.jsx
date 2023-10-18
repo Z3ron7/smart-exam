@@ -7,8 +7,8 @@ const Questionnaire = () => {
   const [questionsData, setQuestionsData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState(null);
-  const [selectedProgram, setSelectedProgram] = useState(null); // Track selected program
-  const [selectedCompetency, setSelectedCompetency] = useState(null); // Track selected competency
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor Science in Social Work' }); // Track selected program
+  const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' }); // Track selected competency
   const [loading, setLoading] = useState(true);
 
 
@@ -69,15 +69,17 @@ const Questionnaire = () => {
 
 
   const programOptions = [
-    { value: 'Social Work', label: 'Social Work' },
+    { value: 'Social Work', label: 'Bachelor Science in Social Work' },
     { value: 'Option', label: 'Option' },
   ];
-  
+
   const competencyOptions = [
-    { value: 'All', label: 'All' },
+    { value: 'All Competency', label: 'All Competency' },
     { value: 'SWPPS', label: 'SWPPS' },
     { value: 'Casework', label: 'Casework' },
     { value: 'HBSE', label: 'HBSE' },
+    { value: 'CO', label: 'CO' },
+    { value: 'Groupwork', label: 'Groupwork' },
   ];
 
   return (

@@ -63,14 +63,16 @@ const Dashboard = () => {
     const [totalStudents, setTotalStudents] = useState(0);
     const [graduatingStudents, setGraduatingStudents] = useState(0);
     const [alumni, setAlumni] = useState(0);
+    const [pendingRequests, setPendingRequests] = useState(0);
   
     useEffect(() => {
       // Fetch the counts from your backend
       axios.get('http://localhost:3001/users/user-stats') // Adjust the URL accordingly
         .then((response) => {
-          setTotalStudents(response.data.totalUsers);
-          setGraduatingStudents(response.data.totalStudents);
-          setAlumni(response.data.totalAlumni);
+          setTotalStudents(response.data.totalStudentsVerified + response.data.totalAlumniVerified);
+          setGraduatingStudents(response.data.totalStudentsVerified);
+          setAlumni(response.data.totalAlumniVerified);
+          setPendingRequests(response.data.totalStudentsNotVerified + response.data.totalAlumniNotVerified);
         })
         .catch((error) => {
           console.error('Error fetching user statistics:', error);
@@ -118,7 +120,7 @@ const Dashboard = () => {
 				</div>
                     <div>
                         <h2 className='text-[#1cc88a] text-[11px] leading-[17px] px-[10px] font-bold'>PENDING REQUESTS</h2>
-                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] px-[10px] mt-[5px] dark:text-white'>204</h1>
+                        <h1 className='text-[20px] leading-[24px] font-bold text-[#5a5c69] px-[10px] mt-[5px] dark:text-white'>{pendingRequests}</h1>
                     </div>
                 </div>
 

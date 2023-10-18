@@ -12,15 +12,16 @@ const columns = [
     headerName: "Avatar",
     width: 100,
     renderCell: (params) => {
+      const imageUrl = params.row.image || "/noavatar.png";
       return (
         <img
-          src={params.row.image || "/noavatar.png"}
+          src={imageUrl}
           alt=""
           style={{ width: 40, height: 40 }}
         />
       );
-    },
-  },
+    },    
+  },  
   {
     field: "name",
     type: "string",
@@ -37,7 +38,7 @@ const columns = [
     field: "username",
     type: "string",
     headerName: "Email",
-    width: 200,
+    width: 250,
   },
   {
     field: "status",
@@ -104,7 +105,7 @@ const Users = () => {
         <div className="flex items-end marker:justify-end">
           <button
             onClick={() => openModal()}
-            className="bg-transparent border-2 border-indigo-700 hover:bg-indigo-700 active:bg-indigo-700 hover:text-white active:text-white py-2 px-4 rounded"
+            className="bg-transparent border-2 border-indigo-700 hover:bg-indigo-700 active:bg-indigo-700 dark:text-white hover:text-white active:text-white py-2 px-4 rounded"
           >
             Verify User's
           </button>

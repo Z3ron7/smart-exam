@@ -17,17 +17,19 @@ const conn = db.connection;
 const queryAsync = promisify(conn.query).bind(conn);
 
 router.get('/users', async (req, res) => {
-    try {
-      const query = 'SELECT user_id, name, gender, username, status FROM users WHERE status IN (?, ?)';
-      const statusFilter = ['student', 'alumni'];
-  
-      const users = await queryAsync(query, statusFilter);
-      res.json(users);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      res.status(500).json({ error: 'An error occurred while fetching data' });
-    }
-  });
+  try {
+    const query = 'SELECT user_id, name, gender, username, status, image FROM users WHERE status IN (?, ?) AND isVerified = ?';
+    const statusFilter = ['student', 'alumni'];
+    const isVerifiedValue = 1; // 1 for true
+
+    const users = await queryAsync(query, [...statusFilter, isVerifiedValue]);
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ error: 'An error occurred while fetching data' });
+  }
+});
+
   
   router.delete('/users/:user_id', async (req, res) => {
     try {
@@ -53,24 +55,39 @@ router.get('/users', async (req, res) => {
 
   router.get('/user-stats', async (req, res) => {
     try {
-      const query = 'SELECT status, COUNT(*) AS count FROM users GROUP BY status';
-      const results = await queryAsync(query);
-      
+      const query = `
+        SELECT status, isVerified, COUNT(*) AS count 
+        FROM users 
+        WHERE (isVerified = ? OR isVerified = ?)
+        AND status IN (?, ?) 
+        GROUP BY status, isVerified`;
+  
+      const isVerifiedTrue = 1; // 1 for true
+      const isVerifiedFalse = 0; // 0 for false
+      const statusFilter = ['student', 'alumni'];
+  
+      const results = await queryAsync(query, [isVerifiedTrue, isVerifiedFalse, ...statusFilter]);
+  
       const userStats = {
-        totalUsers: 0,
-        totalStudents: 0,
-        totalAlumni: 0,
+        totalStudentsVerified: 0,
+        totalAlumniVerified: 0,
+        totalStudentsNotVerified: 0,
+        totalAlumniNotVerified: 0,
       };
   
       results.forEach((row) => {
-        if (row.status === 'admin') {
-          userStats.totalUsers += row.count;
-        } else if (row.status === 'student') {
-          userStats.totalStudents += row.count;
-          userStats.totalUsers += row.count;
+        if (row.status === 'student') {
+          if (row.isVerified === isVerifiedTrue) {
+            userStats.totalStudentsVerified = row.count;
+          } else {
+            userStats.totalStudentsNotVerified = row.count;
+          }
         } else if (row.status === 'alumni') {
-          userStats.totalAlumni += row.count;
-          userStats.totalUsers += row.count;
+          if (row.isVerified === isVerifiedTrue) {
+            userStats.totalAlumniVerified = row.count;
+          } else {
+            userStats.totalAlumniNotVerified = row.count;
+          }
         }
       });
   
@@ -80,5 +97,7 @@ router.get('/users', async (req, res) => {
       res.status(500).json({ error: 'An error occurred while fetching statistics' });
     }
   });
+  
+  
   
   module.exports = router;

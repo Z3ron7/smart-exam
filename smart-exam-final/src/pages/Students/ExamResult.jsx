@@ -12,9 +12,14 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame }) => {
   // Function to calculate the total score for selected questions
   const calculateTotalScore = () => {
     return filteredQuestionsByCompetency.reduce((totalScore, question, index) => {
-      return totalScore + (selectedChoices[index].isCorrect ? 1 : 0);
+      const selectedChoice = selectedChoices[index];
+      if (selectedChoice && selectedChoice.isCorrect) {
+        return totalScore + 1;
+      }
+      return totalScore;
     }, 0);
   };
+  
 
   return (
     <div>

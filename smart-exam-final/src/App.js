@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Admin/Dashboard';
 import Questionnaire from './pages/Admin/Questionnaire';
 import Room from './pages/Admin/Room';
+import RoomSuper from './pages/SuperAdmin/Room';
 import Users from './pages/users/Users';
 import User from './pages/user/User';
 import LoginPage from './pages/Login/LoginPage';
@@ -87,6 +88,17 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutSuper><QuestionnaireSuper /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/room"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><RoomSuper /></LayoutSuper>}
               allowedRoles={['Super Admin']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}

@@ -30,9 +30,7 @@ const NavbarSuper = () => {
         <span className="dark:text-white">Admin</span>
       </div> */}
       <div className="flex items-center mx-auto">
-        <span className="text-xl font-medium whitespace-nowrap dark:text-white">
-          Welcome
-        </span>
+       
       </div>
 
       <div className="flex justify-end pr-4">

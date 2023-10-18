@@ -28,9 +28,9 @@ const DataTable = (props) => {
   };
 
     return (
-      <div className="dataTable">
+      <div className="dataTable w-full border-2 border-indigo-700"> 
         <DataGrid
-          className="dataGrid"
+          className="dataGrid dark:bg-slate-900 flex-row-reverse dark:text-white"
           rows={props.rows}
           columns={[...props.columns, actionColumn]}
           getRowId={(row) => row.user_id}
