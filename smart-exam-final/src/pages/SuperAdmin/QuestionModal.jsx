@@ -75,7 +75,7 @@ const QuestionModal = ({isOpen, onClose}) => {
     <div
       className={`fixed inset-0 flex items-center justify-center z-50 ${
         isOpen ? 'block' : 'hidden'
-      } bg-opacity-50 bg-gray-900`}
+      } bg-opacity-50 bg-transparent`}
       onClick={onClose}
     >
       <div

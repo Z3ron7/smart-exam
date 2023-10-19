@@ -185,6 +185,24 @@ router.put("/update/:questionId", async (req, res) => {
   }
 });
 
+router.delete("/delete/:questionId", async (req, res) => {
+  const { questionId } = req.params;
+
+  try {
+    // Delete the question and associated choices
+    await queryAsync(
+      "DELETE FROM question WHERE question_id = ?;",
+      [questionId]
+    );
+
+    // Respond with a success message
+    res.json({ message: "Question and associated choices deleted successfully", question_id: questionId });
+  } catch (error) {
+    console.error("Error deleting question and associated choices:", error);
+    res.status(500).json({ error: "Failed to delete question and associated choices" });
+  }
+});
+
 
 router.get('/refresh', async (req, res) => {
   const db = new Database();

@@ -38,7 +38,6 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
     try {
       const response = await axios.get('http://localhost:3001/questions/fetch');
       setQuestionsData(response.data); // Limit to 10 randomized questions
-      console.log("Data:", response.data)
     } catch (error) {
       console.error('Error fetching data for refresh:', error);
     }
@@ -54,7 +53,20 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
     // Assuming you want to start with 'A' for index 0
     return String.fromCharCode(65 + index);
   };
-
+  const handleDelete = (questionId) => {
+    // Make an API request to delete the question by its ID
+    axios
+      .delete(`http://localhost:3001/questions/delete/${questionId}`)
+      .then((response) => {
+        // Handle success, for example, you can close the modal or update the questions list
+        console.log('Question deleted successfully');
+        // Close the modal or update the questions list here
+      })
+      .catch((error) => {
+        console.error('Error deleting question:', error);
+        // Handle the error, display an error message, or take other appropriate actions
+      });
+  };
   const programOptions = [
     { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
     { value: 'Option', label: 'Option' },
@@ -127,52 +139,67 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
       <div className="container min-h-screen h-auto items flex flex-col bg-transparent">
       
         <div className="grid grid-cols-1 gap-4 mt-4">
-<ul>
-{questionsData.map((question, index) => (
-  <li key={question.question_id}>
-    <div className="border-2 border-indigo-700 dark:bg-slate-900 shadow-lg items-center justify-center my-2">
-      {/* Add the Edit button in the top-right corner */}
-      <button
-                    onClick={() => openEditModal(question)} // Open the edit modal with the clicked question
-                    className=" items-end text-gray-600"
-                  >
-                    Edit
-                  </button>
-                  <EditQuestionModal
-    isOpen={isModalOpen}
-    onClose={closeEditModal}
-    questionToEdit={questionToEdit}
-    programOptions={programOptions} // Pass program options to EditQuestionModal
-        competencyOptions={competencyOptions}
-    fetchQuestions={fetchQuestions}
-  />
-      <div className="text-xl text-center dark:text-white btn-primary">
-        Question
-      </div>
-      <div className="p-3 dark:text-white text-2xl text-center">{question.questionText}</div>
-      <div id="answers-container" className="p-3">
-        {question.choices.map((choice, choiceIndex) => (
-          <div
-            className="container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer"
-            key={choiceIndex}
-          >
-            <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
-              {generateLetter(choiceIndex)}
-            </div>
-            <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice.choiceText}</div>
+        <ul>
+  {questionsData.map((question, index) => (
+    <li key={question.question_id}>
+      <div className="border-2 border-indigo-700 dark:bg-slate-900 shadow-lg items-center justify-center my-2">
+        <div className="flex justify-end"> {/* Create a flex container for buttons */}
+          <div className='m-2'>
+            <button
+              onClick={() => {
+                console.log('Question:', question);
+                openEditModal(question);
+              }}
+              className="items-end text-green-600 text-base"
+            >
+              Edit
+            </button>
           </div>
-        ))}
+          <div className='mr-4 mt-2'>
+            <button
+              onClick={() => {
+                handleDelete(question.question_id);
+              }}
+              className="items-end text-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+        <EditQuestionModal
+          isOpen={isModalOpen}
+          onClose={closeEditModal}
+          questionToEdit={questionToEdit}
+          programOptions={programOptions}
+          competencyOptions={competencyOptions}
+          fetchQuestions={fetchQuestions}
+        />
+        <div className="text-xl text-center dark:text-white btn-primary">Question</div>
+        <div className="p-3 dark:text-white text-2xl text-center">{question.questionText}</div>
+        <div id="answers-container" className="p-3">
+          {question.choices.map((choice, choiceIndex) => (
+            <div
+              className="container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer"
+              key={choiceIndex}
+            >
+              <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
+                {generateLetter(choiceIndex)}
+              </div>
+              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice.choiceText}</div>
+            </div>
+          ))}
+        </div>
+        <div className="flex mb-4 items-center">
+          <span className="font-bold mr-3 text-lg dark:text-white">Answer:</span>
+          <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
+            {question.choices.filter((choice) => choice.isCorrect).map((choice) => choice.choiceText).join(', ')}
+          </span>
+        </div>
       </div>
-      <div className="flex mb-4 items-center">
-        <span className="font-bold mr-3 text-lg dark:text-white">Answer:</span>
-        <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
-          {question.choices.filter((choice) => choice.isCorrect).map((choice) => choice.choiceText).join(', ')}
-        </span>
-      </div>
-    </div>
-  </li>
-))}
+    </li>
+  ))}
 </ul>
+
 </div>
 
       </div>

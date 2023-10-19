@@ -3,20 +3,19 @@ import axios from 'axios';
 import Select from 'react-select';
 
 const programOptions = [
-    { value: 'Social Work', label: 'Bachelor Science in Social Work' },
-    { value: 'Option', label: 'Option' },
+    { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
   ];
 
   const competencyOptions = [
-    { value: 'SWPPS', label: 'SWPPS' },
-    { value: 'Casework', label: 'Casework' },
-    { value: 'HBSE', label: 'HBSE' },
-    { value: 'CO', label: 'CO' },
-    { value: 'Groupwork', label: 'Groupwork' },
+    { value: 1, label: 'SWPPS' },
+    { value: 2, label: 'Casework' },
+    { value: 3, label: 'HBSE' },
+    { value: 5, label: 'CO' },
+    { value: 6, label: 'Groupwork' },
   ];
 
-const EditQuestionModal = ({ isOpen, onClose, questionToEdit, programOptions, competencyOptions, fetchQuestions }) => {
-  const [selectedProgram, setSelectedProgram] = useState(null);
+const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions }) => {
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor Science in Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState(null);
   const [questionText, setQuestionText] = useState('');
   const [choices, setChoices] = useState([{ choiceText: '', isCorrect: false }]);
@@ -24,35 +23,19 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit, programOptions, co
 
   useEffect(() => {
     if (isOpen && questionToEdit) {
-      // Fetch associated program and competency for the selected question
-      const fetchProgramAndCompetency = async () => {
-        try {
-          const [program, competency] = await Promise.all([
-            // Fetch program based on the question's program_id
-            axios.get(`http://localhost:3001/program/${questionToEdit.program_id}`),
-            // Fetch competency based on the question's competency_id
-            axios.get(`http://localhost:3001/competency/${questionToEdit.competency_id}`),
-          ]);
-
-          // Set the selected program and competency options
-          setSelectedProgram({ value: program.data.program_id, label: program.data.program_name });
-          setSelectedCompetency({ value: competency.data.competency_id, label: competency.data.competency_name });
-
-          setQuestionText(questionToEdit.questionText);
-          setChoices(questionToEdit.choices);
-        } catch (error) {
-          console.error('Error fetching program and competency:', error);
-        }
-      };
-
-      fetchProgramAndCompetency();
+      setSelectedProgram(questionToEdit.program ? { value: questionToEdit.program, label: questionToEdit.program } : null);
+      setSelectedCompetency(questionToEdit.competency_id);
+      console.log('questionToEdit.competency_id:', questionToEdit.competency_id);
+      setQuestionText(questionToEdit.questionText);
+      setChoices(questionToEdit.choices);
+      console.log('questionToEdit:', questionToEdit);
     }
-
     // Fetch questions when the modal opens
     if (isOpen) {
-        fetchQuestions();
+      fetchQuestions();
     }
   }, [isOpen, questionToEdit]);
+  
 
   const handleAddChoice = () => {
     setChoices([...choices, { choiceText: '', isCorrect: false }]);
@@ -102,7 +85,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit, programOptions, co
     <div
       className={`fixed inset-0 flex items-center justify-center z-50 ${
         isOpen ? 'block' : 'hidden'
-      } bg-opacity-50 bg-gray-900`}
+      } bg-opacity-50 bg-transparent`}
       onClick={onClose}
     >
       <div
@@ -125,7 +108,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit, programOptions, co
             <Select
               id="program"
               name="program"
-              value={selectedProgram}
+              value={{ value: 'Social Work', label: 'Bachelor of Science in Social Work' }}
               onChange={(selectedOption) => setSelectedProgram(selectedOption)}
               options={programOptions}
             />
@@ -136,12 +119,12 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit, programOptions, co
               Competency
             </label>
             <Select
-              id="competency"
-              name="competency"
-              value={selectedCompetency}
-              onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-              options={competencyOptions}
-            />
+  id="competency"
+  name="competency"
+  value={competencyOptions.find((option) => option.value === selectedCompetency)}
+  onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+  options={competencyOptions}
+/>
           </div>
 
           <div className="mb-4">
