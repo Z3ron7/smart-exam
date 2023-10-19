@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
+import { ThemeContext } from "../../components/ThemeContext";
 
 const programOptions = [
     { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
@@ -80,7 +81,27 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
         setAlertMessage('Failed to update question');
       });
   };
-
+  const { theme } = useContext(ThemeContext);
+  const customStyles = {
+    control: (provided, state) => {
+      const backgroundColor = theme === 'dark' ? 'slate-700' : 'white'; // Adjust colors for dark mode
+      const textColor = theme === 'dark' ? 'white' : 'black';
+      return {
+        ...provided,
+        backgroundColor: backgroundColor,
+        color: textColor, // Change `textColor` instead of `text`
+        // Add other style properties as needed
+      };
+    },
+    placeholder: (provided, state) => {
+      const placeholderColor = theme === 'dark' ? 'white' : 'black'; // Adjust placeholder color for dark mode
+      return {
+        ...provided,
+        color: placeholderColor,
+        // Add other style properties for placeholder as needed
+      };
+    },
+  };
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center z-50 ${
@@ -89,7 +110,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
       onClick={onClose}
     >
       <div
-        className="modal-container bg-white w-3/5 p-4 border border-gray-700 mb-2 rounded-3xl"
+        className="modal-container bg-white dark:bg-slate-900 w-3/5 p-4 border-2 border-indigo-700 mb-2 rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
@@ -101,34 +122,36 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
           {alertMessage && (
             <div className="mb-2 text-blue-600 mx-auto justify-center">{alertMessage}</div>
           )}
-          <div className="mb-4">
-            <label htmlFor="program" className="block font-bold text-gray-700">
+          <div className="mb-4 dark:text-white">
+            <label htmlFor="program" className="block font-bold dark:text-white text-gray-700">
               Program
             </label>
-            <Select
+            <Select  className='dark:bg-slate-700 dark:text-white'
               id="program"
               name="program"
-              value={{ value: 'Social Work', label: 'Bachelor of Science in Social Work' }}
+              value={selectedProgram}
               onChange={(selectedOption) => setSelectedProgram(selectedOption)}
               options={programOptions}
+              styles={customStyles}
             />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="competency" className="block font-bold text-gray-700">
+            <label htmlFor="competency" className="block font-bold dark:text-white text-gray-700">
               Competency
             </label>
-            <Select
+            <Select className='dark:bg-slate-700 text-black'
   id="competency"
   name="competency"
   value={competencyOptions.find((option) => option.value === selectedCompetency)}
   onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
   options={competencyOptions}
+  styles={customStyles}
 />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="questionText" className="block font-bold text-gray-700">
+            <label htmlFor="questionText" className="block font-bold text-gray-700 dark:text-white">
               Question Text
             </label>
             <textarea
@@ -136,7 +159,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
               name="questionText"
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
-              className="block w-full mt-1 px-3 py-2 border border-blue-600 rounded-lg focus:outline-none focus:border-indigo-500"
+              className="block w-full mt-1 px-3 py-2 border-2 dark:bg-slate-700 dark:text-white border-blue-600 rounded-lg focus:outline-none focus:border-indigo-500"
               required
             />
           </div>
@@ -147,13 +170,13 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
                 type="checkbox"
                 checked={choice.isCorrect}
                 onChange={() => handleChoiceChange(index, 'isCorrect', !choice.isCorrect)}
-                className="w-5 h-5 mr-3"
+                className="w-5 h-5 mr-3  dark:bg-slate-700 dark:text-white"
               />
               <input
                 type="text"
                 value={choice.choiceText}
                 onChange={(e) => handleChoiceChange(index, 'choiceText', e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-700 rounded-3xl focus:outline-none focus:border-indigo-500"
+                className="flex-1 px-3 py-2 border-2  dark:bg-slate-700 dark:text-white dark:border-indigo-700 rounded-3xl focus:outline-none focus:border-indigo-700"
                 required
               />
               <button

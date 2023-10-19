@@ -204,6 +204,8 @@ const competencyOptions = [
   { value: 'SWPPS', label: 'SWPPS' },
   { value: 'Casework', label: 'Casework' },
   { value: 'HBSE', label: 'HBSE' },
+  { value: 'CO', label: 'CO' },
+  { value: 'Groupwork', label: 'Groupwork' },
 ];
 
   const isLastPage = currentQuestion + questionsPerPage >= maxQuestions;
@@ -212,7 +214,7 @@ const competencyOptions = [
   
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
-      <div className="flex flex-col lg:flex-row text-center py-4 header-bg shadow-md text-lg font-semibold dark:text-white ">
+      <div className="flex flex-col lg:flex-row text-center dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white ">
           <div className="flex flex-col lg:flex-row md:col-4 sm:col-2 gap-5 justify-center items-center mx-auto dark:text-white">
             <div className="mb-4 lg:w-72 md:w-36 sm:w-16 dark:bg-slate-600">
               <Select
@@ -237,8 +239,6 @@ const competencyOptions = [
             </div>
           </div>
         </div>
-
-        <h1 className="text-2xl font-bold mb-4 mx-auto justify-center dark:text-gray-500">Pre-board Exam</h1>
 
         {!showResults && (
           <div>
@@ -307,7 +307,11 @@ const competencyOptions = [
           </div>
           </div>
         )}
-{showResults && <ExamResult filteredQuestions={filteredQuestions} selectedChoices={selectedChoices} resetGame={resetGame} />}
+        {showResults && <ExamResult 
+        filteredQuestions={filteredQuestions} 
+        selectedChoices={selectedChoices} 
+        resetGame={resetGame} 
+        selectedCompetency={selectedCompetency} />}
     </div>
   );
 } 

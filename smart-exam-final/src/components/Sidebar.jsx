@@ -52,26 +52,25 @@ const Sidebar = () => {
         </Link>
 
         <ul className='pt-6'>
-          {Menus.map((menu, index) => (
-            <Link to={menu.path} key={index}>
-              <li
-                className={`flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer dark:text-white hover:bg-slate-800 dark:hover:bg-indigo-700
-                        ${menu.gap ? 'mt-9' : 'mt-2'} ${
-                  location.pathname === menu.path &&
-                  'bg-indigo-800 dark:bg-indigo-700'
-                }`}
-              >
-                <span className='text-2xl mx-2 py-1'>{menu.src}</span>
-                <span
-                  className={`${
-                    !open && 'hidden'
-                  } origin-left duration-300 hover:block`}
-                >
-                  {menu.title}
-                </span>
-              </li>
-            </Link>
-          ))}
+        {Menus.map((menu, index) => (
+  <Link to={menu.path} key={index}>
+    <li
+      className={`
+        flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer
+        hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
+        transition-transform ease-in-out ${menu.gap ? 'mt-9' : 'mt-2'}
+        ${location.pathname === menu.path && 'bg-indigo-800 dark:bg-indigo-700 text-white transform scale-110'}
+      `}
+    >
+      <span className='text-2xl mx-2 py-1'>{menu.src}</span>
+      <span className={`${
+        !open && 'hidden'
+      } origin-left duration-300 hover:block`}>
+        {menu.title}
+      </span>
+    </li>
+  </Link>
+))}
         </ul>
       </div>
       {/* Mobile Menu */}

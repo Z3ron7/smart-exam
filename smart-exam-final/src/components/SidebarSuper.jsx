@@ -3,9 +3,10 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { BsArrowLeftCircle } from 'react-icons/bs'
 import { AiFillPieChart } from 'react-icons/ai'
-import { SiFuturelearn } from 'react-icons/si'
-import { SiOpenaccess } from 'react-icons/si'
-import { CgProfile } from 'react-icons/cg'
+import { BsPeopleFill } from 'react-icons/bs'
+import { RiQuestionnaireFill } from 'react-icons/ri'
+import { SiGoogleclassroom } from 'react-icons/si'
+import { RiAdminFill } from 'react-icons/ri'
 import Logo from '../assets/images/logo.svg'
 import HamburgerButton from './HamburgerMenuButton/HamburgerButton'
 
@@ -16,10 +17,10 @@ const SidebarSuper = () => {
 
   const Menus = [
     { title: 'Dashboard', path: '/super-dashboard', src: <AiFillPieChart /> },
-    { title: 'Students', path: '/users', src: <SiFuturelearn /> },
-    { title: 'Questionnaire', path: '/questionnaire', src: <SiFuturelearn /> },
-    { title: 'Room', path: '/room', src: <SiFuturelearn /> },
-    { title: 'Admin', path: '/admin', src: <SiFuturelearn /> },
+    { title: 'Students', path: '/users', src: <BsPeopleFill /> },
+    { title: 'Questionnaire', path: '/questionnaire', src: <RiQuestionnaireFill /> },
+    { title: 'Room', path: '/room', src: <SiGoogleclassroom /> },
+    { title: 'Admin', path: '/admin', src: <RiAdminFill /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ]
 
@@ -52,26 +53,26 @@ const SidebarSuper = () => {
         </Link>
 
         <ul className='pt-6'>
-          {Menus.map((menu, index) => (
-            <Link to={menu.path} key={index}>
-              <li
-                className={`flex items-center gap-x-6 p-3 text-base active:text-white font-normal rounded-lg cursor-pointer ease-in-out hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
-                        ${menu.gap ? 'mt-9' : 'mt-2'} ${
-                  location.pathname === menu.path &&
-                  'bg-indigo-800 dark:bg-indigo-700 text-white'
-                }`}
-              >
-                <span className='text-2xl mx-2 py-1'>{menu.src}</span>
-                <span
-                  className={`${
-                    !open && 'hidden'
-                  } origin-left duration-300 hover:block`}
-                >
-                  {menu.title}
-                </span>
-              </li>
-            </Link>
-          ))}
+        {Menus.map((menu, index) => (
+  <Link to={menu.path} key={index}>
+    <li
+      className={`
+        flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer
+        hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
+        transition-transform ease-in-out ${menu.gap ? 'mt-9' : 'mt-2'}
+        ${location.pathname === menu.path && 'bg-indigo-800 dark:bg-indigo-700 text-white transform scale-110'}
+      `}
+    >
+      <span className='text-2xl mx-2 py-1'>{menu.src}</span>
+      <span className={`${
+        !open && 'hidden'
+      } origin-left duration-300 hover:block`}>
+        {menu.title}
+      </span>
+    </li>
+  </Link>
+))}
+
         </ul>
       </div>
       {/* Mobile Menu */}

@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, } from 'recharts';
 import PieComponent from './PieComponent';
 // import { Progress } from 'antd';
+import VerifyUser from './VerifyUser'
 import axios from 'axios';
 import error from "../../assets/images/error.png"
 import './dashboard.scss'
@@ -126,7 +127,7 @@ const Dashboard = () => {
 
             </div>
             <div className='flex flex-col md:flex-row md:gap-6 mt-[16px] w-full'>
-            <div className='basis-[54%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
+            <div className='basis-[54%] border-2 border-indigo-700 bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED] mb-[20px]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold '>Students task chart</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
@@ -157,7 +158,7 @@ const Dashboard = () => {
                     </div>
 
                 </div>
-                <div className='basis-[43%] w-96 border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
+                <div className='basis-[43%] w-96 border-2 border-indigo-700 bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Categories</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
@@ -173,40 +174,16 @@ const Dashboard = () => {
                 </div>
             </div>
             <div className='flex flex-col md:flex-row lg:flex-row md:gap-6 lg:gap-6 mt-[22px] w-full'>
-            <div className='basis-[55%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
+            <div className='basis-[55%] border-2 border-indigo-700 bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800 mb-4 md:mb-0 lg:mb-0 lg:mr-4'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'>Pending Students</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />
                     </div>
-                    {/* <div className='px-[25px] space-y-[15px] py-[15px]'>
-                        <div>
-                            <h2>Server Migration</h2>
-                            <Progress percent={30} strokeColor="#E74A3B" />
-                        </div>
-                        <div>
-                            <h2>Sales Tracking</h2>
-                            <Progress percent={50} status="active" strokeColor="#F6C23E" />
-                        </div>
-                        <div>
-                            <h2>Customer Database</h2>
-                            <Progress percent={70} status="active" strokeColor="#4E73DF" />
-                        </div>
-                        <div>
-                            <h2>Payout Details</h2>
-                            <Progress percent={100} strokeColor="#36B9CC" />
-                        </div>
-                        <div>
-                            <h2>Account Setup</h2>
-                            <Progress percent={50} status="exception" strokeColor="#1CC88A" />
-                        </div>
-                    </div> */}
-
-
-
-
+                    
+                    <VerifyUser />
 
                 </div>
-                <div className='basis-[44%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
+                <div className='basis-[44%] border-2 border-indigo-700 bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-800'>
                     <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-darkBlue-900 border-[#EDEDED]'>
                         <h2 className='text-[#4e73df] text-[16px] leading-[19px] font-bold'> Task</h2>
                         <FaEllipsisV color="gray" className='cursor-pointer' />

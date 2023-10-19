@@ -83,49 +83,63 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
 
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
-      <header className="dark:bg-slate-900 space-y-4 p-4 sm:px-8 sm:py-6 lg:p-4 xl:px-8 xl:py-6 mb-2 border-[#4E73DF] border-2">
+      <header className="dark:bg-slate-900 space-y-2 p-2 sm:px-8 sm:py-6 lg:p-2 xl:px-8 xl:py-3 mb-2 border-[#4E73DF] border-2">
   <div className="flex items-center ">
     <h2 className="font-semibold text-slate-900 items-center dark:text-white">Exam Room</h2>
   </div>
 
-  <div className="flex text-center py-4 text-lg grid-cols-4 md:grid-cols-2 md:grid-rows-2 font-semibold dark:text-white space-x-4">
-    <form className="group relative flex-1">
-      <svg width="20" height="20" fill="currentColor" className="absolute left-3 top-1/2 -mt-4 text-slate-400 pointer-events-none group-focus-within:text-blue-500" aria-hidden="true">
-        <path fillRule="evenodd" clipRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
-      </svg>
-      <input className="focus:ring-2 focus:ring-blue-500 focus:outline-none appearance-none lg:w-96 text-sm leading-6 text-slate-900 placeholder-slate-400 rounded-md py-2 pl-10 ring-1 ring-slate-200 shadow-sm" type="text" aria-label="Filter projects" placeholder="Search question..." />
-    </form>
-
-    <div className="mb-4 w-72">
-      
-    <Select
-                placeholder="Program"
-                id="program"
-                name="program"
-                value={selectedProgram}
-                onChange={(selectedOption) => setSelectedProgram(selectedOption)}
-                options={programOptions}
-              />
-    </div>
-    <div className="mb-4 w-72">
-      
-    <Select
-                placeholder="Competency"
-                id="competency"
-                name="competency"
-                value={selectedCompetency}
-                onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-                options={competencyOptions}
-              />
-    </div>
+  <div className="flex flex-col w-full lg:grid lg:grid-rows-2 lg:grid-cols-1 text-center py-2 text-lg font-semibold dark:text-white space-x-4">
+  <div className="flex items-center justify-between w-full">
+  <form className="group flex-1 mb-3 mr-3 relative">
+  <svg
+    width="20"
+    height="20"
+    fill="currentColor"
+    className="absolute left-0 top-1/2 -mt-2.5 ml-2 text-slate-400 pointer-events-none group-focus-within:text-blue-500"
+    aria-hidden="true"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+    />
+  </svg>
+  <input
+    className="focus:ring-2 focus:ring-blue-500 w-full focus:outline-none appearance-none lg:w-full text-sm leading-6 text-slate-900 placeholder-slate-400 rounded-md py-2 pl-10 ring-1 ring-slate-200 shadow-sm"
+    type="text"
+    aria-label="Filter projects"
+    placeholder="Search question..."
+  />
+</form>
 
     <button
       onClick={() => openModal()}
-      className="bg-indigo-700 hover:bg-indigo-600 md:text-sm text-white h-11 py-2 px-4 rounded"
+      className="flex bg-indigo-700 hover:bg-indigo-600 w-32 justify-center items-center text-sm text-center mb-3 text-white h-10 py-2 px-4 rounded"
     >
-      New Question
+     New Question
     </button>
   </div>
+  <div className="flex space-x-4 lg:order-last items-center justify-center">
+    <Select
+      placeholder="Program"
+      id="program"
+      name="program"
+      value={selectedProgram}
+      onChange={(selectedOption) => setSelectedProgram(selectedOption)}
+      options={programOptions}
+    />
+    <Select
+      placeholder="Competency"
+      id="competency"
+      name="competency"
+      value={selectedCompetency}
+      onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+      options={competencyOptions}
+    />
+  </div>
+</div>
+
+
 
   {/* Render the modal */}
   <QuestionModal
@@ -190,8 +204,8 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
           ))}
         </div>
         <div className="flex mb-4 items-center">
-          <span className="font-bold mr-3 text-lg dark:text-white">Answer:</span>
-          <span className="container btn-container h-[80px] items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
+          <span className="font-bold mx-3 text-lg dark:text-white">Answer:</span>
+          <span className="container btn-container px-3 py-2 h-fit w-fit items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
             {question.choices.filter((choice) => choice.isCorrect).map((choice) => choice.choiceText).join(', ')}
           </span>
         </div>

@@ -86,3 +86,55 @@ function VerifyUser({isOpen, onClose}) {
 }
 
 export default VerifyUser;
+
+
+// useEffect(() => {
+//   const fetchData = async () => {
+//     try {
+//       if (selectedProgram) {
+//         let response;
+
+//         if (selectedCompetency?.value === 'All Competency') {
+//           // If "All Competency" is selected, fetch questions for all available competencies
+//           const competencies = ['SWPPS', 'Casework', 'HBSE']; // Replace with your predefined competencies
+//           const allQuestions = [];
+
+//           // Fetch questions for each competency and merge the results
+//           for (const competency of competencies) {
+//             const competencyResponse = await axios.get(
+//               `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+//             );
+
+//             // Check if questions already exist in allQuestions array
+//             for (const question of competencyResponse.data) {
+//               const existingQuestion = allQuestions.find((q) => q.question_id === question.question_id);
+//               if (!existingQuestion) {
+//                 allQuestions.push(question);
+//               }
+//             }
+//           }
+//           response = { data: allQuestions };
+//           localStorage.setItem('selectedCompetencyId', 'All');
+//         } else if (selectedCompetency) {
+//           // Fetch questions for the selected competency
+//           response = await axios.get(
+//             `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
+//           );
+//           localStorage.setItem('selectedCompetencyId', selectedCompetency.value);
+//         } else {
+//           // If no competency is selected, use all questions
+//           await fetchQuestions();
+//           return; // Exit early to avoid setting state again
+//         }
+//         setQuestionsData(response.data);
+//         // setMaxQuestions(response.data.length);
+//         // setCurrentQuestion(0);
+
+//       }
+//     } catch (error) {
+//       console.error('Error:', error);
+//     }
+//   };
+
+//   fetchData();
+// }, [selectedProgram, selectedCompetency]);
