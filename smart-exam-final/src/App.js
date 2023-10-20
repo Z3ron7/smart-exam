@@ -17,7 +17,7 @@ import Register from './pages/Login/Register';
 import PageNotFound from './pages/PageNotFound';
 import StudentDashboard from './pages/Students/StudentDashboard';
 import Exam from './pages/Students/Exam'
-import Result from './pages/Students/Result'
+import ExamHistory from './pages/Students/ExamHistory'
 import ProtectedRoute from './pages/ProtectedRoute';
 import AddQuestion from './pages/Admin/AddQuestion'
 
@@ -197,7 +197,7 @@ function App() {
           path="/result"
           element={
             <ProtectedRoute
-              element={<LayoutStudents><Result /></LayoutStudents>}
+              element={<LayoutStudents><ExamHistory /></LayoutStudents>}
               allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}

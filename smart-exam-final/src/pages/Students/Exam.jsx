@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import classNames from "classnames";
+import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Select from 'react-select';
 import ExamResult from './ExamResult'
 
@@ -15,6 +16,7 @@ function Exam() {
   const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' });
   const [competencyScores, setCompetencyScores] = useState({});
   const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [userExamId, setUserExamId] = useState(null);
 
   function shuffleArray(array) {
     const shuffledArray = [...array];
@@ -139,19 +141,7 @@ function Exam() {
   
     fetchData();
   }, [selectedProgram, selectedCompetency]);
-  
-  
-  
-  
-  const nextPage = () => {
-    const nextQuestion = currentQuestion + questionsPerPage;
-    setCurrentQuestion(nextQuestion);
-  };
 
-  const prevPage = () => {
-    const prevQuestion = currentQuestion - questionsPerPage;
-    setCurrentQuestion(prevQuestion);
-  };
 // Function to update scores for each competency
 const updateCompetencyScore = (competencyId, score) => {
   setCompetencyScores((prevScores) => ({
@@ -188,7 +178,7 @@ const calculateScore = () => {
 };
 
   const resetGame = () => {
-    setSelectedChoices(Array(maxQuestions).fill(null)); // Reset selected answers
+    setSelectedChoices(Array(maxQuestions).fill(-1)); // Reset selected answers
     setScore(0); // Reset the score
     setCurrentQuestion(0);
     setShowResults(false);
@@ -207,38 +197,209 @@ const competencyOptions = [
   { value: 'CO', label: 'CO' },
   { value: 'Groupwork', label: 'Groupwork' },
 ];
+const countdownOptions = [
+  { value: 0, label: '0' },
+  { value: 1, label: '1 hour' },
+  { value: 2, label: '2 hours' },
+  { value: 3, label: '3 hours' },
+  { value: 4, label: '4 hours' },
+  { value: 5, label: '5 hours' },
+];
 
-  const isLastPage = currentQuestion + questionsPerPage >= maxQuestions;
-  const isFirstPage = currentQuestion === 0;
+// Add your state variables for selected options
+const [num, setNum] = useState(0);
+const [selectedTime, setSelectedTime] = useState(1);
+const [countdownStarted, setCountdownStarted] = useState(false);
+const [examStartTime, setExamStartTime] = useState(null);
 
-  
+let intervalRef = useRef();
+
+const formatTime = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
+};
+
+const decreaseNum = () => setNum((prev) => prev - 1);
+
+useEffect(() => {
+  if (countdownStarted && selectedTime > 0 && num > 0) {
+    intervalRef.current = setInterval(decreaseNum, 1000);
+  } else {
+    clearInterval(intervalRef.current);
+    if (num === 0) {
+      // Call the handleEndExam function when the timer reaches 0
+    }
+  }
+  return () => clearInterval(intervalRef.current);
+}, [countdownStarted, selectedTime, num]);
+
+
+const handleTimeChange = (selectedOption) => {
+  setSelectedTime(selectedOption.value);
+  setNum(selectedOption.value * 3600);
+  setCountdownStarted(false);
+};
+const startExam = async () => {
+  const currentStartTime = new Date();
+
+  try {
+    // Validate selectedProgram and selectedCompetency
+    const programValue = selectedProgram ? selectedProgram.value : null;
+    const competencyValue = selectedCompetency ? selectedCompetency.value : null;
+
+    if (programValue === null || competencyValue === null) {
+      // Handle the case where program or competency is not selected
+      console.error('Program or competency is not selected.');
+      // You can display an error message to the user or handle it as needed.
+      return;
+    }
+
+    // Get the user_id from localStorage
+    const user_id = localStorage.getItem('user_id');
+
+    // Create a user_exam entry in the database
+    const response = await axios.post('http://localhost:3001/exams/user-exams', {
+      user_id,
+      program: programValue,
+      competency: competencyValue,
+      duration_minutes: selectedTime * 60, // Convert selectedTime to minutes
+      start_time: currentStartTime,
+    });
+
+    // Store the user_exam_id and other relevant data in your frontend state
+    setUserExamId(response.data.user_exam_id);
+    setCountdownStarted(true);
+    setNum(selectedTime * 3600); // Set the countdown time in seconds
+    setExamStartTime(currentStartTime);
+  } catch (error) {
+    console.error('Error starting exam:', error);
+  }
+};
+
+const endExam = async () => {
+  try {
+    const user_exam_id = userExamId;
+    const endTime = new Date();
+    // Convert JavaScript Date to DATETIME string in 24-hour format
+const formattedEndTime = `${endTime.getFullYear()}-${(endTime.getMonth() + 1).toString().padStart(2, '0')}-${endTime.getDate().toString().padStart(2, '0')} ${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}:${endTime.getSeconds().toString().padStart(2, '0')}`;
+
+    const startTime = examStartTime;
+
+    // Calculate the duration in milliseconds
+    const durationMilliseconds = endTime - startTime;
+
+    // Calculate the total duration in minutes (including the interval time)
+    const total_duration_minutes_with_interval = (durationMilliseconds / 60000).toFixed(2);
+
+    // Send the total duration in the "00h:00m:00s" format
+    const formattedTotalDuration = `${String(Math.floor(total_duration_minutes_with_interval / 60)).padStart(2, '0')}h:${String(
+      Math.floor(total_duration_minutes_with_interval % 60)
+    ).padStart(2, '0')}m:${String(Math.floor((total_duration_minutes_with_interval % 1) * 60)).padStart(2, '0')}s`;
+
+    const response = await axios.post('http://localhost:3001/exams/end-exam', {
+      exam_id: user_exam_id, // Replace with the actual exam ID
+      score: calculateScore(), // Replace with your score calculation logic
+      total_duration_minutes: formattedTotalDuration, // Send the total duration in the "00h:00m:00s" format
+      endTime: formattedEndTime,
+    });
+
+    if (response.status === 200) {
+      // The exam has ended successfully, and you can handle any further actions here.
+      console.log('Exam ended successfully');
+    }
+  } catch (error) {
+    console.error('Error ending exam:', error);
+  }
+};
+
+
+const handleFinishExam = () => {
+  setShowResults(true);
+  setCountdownStarted(false);
+  endExam(); // Call the endExam function when the Finish button is clicked
+};
+
+const nextPage = () => {
+  const nextPage = Math.min(currentPage + 1, totalPages); // Ensure we don't go beyond the last page
+  const nextQuestion = (nextPage - 1) * questionsPerPage;
+  setCurrentQuestion(nextQuestion);
+};
+
+const prevPage = () => {
+  const prevPage = Math.max(currentPage - 1, 1); // Ensure we don't go before the first page
+  const prevQuestion = (prevPage - 1) * questionsPerPage;
+  setCurrentQuestion(prevQuestion);
+};
+
+const handlePageClick = (page) => {
+const newPage = Math.max(1, Math.min(page, totalPages)); // Ensure the selected page is within valid bounds
+const newQuestion = (newPage - 1) * questionsPerPage;
+setCurrentQuestion(newQuestion);
+};
+
+const totalPages = Math.ceil(maxQuestions / questionsPerPage);
+  const currentPage = Math.floor(currentQuestion / questionsPerPage) + 1;
+  const displayPages = 4;
+  const pages = [];
+  for (let i = Math.max(1, currentPage - Math.floor(displayPages / 2)); i <= Math.min(totalPages, currentPage + Math.floor(displayPages / 2)); i++) {
+    pages.push(i);
+  }
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
-      <div className="flex flex-col lg:flex-row text-center dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white ">
-          <div className="flex flex-col lg:flex-row md:col-4 sm:col-2 gap-5 justify-center items-center mx-auto dark:text-white">
-            <div className="mb-4 lg:w-72 md:w-36 sm:w-16 dark:bg-slate-600">
-              <Select
-                placeholder="Program"
-                id="program"
-                name="program"
-                value={selectedProgram}
-                onChange={(selectedOption) => setSelectedProgram(selectedOption)}
-                options={programOptions}
-              />
-            </div>
+      <div className="flex flex-col lg:flex-row text-center dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
+        <div className="flex flex-col lg:flex-row md:col-4 sm:col-2 gap-5 justify-center mx-3 items-center dark:text-white">
+          <div className="mb-4 lg:w-72 md:w-36 sm:w-16 dark:bg-slate-600">
+            <Select
+              placeholder="Program"
+              id="program"
+              name="program"
+              value={selectedProgram}
+              onChange={(selectedOption) => setSelectedProgram(selectedOption)}
+              options={programOptions}
+            />
+          </div>
 
-            <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
-              <Select
-                placeholder="Competency"
-                id="competency"
-                name="competency"
-                value={selectedCompetency}
-                onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-                options={competencyOptions}
-              />
-            </div>
+          <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
+            <Select
+              placeholder="Competency"
+              id="competency"
+              name="competency"
+              value={selectedCompetency}
+              onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+              options={competencyOptions}
+            />
+          </div>
+
+          <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
+            <Select
+              options={countdownOptions}
+              value={countdownOptions.find(option => option.value === selectedTime)}
+              onChange={handleTimeChange}
+              placeholder="Select Time"
+            />
           </div>
         </div>
+        {selectedTime > 0 && (
+            <div className="flex items-center">
+              {formatTime(num)}
+              {!countdownStarted ? (
+                <button
+                  className="ml-3 text-lg transition ease-in-out rounded-lg p-2 px-5 delay-150 bg-indigo-700 hover:-translate-y-1 duration-300 ..."
+                  onClick={startExam}
+                  disabled={!selectedProgram || !selectedCompetency || !selectedTime}
+                >
+                  Start
+                </button>
+              ) : (
+                <button className="text-red-700" disabled>
+                  Counting Down
+                </button>
+              )}
+            </div>
+          )}
+      </div>
 
         {!showResults && (
           <div>
@@ -259,9 +420,10 @@ const competencyOptions = [
                       className={classNames(
                         "container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer",
                         {
-                          "bg-indigo-700": selectedChoices[currentQuestion + index] === choice,
+                          "bg-indigo-700 text-white": selectedChoices[currentQuestion + index] === choice,
                         }
                       )}
+                      disabled={!countdownStarted}
                     >
                       <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                   {String.fromCharCode(65 + choiceIndex)}
@@ -274,38 +436,58 @@ const competencyOptions = [
                 </ul>
               </div>
             ))}
-          <div className="container flex justify-center p-4 header-bg dark:text-white">
+            <div className="flex justify-center p-4">
+            <div className="justify-center items-center">
+              <button
+          className="relative rounded h-10 mr-2 bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white transition-all duration-300 flex"
+          onClick={handleFinishExam}
+        >
+          Submit
+        </button>
+            </div>
+          <div className="container flex justify-end header-bg dark:text-white">
           <ul className="list-style-none flex">
-              <li>
-              {!isFirstPage && (
-                  <button
-                    className="relative block rounded bg-primary-100 px-3 py-1.5 text-sm font-medium text-primary-700 transition-all duration-300"
-                    onClick={prevPage}
-                  >
-                    Previous
-                  </button>
-                )}
-              </li>
-              <li>
-               {isLastPage ? (
-                <button
-                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
-                  onClick={() => setShowResults(true)}
-                >
-                  Finish
-                </button>
-              ) : (
-                <button
-                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
-                  onClick={nextPage}
-                >
-                  Next
-                </button>
-              )}
-              </li>
+          <li>
+        {currentPage > 1 && (
+          <button
+          className="relative rounded h-10 mr-2 bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white transition-all duration-300 flex items-center"
+          onClick={prevPage}
+        >
+          <ArrowLeftIcon strokeWidth={2} className="h-4 w-4 mr-2" />
+          Previous
+        </button>
+        
+        )}
+      </li>
+      {pages.map((page) => (
+        <li key={page}>
+          <button
+            className={`${
+              currentPage === page
+                ? "bg-indigo-700 text-white "
+                : "hover:bg-indigo-600 text-white"
+            } py-2 px-4 rounded gap-1`}
+            onClick={() => handlePageClick(page)}
+          >
+            {page}
+          </button>
+        </li>
+      ))}
+      <li>
+        {currentPage < totalPages && (
+          <button
+            className="relative rounded bg-indigo-700 hover:bg-indigo-600 text-white ml-2 py-2 px-4 flex items-center"
+            onClick={nextPage}
+          >
+            Next
+            <ArrowRightIcon strokeWidth={2} className="h-4 w-4 ml-2" />
+          </button>
+        )}
+      </li>
             </ul>
           </div>
           </div>
+        </div>
         )}
         {showResults && <ExamResult 
         filteredQuestions={filteredQuestions} 

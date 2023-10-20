@@ -36,6 +36,7 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
 
   return (
     <div>
+      <div className='p-3 my-3 border-2 border-indigo-700 dark:bg-slate-900'>
       <div className="competency-buttons">
         {/* Buttons for selecting competencies */}
         {competencyOptions.map(option => (
@@ -50,21 +51,20 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
           </button>
         ))}
       </div>
-
-      <h1 className="text-2xl font-bold mb-4 dark:text-white">
+      <h1 className="text-2xl font-bold mb-4 justify-center dark:text-white">
         {localSelectedCompetency === 'All Competency' ? 'Competency Results' : getCompetencyLabel(localSelectedCompetency)}
       </h1>
 
       <h2 className="flex mb-4 mx-auto justify-center dark:text-white">
         Total Score: {calculateTotalScore()} out of {filteredQuestionsByCompetency.length} correct - ({((calculateTotalScore() / filteredQuestionsByCompetency.length) * 100).toFixed(2)}%)
       </h2>
-
       <button
-        className="bg-indigo-700 hover-bg-indigo-600 text-white py-2 px-4 rounded"
+        className="bg-indigo-700 hover-bg-indigo-600 text-white py-2 px-4 mb-3 rounded"
         onClick={resetGame}
       >
         Restart Game
       </button>
+      </div>
       {filteredQuestionsByCompetency.map((question, index) => (
         <div key={index} className="mb-4 dark:text-white dark:bg-slate-900 p-3 border-2 border-indigo-700">
           <h2 className="text-xl text-center dark:text-white btn-primary">
