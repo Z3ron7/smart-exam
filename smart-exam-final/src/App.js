@@ -21,6 +21,7 @@ import StudentDashboard from './pages/Students/StudentDashboard';
 import Exam from './pages/Students/Exam'
 import Analytics from './pages/Students/Analytics'
 import ExamHistory from './pages/Students/ExamHistory'
+import ExamHistorySet from './pages/Students/ExamHistorySet'
 import ProtectedRoute from './pages/ProtectedRoute';
 import AddQuestion from './pages/Admin/AddQuestion'
 
@@ -212,6 +213,17 @@ function App() {
           element={
             <ProtectedRoute
               element={<LayoutStudents><ExamHistory /></LayoutStudents>}
+              allowedRoles={['Exam-taker']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+         <Route
+          path="/exam-result"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><ExamHistorySet /></LayoutStudents>}
               allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}

@@ -7,7 +7,7 @@ function ExamRoom({selectedRoom}) {
   const [showExam, setShowExam] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
-  const [roomName, setRoomName] = useState(null);
+  const [roomId, setRoomId] = useState(null);
   const [date, setDate] = useState(null);
   const [description, SetDescription] = useState(null);
   const [userExamId, setUserExamId] = useState(null);
@@ -18,7 +18,8 @@ function ExamRoom({selectedRoom}) {
       const mappedProgram = programOptions.find(option => option.value === selectedRoom.program_id);
       // Map numeric competency_id to the corresponding label
       const mappedCompetency = competencyOptions.find(option => option.value === selectedRoom.competency_id);
-  
+      
+      setRoomId(selectedRoom.room_id)
       setSelectedProgram(mappedProgram);
       setSelectedCompetency(mappedCompetency);
       setSelectedTime(selectedRoom.duration_minutes);
@@ -64,14 +65,15 @@ const startExam = async () => {
       const user_id = localStorage.getItem('user_id');
   
       // Create a user_exam entry in the database
-      const response = await axios.post('http://localhost:3001/exams/user-exams', {
+      const response = await axios.post('http://localhost:3001/exam-room/exam-room', {
         user_id,
-        program: programValue,
-        competency: competencyValue,
+        room_id: roomId,
+        program_id: programValue,
+        competency_id: competencyValue,
         duration_minutes: selectedTime * 60, // Convert selectedTime to minutes
         start_time: currentStartTime,
       });
-  
+      console.log('ss', programValue)
       // Store the user_exam_id and other relevant data in your frontend state
       setUserExamId(response.data.user_exam_id);
       setCountdownStarted(true);

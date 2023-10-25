@@ -10,21 +10,7 @@ const queryAsync = promisify(conn.query).bind(conn);
 
 router.post('/exam-room', async (req, res) => {
   try {
-    const { room_id, user_id, program, competency, duration_minutes } = req.body;
-
-    // Perform lookups to get program_id and competency_id based on names
-    const [programResult] = await queryAsync(
-      "SELECT program_id FROM program WHERE program_name = ?",
-      [program]
-    );
-
-    const [competencyResult] = await queryAsync(
-      "SELECT competency_id FROM competency WHERE competency_name = ?",
-      [competency]
-    );
-
-    const program_id = programResult ? programResult.program_id : null;
-    const competency_id = competencyResult ? competencyResult.competency_id : null;
+    const { room_id, user_id, program_id, competency_id, duration_minutes } = req.body;
 
     // Insert the user exam record
     const createExamQuery = `
@@ -33,6 +19,7 @@ router.post('/exam-room', async (req, res) => {
     `;
 
     const createExamResult = await queryAsync(createExamQuery, [
+      room_id,
       user_id,
       program_id,
       competency_id,
@@ -55,12 +42,42 @@ router.post('/end-exam-room', async (req, res) => {
     const { exam_id, score, total_duration_minutes, endTime } = req.body;
 
     // Update the exam record in the database, including the score, total_duration_minutes, and endTime
-    const updateExamQuery = 'UPDATE exam_room SET end_time = ?, total_duration_minutes = ?, score = ? WHERE exam_id = ?';
+    const updateExamQuery = 'UPDATE exam_room SET end_time = ?, total_duration_minutes = ?, score = ? WHERE exam_room_id = ?';
     await queryAsync(updateExamQuery, [endTime, total_duration_minutes, score, exam_id]);
 
     res.status(200).json({ message: 'Exam ended successfully' });
   } catch (error) {
     console.error('Error ending exam:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/fetch-exam-room', async (req, res) => {
+  const userId = req.query.userId;
+  const limit = parseInt(req.query.limit, 10) || 2; // Parse the limit as an integer
+
+  try {
+    // Define a SQL query to fetch user exams with a LIMIT
+    const query = `
+      SELECT * FROM exam_room
+      WHERE user_id = ?
+      ORDER BY end_time DESC
+    `;
+
+    // Replace 'userId' with the actual user ID for whom you want to fetch exams
+
+    const userExams = await queryAsync(query, [userId, limit]);
+    // Fetch the score for the user
+    const scoreQuery = `
+      SELECT score FROM exam_room WHERE user_id = ?;
+    `;
+
+    const scoreResult = await queryAsync(scoreQuery, [userId]);
+    const score = scoreResult[0].score;
+
+    res.json({ userExams, score });
+  } catch (error) {
+    console.error('Error fetching user exams:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

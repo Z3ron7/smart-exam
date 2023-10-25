@@ -27,9 +27,11 @@ const filterRouter = require ("./src/routes/FilterQuestion")
 const verifyRouter = require ("./src/routes/Verification")
 const usersRouter = require ("./src/routes/Users")
 const roomRouter = require ("./src/routes/Room")
+const examRoomRouter = require ("./src/routes/ExamRoom")
 
 app.use("/exams", examsRouter);
 app.use("/room", roomRouter);
+app.use("/exam-room", examRoomRouter);
 app.use("/questions", questionsRouter); // Add this
 app.use("/choices", choicesRouter); // Add this
 app.use("/category", programRouter); // Add this
@@ -71,17 +73,16 @@ const verifyUser = (req, res, next) => {
       if (err) {
         return res.json({ Error: "Token is not valid" });
       } else {
-        req.user = {
-          id: decoded.user_id, // Attach user_id to req.user
-          name: decoded.name, // Attach other user data if needed
-        };
+          req.user_id = decoded.user_id, // Attach user_id to req.user
+          req.name = decoded.name, // Attach other user data if needed
+          req.image = decoded.image,
         next();
       }
     });
   }
 };
 app.get("/", verifyUser, (req, res) => {
-  return res.json({ Status: "Success", name: req.name });
+  return res.json({ Status: "Success", name: req.name, image: req.image });
 });
 
 app.post('/register', upload.single('profileImage'), async (req, res) => {
@@ -155,8 +156,6 @@ app.post('/register', upload.single('profileImage'), async (req, res) => {
   }
 });
 
-
-
 app.post("/login", (req, res) => {
   const sql = "SELECT * FROM users WHERE username = ?";
   conn.query(sql, [req.body.username], (err, data) => {
@@ -170,6 +169,7 @@ app.post("/login", (req, res) => {
         }
         if (response) {
           const name = data[0].name;
+          const image = data[0].image;
           let role = data[0].role; // Get the role from the database
           const status = data[0].status; // Get the status from the database
           const user_id = data[0].user_id;
@@ -183,12 +183,12 @@ app.post("/login", (req, res) => {
           const isVerified = data[0].isVerified; // Assuming you have an "isVerified" column
 
           // Include the isVerified status in the token payload
-          const token = jwt.sign({ user_id, name, role, isVerified }, "jwt-secret-key", {
-            expiresIn: "1d",
+          const token = jwt.sign({ user_id, name, image, role, isVerified }, "jwt-secret-key", {
+            expiresIn: "3d",
           });
           res.cookie("token", token);
 
-          return res.json({ Status: "Login Successful", user_id, role, isVerified });
+          return res.json({ Status: "Login Successful", user_id, name, image, role, isVerified });
         } else {
           return res.json({ Error: "Password error!" });
         }
@@ -199,6 +199,18 @@ app.post("/login", (req, res) => {
   });
 });
 
+// Add a new route to fetch user data for the currently logged-in user
+app.get("/fetch-user", verifyUser, async (req, res) => {
+  const userId = req.user_id; // Retrieve the user ID from req.user
+  try {
+    // Query the database to fetch user data based on the user ID
+    const userData = await db.one("SELECT * FROM users WHERE user_id = $1", userId);
+    res.json(userData);
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 
 

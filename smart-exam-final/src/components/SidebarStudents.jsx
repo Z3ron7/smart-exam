@@ -20,7 +20,7 @@ const SidebarStudents = () => {
   const Menus = [
     { title: 'Dashboard', path: '/student-dashboard', src: <AiFillPieChart /> },
     { title: 'Exam', path: '/exam', src: <PiExamFill /> },
-    { title: 'View Result', path: '/result', src: <RiFolderHistoryFill />, subMenu: true },
+    { title: 'View Result', path: false, src: <RiFolderHistoryFill />, subMenu: true },
     { title: 'Room', path: '/student-room', src: <SiGoogleclassroom /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ];
@@ -28,12 +28,16 @@ const SidebarStudents = () => {
     mount: { scale: 1 },
     unmount: { scale: 0.9 },
   };
+
+  const accordionClasses = {
+    root: 'bg-gray-300', // Apply your custom Tailwind CSS class
+  };
   return (
     <>
       <div
         className={`${
           open ? 'w-60' : 'w-fit'
-        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 pt-4 dark:bg-slate-900 `}
+        } hidden sm:block relative h-screen duration-300 bg-gray-300 border-r border-gray-200 dark:border-gray-600 pt-4 dark:bg-slate-900 `}
         style={{
           position: 'sticky',
           top: 0,
@@ -60,12 +64,15 @@ const SidebarStudents = () => {
           {Menus.map((menu, index) => (
             <Link to={menu.path} key={index}>
               {menu.subMenu ? (
-                <Accordion
-                className='mt-2 text-base font-normal rounded-lg cursor-pointer bg-black
+                <Accordion sx={{ 
+          backgroundColor: 'lightgray'
+        }}
+                className='mt-2 text-base font-normal rounded-lg cursor-pointer dark:bg-slate-900
                 hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
                 transition-transform ease-in-out'
                   expanded={viewResultOpen}
                   onChange={() => setViewResultOpen(!viewResultOpen)}
+                  classes={accordionClasses}
                   animate={CUSTOM_ANIMATION}
                 >
                   <AccordionSummary>
@@ -80,8 +87,12 @@ const SidebarStudents = () => {
                   </AccordionSummary>
                   <AccordionDetails>
                     {/* Add your sub-menu items here */}
-                    <Link to='/sub-menu-item-1' className="block">Sub-Menu Item 1</Link>
-                    <Link to='/sub-menu-item-2' className="block">Sub-Menu Item 2</Link>
+                    <Link to='/exam-result' className='text-base font-normal rounded-lg cursor-pointer dark:bg-slate-900
+                hover:text-black dark:text-white hover:bg-gray-300 block dark:hover:bg-indigo-700
+                transition-transform ease-in-out'>Exam</Link>
+                    <Link to='/result' className='mt-2 text-base font-normal rounded-lg cursor-pointer dark:bg-slate-900
+                hover:text-black dark:text-white hover:bg-gray-300 block dark:hover:bg-indigo-700
+                transition-transform ease-in-out'>Customize Exam</Link>
                     {/* You can add more sub-menu items as needed */}
                   </AccordionDetails>
                 </Accordion>
