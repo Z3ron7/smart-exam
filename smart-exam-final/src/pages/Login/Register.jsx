@@ -84,7 +84,7 @@ export default function Register() {
     }),
   };
   return (
-    <div className="flex flex-col items-center justify-center mx-auto">
+    <div className="flex">
       {registrationStatus === "success" && (
         <div
           className=" flex w-1/2 mx-auto rounded-lg bg-green-100 px-6 py-5 text-base text-green-500 justify-center items-center"
@@ -107,43 +107,62 @@ export default function Register() {
             <h3 className="text-4xl font-bold text-purple-600">Logo</h3>
           </a>
         </div>
-        <div className="w-1/2 px-6 py-4 mt-6 overflow-hidden items-center bg-white shadow-md sm:max-w-lg sm:rounded-lg">
-      <form onSubmit={handleRegister} encType="multipart/form-data">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 undefined"
-              >
-                Name
-              </label>
-              <div className="flex flex-col items-start">
-                <input
-                  type="text"
-                  name="name"
-                  value={values.name}
-                  onChange={e => setValues({ ...values, name: e.target.value })} // Update the name state
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 undefined"
-              >
-                Email
-              </label>
-              <div className="flex flex-col items-start">
-                <input
-                  type="email"
-                  name="username"
-                  value={values.username} // Use values.username
-                  onChange={e => setValues({ ...values, username: e.target.value })} // Update values.username
-                  className="block w-full rounded-md py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+        <div className="px-6 py-4 mt-6 overflow-hidden items-center bg-white shadow-md sm:max-w-lg sm:rounded-lg">
+      <form className="w-full" onSubmit={handleRegister} encType="multipart/form-data">
+      <div className="flex flex-row items-start justify-start">
+  {/* Left Column for Name and Email */}
+  <div className="w-2/3 p-1">
+    <div className="mb-4">
+      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        Name
+      </label>
+      <input
+        type="text"
+        name="name"
+        value={values.name}
+        onChange={(e) => setValues({ ...values, name: e.target.value })}
+        className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+      />
+    </div>
+    
+    <div className="mt-4">
+      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        Email
+      </label>
+      <input
+        type="email"
+        name="username"
+        value={values.username}
+        onChange={(e) => setValues({ ...values, username: e.target.value })}
+        className="block w-full rounded-md py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+      />
+    </div>
+  </div>
+
+  {/* Right Column for Image Upload */}
+  <div className="w-1/3">
+    <div className="bg-white p-1">
+      <label htmlFor="profileImage" className="w-32 h-24 rounded-full overflow-hidden cursor-pointer">
+          <img
+            src={selectedImage || "default-profile-image.jpg"}
+            alt="Upload Image"
+            className="w-full h-28 object-cover"
+          />
+        </label>
+      <div className="mb-0">
+        <input
+          type="file"
+          accept="image/*"
+          id="profileImage"
+          name="profileImage"
+          className="w-15 text-[11px]"
+          onChange={handleImageChange}
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
             <div className="flex items-start mt-4">
             <div className="flex flex-col items-start mr-9">
   <Select
@@ -212,14 +231,18 @@ export default function Register() {
                 Password
               </label>
               <div className="flex flex-col items-start">
-                <input
-                  type="password"
-                  name="password"
-                  value={values.password}
-                  onChange={e => setValues({ ...values, password: e.target.value })}
-                  className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
+  <input
+    type="password"
+    name="password"
+    value={values.password}
+    onChange={(e) => setValues({ ...values, password: e.target.value })}
+    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+  />
+  {values.password.length < 8 && values.password.length > 0 && (
+    <p className="text-red-500 text-sm mt-1">Password must be at least 8 characters long.</p>
+  )}
+</div>
+
             </div>
             <div className="mt-4">
               <label
@@ -249,35 +272,7 @@ export default function Register() {
                 Register
               </button>
             </div>
-            <div className="md:w-2/5 m-5 bg-white p-8">
-        {/* Image upload UI */}
-        <div className="mb-4 text-gray-700 text-lg">
-          Upload Profile Picture
-        </div>
-        <div className="mb-8">
-          <input
-            type="file"
-            accept="image/*"
-            id="profileImage"
-            name="profileImage"
-            className="s"
-            onChange={handleImageChange}
-          />
-          <label
-            htmlFor="profileImage"
-            className="w-32 h-32 rounded-full overflow-hidden cursor-pointer"
-          >
-            <img
-              src={selectedImage || "default-profile-image.jpg"}
-              alt="Profile Image"
-              className="w-1/2 h-1/2 object-cover"
-            />
-          </label>
-        </div>
-        <div className="text-gray-700 text-sm">
-          Click on the profile picture to upload your image.
-        </div>
-      </div>
+            
           </form>
           <div className="mt-4 text-grey-600">
             Already have an account?{" "}
