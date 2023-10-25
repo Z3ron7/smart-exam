@@ -209,24 +209,36 @@ router.post('/end-admin-exam', async (req, res) => {
   }
 });
 router.get('/fetch-user-exams', async (req, res) => {
+  const userId = req.query.userId;
+  const limit = parseInt(req.query.limit, 10) || 2; // Parse the limit as an integer
+
   try {
-    // Define a SQL query to fetch user exams
+    // Define a SQL query to fetch user exams with a LIMIT
     const query = `
       SELECT * FROM user_exams
-      WHERE user_id = ?;
+      WHERE user_id = ?
+      ORDER BY end_time DESC
+      LIMIT ?;
     `;
 
     // Replace 'userId' with the actual user ID for whom you want to fetch exams
-    const userId = req.query.userId;
 
-    const userExams = await queryAsync(query, [userId]);
+    const userExams = await queryAsync(query, [userId, limit]);
+    // Fetch the score for the user
+    const scoreQuery = `
+      SELECT score FROM user_exams WHERE user_id = ?;
+    `;
 
-    res.json({ userExams });
+    const scoreResult = await queryAsync(scoreQuery, [userId]);
+    const score = scoreResult[0].score;
+
+    res.json({ userExams, score });
   } catch (error) {
     console.error('Error fetching user exams:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 router.get('/fetch-admin-exams', async (req, res) => {
   try {
     // Define a SQL query to fetch admin exams

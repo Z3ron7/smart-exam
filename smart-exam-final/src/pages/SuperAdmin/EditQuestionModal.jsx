@@ -113,7 +113,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
         className="modal-container bg-white dark:bg-slate-900 w-3/5 p-4 border-2 border-indigo-700 mb-2 rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
+        <button className="absolute top-2 right-2 text-white-600" onClick={onClose}>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>

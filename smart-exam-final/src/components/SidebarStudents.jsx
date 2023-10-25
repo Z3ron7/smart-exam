@@ -1,28 +1,33 @@
-import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-
-import { BsArrowLeftCircle } from 'react-icons/bs'
-import { AiFillPieChart } from 'react-icons/ai'
-import { SiFuturelearn } from 'react-icons/si'
-import { PiExamFill } from 'react-icons/pi'
-import { RiFolderHistoryFill } from 'react-icons/ri'
-import { SiGoogleclassroom } from 'react-icons/si'
-import Logo from '../assets/images/logo.svg'
-import HamburgerButton from './HamburgerMenuButton/HamburgerButton'
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { BsArrowLeftCircle } from 'react-icons/bs';
+import { AiFillPieChart } from 'react-icons/ai';
+import { PiExamFill } from 'react-icons/pi';
+import { RiFolderHistoryFill } from 'react-icons/ri';
+import { SiGoogleclassroom } from 'react-icons/si';
+import Logo from '../assets/images/logo.svg';
+import HamburgerButton from './HamburgerMenuButton/HamburgerButton';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 
 const SidebarStudents = () => {
-  const [open, setOpen] = useState(true)
-  const [mobileMenu, setMobileMenu] = useState(false)
-  const location = useLocation()
+  const [open, setOpen] = useState(true);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [viewResultOpen, setViewResultOpen] = useState(false);
+  const location = useLocation();
 
   const Menus = [
     { title: 'Dashboard', path: '/student-dashboard', src: <AiFillPieChart /> },
     { title: 'Exam', path: '/exam', src: <PiExamFill /> },
-    { title: 'View Result', path: '/result', src: <RiFolderHistoryFill /> },
-    { title: 'Room', path: '/room', src: <SiGoogleclassroom /> },
+    { title: 'View Result', path: '/result', src: <RiFolderHistoryFill />, subMenu: true },
+    { title: 'Room', path: '/student-room', src: <SiGoogleclassroom /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
-  ]
-
+  ];
+  const CUSTOM_ANIMATION = {
+    mount: { scale: 1 },
+    unmount: { scale: 0.9 },
+  };
   return (
     <>
       <div
@@ -52,33 +57,58 @@ const SidebarStudents = () => {
         </Link>
 
         <ul className='pt-6'>
-        {Menus.map((menu, index) => (
-  <Link to={menu.path} key={index}>
-    <li
-      className={`
-        flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer
-        hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
-        transition-transform ease-in-out ${menu.gap ? 'mt-9' : 'mt-2'}
-        ${location.pathname === menu.path && 'bg-indigo-800 dark:bg-indigo-700 text-white transform scale-110'}
-      `}
-    >
-      <span className='text-2xl mx-2 py-1'>{menu.src}</span>
-      <span className={`${
-        !open && 'hidden'
-      } origin-left duration-300 hover:block`}>
-        {menu.title}
-      </span>
-    </li>
-  </Link>
-))}
+          {Menus.map((menu, index) => (
+            <Link to={menu.path} key={index}>
+              {menu.subMenu ? (
+                <Accordion
+                className='mt-2 text-base font-normal rounded-lg cursor-pointer bg-black
+                hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
+                transition-transform ease-in-out'
+                  expanded={viewResultOpen}
+                  onChange={() => setViewResultOpen(!viewResultOpen)}
+                  animate={CUSTOM_ANIMATION}
+                >
+                  <AccordionSummary>
+                    <span className='text-2xl ml-1 mr-6 py-1'>{menu.src}</span>
+                    <span
+                      className={`${
+                        !open && 'hidden'
+                      } origin-left duration-300`}
+                    >
+                      {menu.title}
+                    </span>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {/* Add your sub-menu items here */}
+                    <Link to='/sub-menu-item-1' className="block">Sub-Menu Item 1</Link>
+                    <Link to='/sub-menu-item-2' className="block">Sub-Menu Item 2</Link>
+                    {/* You can add more sub-menu items as needed */}
+                  </AccordionDetails>
+                </Accordion>
+              ) : (
+                <li
+                  className={`
+                    flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer
+                    hover:text-white dark:text-white hover:bg-indigo-700 dark:hover-bg-indigo-700
+                    transition-transform ease-in-out ${menu.gap ? 'mt-9' : 'mt-2'}
+                    ${location.pathname === menu.path && 'bg-indigo-700 dark:bg-indigo-700 text-white transform scale-110'}
+                  `}
+                >
+                  <span className='text-2xl mx-2 py-1'>{menu.src}</span>
+                  <span className={`${
+                    !open && 'hidden'
+                  } origin-left duration-300 hover:block`}>
+                    {menu.title}
+                  </span>
+                </li>
+              )}
+            </Link>
+          ))}
         </ul>
       </div>
       {/* Mobile Menu */}
       <div className="pt-3">
-        <HamburgerButton
-          setMobileMenu={setMobileMenu}
-          mobileMenu={mobileMenu}
-        />
+        <HamburgerButton setMobileMenu={setMobileMenu} mobileMenu={mobileMenu} />
       </div>
       <div className="sm:hidden">
         <div
@@ -87,11 +117,7 @@ const SidebarStudents = () => {
           } absolute z-50 flex-col items-center self-end py-8 mt-16 space-y-6 font-bold sm:w-auto left-6 right-6 dark:text-white  bg-gray-50 dark:bg-slate-800 drop-shadow md rounded-xl`}
         >
           {Menus.map((menu, index) => (
-            <Link
-              to={menu.path}
-              key={index}
-              onClick={() => setMobileMenu(false)}
-            >
+            <Link to={menu.path} key={index} onClick={() => setMobileMenu(false)}>
               <span
                 className={` ${
                   location.pathname === menu.path &&
@@ -105,7 +131,7 @@ const SidebarStudents = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default SidebarStudents
+export default SidebarStudents;

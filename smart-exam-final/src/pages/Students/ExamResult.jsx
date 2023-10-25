@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
+import { Link } from 'react-router-dom'
 
 const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCompetency }) => {
   // State for selectedCompetency
@@ -20,6 +21,7 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
       return totalScore;
     }, 0);
   };
+  
   const competencyOptions = [
     { value: 'All Competency', label: 'All Competency' },
     { value: 1, label: 'SWPPS' },
@@ -58,12 +60,20 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
       <h2 className="flex mb-4 mx-auto justify-center dark:text-white">
         Total Score: {calculateTotalScore()} out of {filteredQuestionsByCompetency.length} correct - ({((calculateTotalScore() / filteredQuestionsByCompetency.length) * 100).toFixed(2)}%)
       </h2>
+      <div className='flex justify-between'> 
       <button
         className="bg-indigo-700 hover-bg-indigo-600 text-white py-2 px-4 mb-3 rounded"
         onClick={resetGame}
       >
-        Restart Game
+        Restart Exam
       </button>
+      <Link to="/exam/analytics">
+      <button
+        className="bg-indigo-700 hover-bg-indigo-600 text-white py-2 px-4 mb-3 rounded"
+      >View Analytics
+      </button>
+      </Link>
+      </div>
       </div>
       {filteredQuestionsByCompetency.map((question, index) => (
         <div key={index} className="mb-4 dark:text-white dark:bg-slate-900 p-3 border-2 border-indigo-700">

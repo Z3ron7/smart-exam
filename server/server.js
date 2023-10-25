@@ -26,8 +26,10 @@ const programRouter = require("./src/routes/Program");
 const filterRouter = require ("./src/routes/FilterQuestion")
 const verifyRouter = require ("./src/routes/Verification")
 const usersRouter = require ("./src/routes/Users")
+const roomRouter = require ("./src/routes/Room")
 
 app.use("/exams", examsRouter);
+app.use("/room", roomRouter);
 app.use("/questions", questionsRouter); // Add this
 app.use("/choices", choicesRouter); // Add this
 app.use("/category", programRouter); // Add this

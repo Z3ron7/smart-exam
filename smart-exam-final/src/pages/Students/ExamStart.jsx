@@ -5,18 +5,15 @@ import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Select from 'react-select';
 import ExamResult from './ExamResult'
 
-function Exam() {
+function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStartTime, countdownStarted, setCountdownStarted, formatTime, num, userExamId}) {
   const [showResults, setShowResults] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [maxQuestions, setMaxQuestions] = useState(10);
   const [score, setScore] = useState(0);
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null)); // Adjust the number of questions
   const questionsPerPage = 3; // Adjust the number of questions per page
-  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
-  const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' });
   const [competencyScores, setCompetencyScores] = useState({});
   const [filteredQuestions, setFilteredQuestions] = useState([]);
-  const [userExamId, setUserExamId] = useState(null);
 
   function shuffleArray(array) {
     const shuffledArray = [...array];
@@ -203,100 +200,6 @@ const [localSelectedCompetency, setLocalSelectedCompetency] = useState('All Comp
     setCurrentQuestion(0);
     setShowResults(false);
   };
-// Define your Select options
-const programOptions = [
-  { value: 'Social Work', label: 'Social Work' },
-  { value: 'Option', label: 'Option' },
-];
-
-const competencyOptions = [
-  { value: 'All Competency', label: 'All Competency' },
-  { value: 'SWPPS', label: 'SWPPS' },
-  { value: 'Casework', label: 'Casework' },
-  { value: 'HBSE', label: 'HBSE' },
-  { value: 'CO', label: 'CO' },
-  { value: 'Groupwork', label: 'Groupwork' },
-];
-const countdownOptions = [
-  { value: 0, label: '0' },
-  { value: 1, label: '1 hour' },
-  { value: 2, label: '2 hours' },
-  { value: 3, label: '3 hours' },
-  { value: 4, label: '4 hours' },
-  { value: 5, label: '5 hours' },
-];
-
-// Add your state variables for selected options
-const [num, setNum] = useState(0);
-const [selectedTime, setSelectedTime] = useState(1);
-const [countdownStarted, setCountdownStarted] = useState(false);
-const [examStartTime, setExamStartTime] = useState(null);
-
-let intervalRef = useRef();
-
-const formatTime = (seconds) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-  return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
-};
-
-const decreaseNum = () => setNum((prev) => prev - 1);
-
-useEffect(() => {
-  if (countdownStarted && selectedTime > 0 && num > 0) {
-    intervalRef.current = setInterval(decreaseNum, 1000);
-  } else {
-    clearInterval(intervalRef.current);
-    if (num === 0) {
-      // Call the handleEndExam function when the timer reaches 0
-    }
-  }
-  return () => clearInterval(intervalRef.current);
-}, [countdownStarted, selectedTime, num]);
-
-
-const handleTimeChange = (selectedOption) => {
-  setSelectedTime(selectedOption.value);
-  setNum(selectedOption.value * 3600);
-  setCountdownStarted(false);
-};
-const startExam = async () => {
-  const currentStartTime = new Date();
-
-  try {
-    // Validate selectedProgram and selectedCompetency
-    const programValue = selectedProgram ? selectedProgram.value : null;
-    const competencyValue = selectedCompetency ? selectedCompetency.value : null;
-
-    if (programValue === null || competencyValue === null) {
-      // Handle the case where program or competency is not selected
-      console.error('Program or competency is not selected.');
-      // You can display an error message to the user or handle it as needed.
-      return;
-    }
-
-    // Get the user_id from localStorage
-    const user_id = localStorage.getItem('user_id');
-
-    // Create a user_exam entry in the database
-    const response = await axios.post('http://localhost:3001/exams/user-exams', {
-      user_id,
-      program: programValue,
-      competency: competencyValue,
-      duration_minutes: selectedTime * 60, // Convert selectedTime to minutes
-      start_time: currentStartTime,
-    });
-
-    // Store the user_exam_id and other relevant data in your frontend state
-    setUserExamId(response.data.user_exam_id);
-    setCountdownStarted(true);
-    setNum(selectedTime * 3600); // Set the countdown time in seconds
-    setExamStartTime(currentStartTime);
-  } catch (error) {
-    console.error('Error starting exam:', error);
-  }
-};
 
 const endExam = async () => {
   try {
@@ -369,49 +272,12 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <div className="flex flex-col lg:flex-row text-center dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
-        <div className="flex flex-col lg:flex-row md:col-4 sm:col-2 gap-5 justify-center mx-3 items-center dark:text-white">
-          <div className="mb-4 lg:w-72 md:w-36 sm:w-16 dark:bg-slate-600">
-            <Select
-              placeholder="Program"
-              id="program"
-              name="program"
-              value={selectedProgram}
-              onChange={(selectedOption) => setSelectedProgram(selectedOption)}
-              options={programOptions}
-            />
-          </div>
-
-          <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
-            <Select
-              placeholder="Competency"
-              id="competency"
-              name="competency"
-              value={selectedCompetency}
-              onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-              options={competencyOptions}
-            />
-          </div>
-
-          <div className="mb-4 lg:w-72 md:w-36 sm:w-16">
-            <Select
-              options={countdownOptions}
-              value={countdownOptions.find(option => option.value === selectedTime)}
-              onChange={handleTimeChange}
-              placeholder="Select Time"
-            />
-          </div>
-        </div>
+        
         {selectedTime > 0 && (
             <div className="flex items-center">
               {formatTime(num)}
               {!countdownStarted ? (
-                <button
-                  className="ml-3 text-lg transition ease-in-out rounded-lg p-2 px-5 delay-150 bg-indigo-700 hover:-translate-y-1 duration-300 ..."
-                  onClick={startExam}
-                  disabled={!selectedProgram || !selectedCompetency || !selectedTime}
-                >
-                  Start
-                </button>
+                null
               ) : (
                 <button className="text-red-700" disabled>
                   Counting Down
@@ -518,4 +384,4 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
   );
 } 
 
-export default Exam;
+export default ExamStart;

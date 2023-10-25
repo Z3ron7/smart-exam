@@ -9,6 +9,8 @@ import Dashboard from './pages/Admin/Dashboard';
 import Questionnaire from './pages/Admin/Questionnaire';
 import Room from './pages/Admin/Room';
 import RoomSuper from './pages/SuperAdmin/Room';
+import RoomStudent from './pages/Students/Room';
+import ExamRoom from './pages/Students/ExamRoom';
 import Users from './pages/users/Users';
 import User from './pages/user/User';
 import LoginPage from './pages/Login/LoginPage';
@@ -17,6 +19,7 @@ import Register from './pages/Login/Register';
 import PageNotFound from './pages/PageNotFound';
 import StudentDashboard from './pages/Students/StudentDashboard';
 import Exam from './pages/Students/Exam'
+import Analytics from './pages/Students/Analytics'
 import ExamHistory from './pages/Students/ExamHistory'
 import ProtectedRoute from './pages/ProtectedRoute';
 import AddQuestion from './pages/Admin/AddQuestion'
@@ -194,6 +197,17 @@ function App() {
           }
         />
         <Route
+          path="/exam/analytics"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><Analytics /></LayoutStudents>}
+              allowedRoles={['Exam-taker']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
           path="/result"
           element={
             <ProtectedRoute
@@ -208,7 +222,18 @@ function App() {
           path="/student-room"
           element={
             <ProtectedRoute
-              element={<LayoutStudents><Room /></LayoutStudents>}
+              element={<LayoutStudents><RoomStudent /></LayoutStudents>}
+              allowedRoles={['Exam-taker']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/exam-room"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><ExamRoom /></LayoutStudents>}
               allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
