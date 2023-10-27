@@ -1,14 +1,13 @@
 import Single from "../../components/single/Single"
-import { singleUser } from "../../data"
 import "./user.scss"
-
+import { useParams } from "react-router-dom";
 const User = () => {
-
+  const { user_id } = useParams();
   //Fetch data and send to Single Component
   
   return (
     <div className="user">
-      <Single {...singleUser}/>
+      <Single userId={user_id} />
     </div>
   )
 }

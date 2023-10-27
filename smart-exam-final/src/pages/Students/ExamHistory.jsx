@@ -171,7 +171,7 @@ const competencyMap = {
                 >
                   <CartesianGrid strokeDasharray='3 3' />
                   <XAxis dataKey='competency' />
-                  <YAxis domain={[0, 100]} />
+                  <YAxis domain={[0, 10]} />
                   <Tooltip />
                   <Legend />
                   <Line type='monotone' dataKey='score' stroke='#8884d8' activeDot={{ r: 8 }} />

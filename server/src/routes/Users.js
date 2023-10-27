@@ -30,6 +30,25 @@ router.get('/users', async (req, res) => {
   }
 });
 
+
+router.get('/users/:user_id', async (req, res) => {
+  const userId = req.params.user_id; // Retrieve the userId from the URL parameters
+
+  try {
+    const query = 'SELECT user_id, name, gender, username, status, image FROM users WHERE user_id = ?';
+    
+    const user = await queryAsync(query, [userId]);
+    
+    if (user.length === 0) {
+      res.status(404).json({ message: 'User not found' });
+    } else {
+      res.json(user[0]);
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'An error occurred while fetching data' });
+  }
+});
   
   router.delete('/users/:user_id', async (req, res) => {
     try {

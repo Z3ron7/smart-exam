@@ -77,7 +77,7 @@ function App() {
           }
         />
         <Route
-          path="/users/:id"
+          path="/users/:user_id"
           element={
             <ProtectedRoute
               element={<LayoutSuper><User /></LayoutSuper>}

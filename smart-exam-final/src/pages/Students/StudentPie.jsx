@@ -26,50 +26,50 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 const StudentPie = () => {
     return (
         <div>
-                <div >
-                <ResponsiveContainer width="100%" height={400}>
-                <PieChart >
-                    <Pie
-                        data={data}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={renderCustomizedLabel}
-                        outerRadius={150}
-                        fill="#8884d8"
-                        dataKey="value"
-                    >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                </PieChart>
-                </ResponsiveContainer>
-                </div>
-                <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-center mx-auto items-center'>
-                {
-                  
-                     data.map((item)=>(
-                        <p className='flex cursor-pointer font-bold justify-center items-center mx-auto'>{item.name}</p>
-                              ))
+        <div >
+        <ResponsiveContainer width="100%" height={350}>
+        <PieChart >
+            <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomizedLabel}
+                outerRadius={150}
+                fill="#8884d8"
+                dataKey="value"
+            >
+                {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+            </Pie>
+        </PieChart>
+        </ResponsiveContainer>
+        </div>
+        <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-center mx-auto items-center'>
+        {
+          
+             data.map((item)=>(
+                <p className='flex cursor-pointer font-bold justify-center items-center mx-auto'>{item.name}</p>
+                      ))
 
-                }
-                </div>
-                <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-                    {
-                         COLORS.map((item)=>(
-                <div className="flex h-[20px] w-[20px] justify-center items-center mx-auto mb-3" style={{backgroundColor:item}}>
+        }
+        </div>
+        <div className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+            {
+                 COLORS.map((item)=>(
+        <div className="flex h-[20px] w-[20px] justify-center items-center mx-auto mb-3" style={{backgroundColor:item}}>
 
-                  </div>
-                         ))
-  
-                    }
-                  
+          </div>
+                 ))
 
-                </div>
-        
+            }
+          
 
         </div>
+
+
+</div>
     )
 }
 
