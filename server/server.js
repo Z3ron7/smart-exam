@@ -28,6 +28,7 @@ const verifyRouter = require ("./src/routes/Verification")
 const usersRouter = require ("./src/routes/Users")
 const roomRouter = require ("./src/routes/Room")
 const examRoomRouter = require ("./src/routes/ExamRoom")
+const dashboardRouter = require ("./src/routes/Dashboard")
 
 app.use("/exams", examsRouter);
 app.use("/room", roomRouter);
@@ -38,6 +39,7 @@ app.use("/category", programRouter); // Add this
 app.use("/filter", filterRouter); // Add this
 app.use("/verify", verifyRouter); // Add this
 app.use("/users", usersRouter); // Add this
+app.use("/dashboard", dashboardRouter); // Add this
 app.use(cookieParser());
 
 const db = new Database();

@@ -5,32 +5,33 @@ import { AiFillPieChart } from 'react-icons/ai';
 import { PiExamFill } from 'react-icons/pi';
 import { RiFolderHistoryFill } from 'react-icons/ri';
 import { SiGoogleclassroom } from 'react-icons/si';
+import { MdViewComfy } from 'react-icons/md';
 import Logo from '../assets/images/logo.svg';
 import HamburgerButton from './HamburgerMenuButton/HamburgerButton';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
 
 const SidebarStudents = () => {
   const [open, setOpen] = useState(true);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [viewResultOpen, setViewResultOpen] = useState(false);
+  const [viewResultOpen, setViewResultOpen] = useState(false); // To control the visibility of the sub-menu
   const location = useLocation();
 
   const Menus = [
     { title: 'Dashboard', path: '/student-dashboard', src: <AiFillPieChart /> },
     { title: 'Exam', path: '/exam', src: <PiExamFill /> },
-    { title: 'View Result', path: false, src: <RiFolderHistoryFill />, subMenu: true },
+    {
+      title: 'View Result',
+      path: false,
+      src: <RiFolderHistoryFill />,
+      subMenus: [ // Add sub-menus here
+        { title: 'Exam', path: '/exam-result', src: <MdViewComfy /> },
+        { title: 'Customize Exam', path: '/result', src: <PiExamFill /> },
+      ],
+    },
     { title: 'Room', path: '/student-room', src: <SiGoogleclassroom /> },
-    // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ];
-  const CUSTOM_ANIMATION = {
-    mount: { scale: 1 },
-    unmount: { scale: 0.9 },
-  };
 
-  const accordionClasses = {
-    root: 'bg-gray-300', // Apply your custom Tailwind CSS class
+  const toggleViewResult = () => {
+    setViewResultOpen(!viewResultOpen);
   };
   return (
     <>
@@ -59,60 +60,45 @@ const SidebarStudents = () => {
             )}
           </div>
         </Link>
-
         <ul className='pt-6'>
           {Menus.map((menu, index) => (
             <Link to={menu.path} key={index}>
-              {menu.subMenu ? (
-                <Accordion sx={{ 
-          backgroundColor: 'lightgray'
-        }}
-                className='mt-2 text-base font-normal rounded-lg cursor-pointer dark:bg-slate-900
-                hover:text-white dark:text-white hover:bg-indigo-700 dark:hover:bg-indigo-700
-                transition-transform ease-in-out'
-                  expanded={viewResultOpen}
-                  onChange={() => setViewResultOpen(!viewResultOpen)}
-                  classes={accordionClasses}
-                  animate={CUSTOM_ANIMATION}
-                >
-                  <AccordionSummary>
-                    <span className='text-2xl ml-1 mr-6 py-1'>{menu.src}</span>
-                    <span
-                      className={`${
-                        !open && 'hidden'
-                      } origin-left duration-300`}
-                    >
-                      {menu.title}
-                    </span>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {/* Add your sub-menu items here */}
-                    <Link to='/exam-result' className='text-base font-normal rounded-lg cursor-pointer dark:bg-slate-900
-                hover:text-black dark:text-white hover:bg-gray-300 block dark:hover:bg-indigo-700
-                transition-transform ease-in-out'>Exam</Link>
-                    <Link to='/result' className='mt-2 text-base font-normal rounded-lg cursor-pointer dark:bg-slate-900
-                hover:text-black dark:text-white hover:bg-gray-300 block dark:hover:bg-indigo-700
-                transition-transform ease-in-out'>Customize Exam</Link>
-                    {/* You can add more sub-menu items as needed */}
-                  </AccordionDetails>
-                </Accordion>
-              ) : (
-                <li
-                  className={`
-                    flex items-center gap-x-6 p-3 text-base font-normal rounded-lg cursor-pointer
-                    hover:text-white dark:text-white hover:bg-indigo-700 dark:hover-bg-indigo-700
-                    transition-transform ease-in-out ${menu.gap ? 'mt-9' : 'mt-2'}
-                    ${location.pathname === menu.path && 'bg-indigo-700 dark:bg-indigo-700 text-white transform scale-110'}
-                  `}
-                >
-                  <span className='text-2xl mx-2 py-1'>{menu.src}</span>
-                  <span className={`${
-                    !open && 'hidden'
-                  } origin-left duration-300 hover:block`}>
-                    {menu.title}
-                  </span>
-                </li>
-              )}
+              <li
+                className={`
+                  flex items-center gap-x-6 p-3 text-base font-semibold rounded-lg cursor-pointer
+                  hover:text-white dark:text-white hover:bg-indigo-700 dark:hover-bg-indigo-700
+                  transition-transform ease-in-out ${menu.gap ? 'mt-9' : 'mt-2'}
+                  ${location.pathname === menu.path && 'bg-indigo-700 dark:bg-indigo-700 text-white transform scale-110'}
+                `}
+                onClick={() => {
+                  if (menu.title === 'View Result') {
+                    setViewResultOpen(!viewResultOpen); // Toggle the state
+                  }
+                }}
+              >
+                <span className='text-2xl mx-2 py-1'>{menu.src}</span>
+                <span>{menu.title}</span>
+                {/* Render sub-menus for 'View Result' when clicked */}
+              </li>
+              {menu.title === 'View Result' && viewResultOpen && (
+                  <ul className="mt-2 ">
+                  {menu.subMenus.map((subMenu, subIndex) => (
+                    <Link to={subMenu.path} key={subIndex}>
+                      <li
+                        className={`
+                          flex items-center gap-x-4 p-3 pl-7 text-base rounded-lg cursor-pointer mt-2
+                          hover:text-white dark:text-white hover:bg-indigo-700 dark:hover-bg-indigo-700
+                          transition-transform ease-in-out font-semibold
+                          ${location.pathname === subMenu.path && 'bg-indigo-700 dark:bg-indigo-700 text-white transform scale-110'}
+                        `}
+                      >
+                        <span className='text-xl mx-2 py-1'>{subMenu.src}</span>
+                        {subMenu.title}
+                      </li>
+                    </Link>
+                  ))}
+                </ul>
+                )}
             </Link>
           ))}
         </ul>

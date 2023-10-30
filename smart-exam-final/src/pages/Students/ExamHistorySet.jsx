@@ -1,17 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {
-  Accordion,
-  AccordionHeader,
-  AccordionBody,
-} from "@material-tailwind/react";
 import { FaEllipsisV } from 'react-icons/fa';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
-
-const CUSTOM_ANIMATION = {
-  mount: { scale: 1 },
-  unmount: { scale: 0.9 },
-};
+import AccordionLayout from '../../components/accordion/AccordionLayout'
 
 // Define a function to get text color based on competency level
 function getColorForLevel(level) {
@@ -33,16 +24,15 @@ function getColorForLevel(level) {
 
 export default function ExamHistorySet() {
   const [examScores, setExamScores] = useState([]);
-  const [open, setOpen] = useState(null); // Initialize 'open' state
+  const [activeIndex, setActiveIndex] = useState(null);
 
-  const handleOpen = (value) => {
-    if (value === open) {
-      setOpen(null); // Close if clicked twice
+  const handleOpen = (index) => {
+    if (activeIndex === index) {
+      setActiveIndex(null); // Close the accordion if it's already open
     } else {
-      setOpen(value); // Open if clicked once
+      setActiveIndex(index); // Open the clicked accordion
     }
   };
-
 
   useEffect(() => {
     const user_id = localStorage.getItem('user_id');
@@ -68,7 +58,7 @@ const competencyMap = {
   // Add more mappings as needed
 };
 
-  const processExamScores = (exam) => {
+  const processExamScores = (exam, index, activeIndex) => {
     const { room_name, description, score, duration_minutes, end_time, total_duration_minutes } = exam;
     const endDate = new Date(end_time);
     const endDateFormatted = endDate.toISOString().split('T')[0];
@@ -154,13 +144,13 @@ const competencyMap = {
       const competenciesForChart = mappedScores.filter((item) => item.competency !== 'All Competency');
 
       return (
-        <div className="flex justify-center">
-          <div className='w-1/2 border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-900 mb-4 h-4/6 lg:mb-3'>
+        <div className="flex flex-col sm:flex-row justify-center">
+          <div className=' max-w-lg sm:w-1/2 lg:w-1/2 md:w-1/2 border mx-2 bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-900 mb-4 h-4/6 lg:mb-3'>
             <div className='bg-[#F8F9FC] flex items-center justify-between py-[15px] px-[20px] border-b-[1px] dark:bg-slate-900 border-[#EDEDED]'>
               <h2 className='text-[16px] leading-[19px] font-bold text-[#4e73df]'> Result</h2>
               <FaEllipsisV color='gray' className='cursor-pointer' />
             </div>
-            <div className='lineChart '>
+            <div className='lineChart'>
               <ResponsiveContainer height={300}>
                 <LineChart
                   data={competenciesForChart}
@@ -181,7 +171,7 @@ const competencyMap = {
               </ResponsiveContainer>
             </div>
           </div>
-          <div className='bg-gray-200 ml-3 p-2 rounded-lg h-[350px] shadow-md'>
+          <div className='bg-gray-200 dark:bg-slate-900 p-2 rounded-lg h-[350px] w- shadow-md'>
             <h2 className='text-xl font-semibold'>Exam Details</h2>
             <p>Exam Name: {room_name}</p>
             <p>Description: {description}</p>
@@ -230,32 +220,39 @@ const competencyMap = {
     6: 'Groupwork',
   };
   return (
-    <div className="dash">
+    <div className="dash flex dark:text-white">
       <div className="flex items-center justify-between">
       </div>
       <div className="mt-[10px] w-full justify-center">
-        <div className="flex bg-gray-200 p-2 mb-4 rounded-lg shadow-md">
-          <div className="pl-11 w-1/6 font-semibold">Exam ID</div>
-          <div className="pl-5 w-1/6 font-semibold">Competency ID</div>
-          <div className="pl-2 w-1/6 font-semibold">Duration (Minutes)</div>
-          <div className="pl-4 w-1/6 font-semibold">Total Duration</div>
-          <div className="pl-1 w-1/6 font-semibold">Exam Date taken</div>
-          <div className="w-1/6 font-semibold">Action</div>
+        <div className="flex bg-gray-200 dark:bg-slate-900 p-2 gap-2 mb-4 rounded-lg shadow-md">
+          <div className="sm:w-14 lg:w-28 lg:font-semibold md:text-sm text-sm">Exam ID</div>
+          <div className="w-1/4 text-sm md:text-sm lg:font-semibold">Competency ID</div>
+          <div className="pl-1 w-1/5 text-sm md:text-sm lg:font-semibold">Duration (Minutes)</div>
+          <div className="pl-1 w-1/5 text-sm md:text-sm lg:font-semibold">Total Duration</div>
+          <div className="w-1/5 text-sm md:text-sm lg:font-semibold">Exam Date taken</div>
+          <div className="w-1/6 text-sm md:text-sm lg:font-semibold">Action</div>
         </div>
         {examScores.map((exam, index) => (
-          <Accordion open={open === index} icon={<Icon index={index} open={open} />} animate={CUSTOM_ANIMATION} key={index} onClick={() => handleOpen(index)}>
-            <AccordionHeader>
-              <div className="flex w-full">
-                <div className="w-1/6">{exam.exam_room_id}</div>
-                <div className="w-1/6">{competencyName[exam.competency_id]}</div>
-                <div className="w-1/6">{exam.duration_minutes}</div>
-                <div className="w-1/6">{exam.total_duration_minutes}</div>
-                <div className="w-1/6">{new Date(exam.end_time).toISOString().split('T')[0].split(' ')[0]}</div>
-              </div>
-            </AccordionHeader>
-            <AccordionBody>{processExamScores(exam)}</AccordionBody>
-          </Accordion>
-        ))}
+        <AccordionLayout 
+          title={(
+            <div className="flex flex-row items-center justify-center gap-2 p-2 sm:gap-10 lg:gap-5 dark:text-white mx-3">
+  <div className="w-10 text-xs lg:text-base lg:w-16 ">{exam.exam_room_id}</div>
+  <div className="w-24 text-xs lg:text-base lg:w-32">{competencyName[exam.competency_id]}</div>
+  <div className="pl-3 text-xs lg:text-base w-1/6 lg:w-28 lg:pl-32">{exam.duration_minutes}</div>
+  <div className="w-28 text-xs lg:text-base lg:w-28 sm:pl-10 lg:pl-32">{exam.total_duration_minutes}</div>
+  <div className=" w-32 lg:w-72 lg:pl-44">
+    <span className='w-24 text-xs lg:text-base'>{new Date(exam.end_time).toISOString().split('T')[0].split(' ')[0]}</span>
+  </div>
+</div>
+          )}
+          index={index}
+          activeIndex={activeIndex}
+          setActiveIndex={handleOpen}
+          key={index}
+        >
+          {processExamScores(exam)}
+        </AccordionLayout>
+      ))}
       </div>
     </div>
   );

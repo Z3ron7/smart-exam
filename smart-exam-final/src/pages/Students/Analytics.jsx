@@ -55,6 +55,8 @@ const Analytics = () => {
     '1': 'SWWPS',
     '2': 'Casework',
     '3': 'HBSE',
+    '4': 'CO',
+    '5': 'Groupwork',
     // Add more mappings as needed
   };
 
@@ -142,7 +144,7 @@ const Analytics = () => {
         });
       }
       const competenciesForChart = mappedScores.filter((item) => item.competency !== 'All Competency');
-
+      console.log('competency:', competenciesForChart)
       return (
         <div key={index} className="w-1/2 p-4">
             <div className='basis-[50%] border bg-white shadow-md cursor-pointer rounded-[4px] dark:bg-slate-900 mb-4 h-4/6 lg:mb-3'>
@@ -164,7 +166,7 @@ const Analytics = () => {
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='competency' />
-                <YAxis domain={[0, 10]} />
+                <YAxis domain={[0, 100]} />
                 <Tooltip />
                 <Legend />
                 <Line type='monotone' dataKey='score' stroke='#8884d8' activeDot={{ r: 8 }} />

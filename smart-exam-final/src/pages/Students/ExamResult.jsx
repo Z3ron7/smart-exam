@@ -27,8 +27,8 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
     { value: 1, label: 'SWPPS' },
     { value: 2, label: 'Casework' },
     { value: 3, label: 'HBSE' },
-    { value: 5, label: 'CO' },
-    { value: 6, label: 'Groupwork' },
+    { value: 4, label: 'CO' },
+    { value: 5, label: 'Groupwork' },
   ];
 
   const getCompetencyLabel = (selectedCompetency) => {
@@ -38,7 +38,7 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
 
   return (
     <div>
-      <div className='p-3 my-3 border-2 border-indigo-700 dark:bg-slate-900'>
+      <div className='p-3 my-3 border-2 dark:border-gray-700 dark:rounded-lg dark:bg-slate-900'>
       <div className="competency-buttons">
         {/* Buttons for selecting competencies */}
         {competencyOptions.map(option => (
@@ -57,15 +57,26 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
         {localSelectedCompetency === 'All Competency' ? 'Competency Results' : getCompetencyLabel(localSelectedCompetency)}
       </h1>
 
-      <h2 className="flex mb-4 mx-auto justify-center dark:text-white">
-        Total Score: {calculateTotalScore()} out of {filteredQuestionsByCompetency.length} correct - ({((calculateTotalScore() / filteredQuestionsByCompetency.length) * 100).toFixed(2)}%)
-      </h2>
+      <h2 className="flex mb-4 mx-auto justify-center text-3xl font-medium dark:text-white">
+  Total Score: 
+  <span className="text-green-500 mx-2">
+    {calculateTotalScore()}
+  </span>{' '}
+  correct out of 
+  <span className="text-orange-500 mx-2">
+    {filteredQuestionsByCompetency.length}
+  </span> question - 
+  <span className="text-blue-500 ml-1">
+    ({((calculateTotalScore() / filteredQuestionsByCompetency.length) * 100).toFixed(2)}%)
+  </span>
+</h2>
+
       <div className='flex justify-between'> 
       <button
         className="bg-indigo-700 hover-bg-indigo-600 text-white py-2 px-4 mb-3 rounded"
         onClick={resetGame}
       >
-        Restart Exam
+        Go back
       </button>
       <Link to="/exam/analytics">
       <button
@@ -76,7 +87,7 @@ const ExamResult = ({ filteredQuestions, selectedChoices, resetGame, selectedCom
       </div>
       </div>
       {filteredQuestionsByCompetency.map((question, index) => (
-        <div key={index} className="mb-4 dark:text-white dark:bg-slate-900 p-3 border-2 border-indigo-700">
+        <div key={index} className="mb-4 dark:text-white dark:bg-slate-900 p-3 border-2 dark:border-gray-700 dark:rounded-lg">
           <h2 className="text-xl text-center dark:text-white btn-primary">
             Question {index + 1}/{filteredQuestionsByCompetency.length}
           </h2>

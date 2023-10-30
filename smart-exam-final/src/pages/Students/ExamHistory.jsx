@@ -7,6 +7,7 @@ import {
 import { FaEllipsisV } from 'react-icons/fa';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
+import AccordionLayout from '../../components/accordion/AccordionLayout'
 
 const CUSTOM_ANIMATION = {
   mount: { scale: 1 },
@@ -33,13 +34,13 @@ function getColorForLevel(level) {
 
 export default function ExamHistory() {
   const [examScores, setExamScores] = useState([]);
-  const [open, setOpen] = useState(null); // Initialize 'open' state
+  const [activeIndex, setActiveIndex] = useState(null);
 
-  const handleOpen = (value) => {
-    if (value === open) {
-      setOpen(null); // Close if clicked twice
+  const handleOpen = (index) => {
+    if (activeIndex === index) {
+      setActiveIndex(null); // Close the accordion if it's already open
     } else {
-      setOpen(value); // Open if clicked once
+      setActiveIndex(index); // Open the clicked accordion
     }
   };
 
@@ -49,7 +50,7 @@ export default function ExamHistory() {
 
     const fetchExamScores = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/exams/fetch-user-exams?userId=${user_id}`);
+        const response = await axios.get(`http://localhost:3001/exams/fetch-user-exam?userId=${user_id}`);
         setExamScores(response.data.userExams);
       } catch (error) {
         console.error('Error fetching exam scores:', error);
@@ -58,11 +59,32 @@ export default function ExamHistory() {
 
     fetchExamScores();
   }, []);
+
+  const handleDeleteExam = async (examId) => {
+    try {
+      // Make a DELETE request to your backend API
+      await axios.delete(`http://localhost:3001/exams/delete-user-exam`, {
+        data: { examId }, // Pass the examId in the request body
+      });
+  
+      // After successful deletion, you can update the examScores state
+      // to remove the deleted exam from the list
+      setExamScores((prevExamScores) =>
+        prevExamScores.filter((exam) => exam.exam_id !== examId)
+      );
+    } catch (error) {
+      console.error('Error deleting exam:', error);
+      // Handle the error here, e.g., display an error message to the user
+    }
+  };
+  
 // Define a mapping of competency IDs to competency names
 const competencyMap = {
   '1': 'SWWPS',
   '2': 'Casework',
   '3': 'HBSE',
+  '4': 'CO',
+  '5': 'Groupwork',
   // Add more mappings as needed
 };
 
@@ -179,7 +201,7 @@ const competencyMap = {
               </ResponsiveContainer>
             </div>
           </div>
-          <div className='bg-gray-200 ml-3 p-2 rounded-lg h-[350px] shadow-md'>
+          <div className='bg-gray-200 dark:bg-slate-900 ml-3 p-2 rounded-lg h-[350px] shadow-md'>
             <h2 className='text-xl font-semibold'>Exam Details</h2>
             <p>Duration (Minutes): {duration_minutes}</p>
             <p>Date: {endDateFormatted}</p>
@@ -218,39 +240,60 @@ const competencyMap = {
   );
 }
   const competencyName = {
-    4: 'All Competency',
+    6: 'All Competency',
     1: 'SWWPS',
     2: 'Casework',
     3: 'HBSE',
-    5: 'CO',
-    6: 'Groupwork',
+    4: 'CO',
+    5: 'Groupwork',
   };
   return (
-    <div className="dash">
+    <div className="dash dark:text-white">
       <div className="flex items-center justify-between">
       </div>
       <div className="mt-[10px] w-full justify-center">
-        <div className="flex bg-gray-200 p-2 mb-4 rounded-lg shadow-md">
-          <div className="pl-11 w-1/6 font-semibold">Exam ID</div>
-          <div className="pl-5 w-1/6 font-semibold">Competency ID</div>
-          <div className="pl-2 w-1/6 font-semibold">Duration (Minutes)</div>
-          <div className="pl-4 w-1/6 font-semibold">Total Duration</div>
-          <div className="pl-1 w-1/6 font-semibold">Exam Date taken</div>
-          <div className="w-1/6 font-semibold">Action</div>
+        <div className="flex bg-gray-200 dark:text-blue-600 dark:bg-slate-900 p-2 gap-2 mb-4 rounded-lg shadow-md">
+          <div className="sm:w-14 lg:w-28 lg:font-semibold md:text-sm text-sm">Exam ID</div>
+          <div className="w-1/4 text-sm md:text-sm lg:font-semibold">Competency ID</div>
+          <div className="pl-1 w-1/5 text-sm md:text-sm lg:font-semibold">Duration (Minutes)</div>
+          <div className="pl-1 w-1/5 text-sm md:text-sm lg:font-semibold">Total Duration</div>
+          <div className="w-1/5 text-sm md:text-sm lg:font-semibold">Exam Date taken</div>
+          <div className="w-1/6 text-sm md:text-sm lg:font-semibold">Action</div>
         </div>
         {examScores.map((exam, index) => (
-          <Accordion open={open === index} icon={<Icon index={index} open={open} />} animate={CUSTOM_ANIMATION} key={index} onClick={() => handleOpen(index)}>
-            <AccordionHeader>
-              <div className="flex w-full">
-                <div className="w-1/6">{exam.exam_id}</div>
-                <div className="w-1/6">{competencyName[exam.competency_id]}</div>
-                <div className="w-1/6">{exam.duration_minutes}</div>
-                <div className="w-1/6">{exam.total_duration_minutes}</div>
-                <div className="w-1/6">{new Date(exam.end_time).toISOString().split('T')[0].split(' ')[0]}</div>
-              </div>
-            </AccordionHeader>
-            <AccordionBody>{processExamScores(exam)}</AccordionBody>
-          </Accordion>
+          <AccordionLayout 
+          title={(
+            <div className="flex flex-row items-center justify-center gap-2 p-2 sm:gap-10 lg:gap-5 dark:text-white mx-3">
+  <div className="w-10 text-xs lg:text-base lg:w-16 ">{exam.exam_id}</div>
+  <div className="w-24 text-xs lg:text-base lg:w-32">{competencyName[exam.competency_id]}</div>
+  <div className="pl-3 text-xs lg:text-base w-1/6 lg:w-28 lg:pl-32">{exam.duration_minutes}</div>
+  <div className="w-28 text-xs lg:text-base lg:w-28 sm:pl-10 lg:pl-32">{exam.total_duration_minutes}</div>
+  <div className=" w-32 lg:w-72 lg:pl-44">
+    <span className='w-24 text-xs lg:text-base'>{new Date(exam.end_time).toISOString().split('T')[0].split(' ')[0]}</span>
+  </div>
+  <div className="flex justify-end mt-4">
+      <button
+        onClick={() => {
+          const confirmed = window.confirm("Are you sure you want to delete this exam?");
+          if (confirmed) {
+            handleDeleteExam(exam.exam_id);
+          }
+        }}
+        className="text-white lg:pl-14 rounded p-2"
+      >
+        <img className=' p-1 border-2 border-white hover:border-red-600' src="/delete.svg" alt="" />
+      </button>
+    </div>
+</div>
+          )}
+          index={index}
+          activeIndex={activeIndex}
+          setActiveIndex={handleOpen}
+          key={index}
+        >
+          {processExamScores(exam)}
+          
+        </AccordionLayout>
         ))}
       </div>
     </div>

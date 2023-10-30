@@ -35,7 +35,7 @@ router.get('/users/:user_id', async (req, res) => {
   const userId = req.params.user_id; // Retrieve the userId from the URL parameters
 
   try {
-    const query = 'SELECT user_id, name, gender, username, status, image FROM users WHERE user_id = ?';
+    const query = 'SELECT user_id, name, gender, username, status, image, isVerified FROM users WHERE user_id = ?';
     
     const user = await queryAsync(query, [userId]);
     
@@ -117,6 +117,31 @@ router.get('/users/:user_id', async (req, res) => {
     }
   });
   
+  router.get('/fetch-latest/:user_id', async (req, res) => {
+    const user_id = req.params.user_id;
+  
+    try {
+      // Define a SQL query to fetch the latest activities from both tables
+      const query = `
+        SELECT * FROM (SELECT user_id, program_id, competency_id, 
+                      start_time, end_time, score 
+                      FROM user_exams
+                      WHERE user_id = ?
+                      UNION
+                      SELECT user_id, program_id, competency_id, 
+                      start_time, end_time, score 
+                      FROM exam_room) AS combined
+        ORDER BY end_time DESC;
+      `;
+  
+      const latestActivities = await queryAsync(query, [user_id]);
+  
+      res.json({ latestActivities });
+    } catch (error) {
+      console.error('Error fetching latest activities:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
   
   
   module.exports = router;

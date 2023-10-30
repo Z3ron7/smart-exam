@@ -2,10 +2,9 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import classNames from "classnames";
 import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
-import Select from 'react-select';
 import ExamResult from './ExamResult'
 
-function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStartTime, countdownStarted, setCountdownStarted, formatTime, num, userExamId}) {
+function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStartTime, countdownStarted, setCountdownStarted, formatTime, num, userExamId, setUserExamId}) {
   const [showResults, setShowResults] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [maxQuestions, setMaxQuestions] = useState(10);
@@ -67,7 +66,7 @@ function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStart
   
           if (selectedCompetency?.value === 'All Competency') {
             // Fetch questions for all available competencies
-            const competencies = ['SWPPS', 'Casework', 'HBSE']; // Replace with your predefined competencies
+            const competencies = ['SWPPS', 'Casework', 'HBSE', 'CO', 'Groupwork']; // Replace with your predefined competencies
             const allQuestions = [];
   
             // Fetch questions for each competency and merge the results
@@ -139,6 +138,25 @@ function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStart
     fetchData();
   }, [selectedProgram, selectedCompetency]);
 
+  const saveExamStateToLocalStorage = () => {
+    const examState = {
+      currentQuestion,
+      selectedChoices,
+      score,
+      userExamId,
+    };
+    localStorage.setItem('examState', JSON.stringify(examState));
+  };
+  useEffect(() => {
+    const savedExamState = localStorage.getItem('examState');
+    if (savedExamState) {
+      const parsedState = JSON.parse(savedExamState);
+      setCurrentQuestion(parsedState.currentQuestion);
+      setSelectedChoices(parsedState.selectedChoices);
+      setScore(parsedState.score);
+      setUserExamId(parsedState.userExamId);
+    }
+  }, []);
 // Function to update scores for each competency
 const updateCompetencyScore = (competencyId, score) => {
   setCompetencyScores((prevScores) => ({
@@ -155,20 +173,12 @@ const handleChoiceClick = (choiceIndex, choice, competencyId) => {
   // Calculate the score for the current competency
   const competencyScore = calculateScore(updatedSelectedChoices, competencyId);
   updateCompetencyScore(competencyId, competencyScore);
+  saveExamStateToLocalStorage();
 };
 
-
-const [localSelectedCompetency, setLocalSelectedCompetency] = useState('All Competency');
-
-  // Function to filter questions based on selected competency
-  const filteredQuestionsByCompetency = localSelectedCompetency === 'All Competency'
-    ? filteredQuestions
-    : filteredQuestions.filter(question => question.competency_id === localSelectedCompetency);
-
-  // Function to calculate the total score for selected questions
   // Function to calculate the total score for selected questions
   const calculateScore = () => {
-    const scoresByCompetency = {}; // Create an object to store scores by competency ID
+    const scoresByCompetency = {};
   
     filteredQuestions.forEach((question, index) => {
       const selectedChoice = selectedChoices[index];
@@ -227,7 +237,7 @@ const formattedEndTime = `${endTime.getFullYear()}-${(endTime.getMonth() + 1).to
       total_duration_minutes: formattedTotalDuration, // Send the total duration in the "00h:00m:00s" format
       endTime: formattedEndTime,
     });
-
+    localStorage.removeItem('examState');
     if (response.status === 200) {
       // The exam has ended successfully, and you can handle any further actions here.
       console.log('Exam ended successfully');
@@ -242,12 +252,14 @@ const handleFinishExam = () => {
   setShowResults(true);
   setCountdownStarted(false);
   endExam(); // Call the endExam function when the Finish button is clicked
+  localStorage.removeItem('examState');
 };
 
 const nextPage = () => {
   const nextPage = Math.min(currentPage + 1, totalPages); // Ensure we don't go beyond the last page
   const nextQuestion = (nextPage - 1) * questionsPerPage;
   setCurrentQuestion(nextQuestion);
+  saveExamStateToLocalStorage();
 };
 
 const prevPage = () => {

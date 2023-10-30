@@ -8,8 +8,6 @@ function ExamRoom({selectedRoom}) {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCompetency, setSelectedCompetency] = useState(null);
   const [roomId, setRoomId] = useState(null);
-  const [date, setDate] = useState(null);
-  const [description, SetDescription] = useState(null);
   const [userExamId, setUserExamId] = useState(null);
  
   useEffect(() => {
@@ -31,12 +29,12 @@ const programOptions = [
 ];
 
 const competencyOptions = [
-  { value: 4, label: 'All Competency' },
+  { value: 6, label: 'All Competency' },
   { value: 1, label: 'SWPPS' },
   { value: 2, label: 'Casework' },
   { value: 3, label: 'HBSE' },
-  { value: 5, label: 'CO' },
-  { value: 6, label: 'Groupwork' },
+  { value: 4, label: 'CO' },
+  { value: 5, label: 'Groupwork' },
 ];
 const countdownOptions = [
   { value: 0, label: '0' },
@@ -181,6 +179,7 @@ return (
           setCountdownStarted={setCountdownStarted}
           formatTime={formatTime}
           userExamId={userExamId}
+          setUserExamId={setUserExamId}
           num={num}
         />
       )}

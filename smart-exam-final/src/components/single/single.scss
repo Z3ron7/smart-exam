@@ -18,8 +18,8 @@
         gap: 20px;
 
         img {
-          width: 100px;
-          height: 100px;
+          width: 150px;
+          height: 150px;
           border-radius: 20px;
           object-fit: cover;
         }
@@ -71,7 +71,10 @@
       margin-bottom: 20px;
     }
 
-    ul {
+    .activity-list {
+    max-height: 450px; /* Set the max height for the list */
+    overflow-y: auto;
+
       li {
         list-style-type: none;
         position: relative;

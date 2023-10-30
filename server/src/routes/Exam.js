@@ -239,6 +239,58 @@ router.get('/fetch-user-exams', async (req, res) => {
   }
 });
 
+router.get('/fetch-user-exam', async (req, res) => {
+  const userId = req.query.userId;
+
+  try {
+    // Define a SQL query to fetch user exams with a LIMIT
+    const query = `
+      SELECT * FROM user_exams
+      WHERE user_id = ?
+      ORDER BY end_time DESC
+    `;
+
+    // Replace 'userId' with the actual user ID for whom you want to fetch exams
+
+    const userExams = await queryAsync(query, [userId]);
+    // Fetch the score for the user
+    const scoreQuery = `
+      SELECT score FROM user_exams WHERE user_id = ?;
+    `;
+
+    const scoreResult = await queryAsync(scoreQuery, [userId]);
+    const score = scoreResult[0].score;
+
+    res.json({ userExams, score });
+  } catch (error) {
+    console.error('Error fetching user exams:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/delete-user-exam', async (req, res) => {
+  const examId = req.body.examId; // Assuming you send the exam_id in the request body
+
+  if (!examId) {
+    return res.status(400).json({ message: 'Exam ID is required' });
+  }
+
+  try {
+    // Define a SQL query to delete a user exam by exam_id
+    const deleteQuery = `
+      DELETE FROM user_exams
+      WHERE exam_id = ?;
+    `;
+
+    await queryAsync(deleteQuery, [examId]); // Execute the delete query
+
+    res.json({ message: 'User exam deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user exam:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.get('/fetch-admin-exams', async (req, res) => {
   try {
     // Define a SQL query to fetch admin exams
@@ -294,46 +346,6 @@ router.delete('/user-exams/:user_exam_id', async (req, res) => {
     res.status(500).json({ message: 'Failed to delete user exam' });
   }
 });
-
-router.post('/record_exam_choices', async (req, res) => {
-  try {
-    const { userId, examId, questionId, choiceId, isCorrect } = req.body;
-
-    // Insert a record into the user_exam_records table
-    const insertQuery = `
-      INSERT INTO user_exam_records (user_id, exam_id, question_id, choice_id, is_correct)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-
-    await queryAsync(insertQuery, [userId, examId, questionId, choiceId, isCorrect]);
-
-    res.status(200).json({ message: 'Exam choices recorded successfully' });
-  } catch (error) {
-    console.error('Error recording exam choices:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/total-scores', async (req, res) => {
-  try {
-    const { user_id } = req.body;
-
-    // Calculate the user's total score and total duration_minutes
-    const { totalScore, totalDurationMinutes } = await calculateUserScore(user_id);
-
-    // Update the total_scores table with the user's score and duration
-    await queryAsync(
-      'UPDATE total_scores SET total_score = ?, total_duration_minutes = ?, updated_at = NOW() WHERE user_id = ?',
-      [totalScore, totalDurationMinutes, user_id]
-    );
-
-    res.json({ message: 'Total scores updated successfully' });
-  } catch (error) {
-    console.error('Error updating total scores:', error);
-    res.status(500).json({ message: 'Failed to update total scores' });
-  }
-});
-
 
 
 module.exports = router;

@@ -43,7 +43,7 @@ const NavbarStudents = () => {
     return <div>Loading...</div>;
   }
   return (
-    <div className="navbar dark:bg-slate-900">
+    <div className="navbar dark:bg-slate-900 border-b-2 dark:border-gray-700 dark:rounded-lg">
       <div className="flex items-center mx-auto">
         <span className="text-xl font-medium whitespace-nowrap dark:text-white">
           Welcome
