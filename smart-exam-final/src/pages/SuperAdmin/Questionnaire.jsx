@@ -8,8 +8,8 @@ const Questionnaire = () => {
   const [questionsData, setQuestionsData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState(null);
-  const [selectedProgram, setSelectedProgram] = useState(null); // Set initial program selection
-const [selectedCompetency, setSelectedCompetency] = useState(null); // Track selected competency
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
+  const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' });
   const [loading, setLoading] = useState(true);
 
 
@@ -33,8 +33,36 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
     setQuestionToEdit(null);
   };
 
+  function shuffleArray(array) {
+    const shuffledArray = [...array];
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+    return shuffledArray;
+  }
+
+  function shuffleArrayWithCorrectChoice(questions) {
+    const shuffledQuestions = [...questions];
   
-   const fetchQuestions = useCallback(async () => {
+    for (let i = 0; i < shuffledQuestions.length; i++) {
+      if (shuffledQuestions[i].choices) {
+        const correctChoices = shuffledQuestions[i].choices.filter((choice) => choice.isCorrect);
+        const incorrectChoices = shuffledQuestions[i].choices.filter((choice) => !choice.isCorrect);
+  
+        if (correctChoices.length > 0 && incorrectChoices.length > 2) {
+          // Shuffle the choices, ensuring one correct and three incorrect choices
+          const shuffledCorrectChoice = shuffleArray(correctChoices);
+          const shuffledIncorrectChoices = shuffleArray(incorrectChoices.slice(0, 3));
+          shuffledQuestions[i].choices = [...shuffledCorrectChoice, ...shuffledIncorrectChoices];
+        }
+      }
+    }
+  
+    return shuffledQuestions;
+  }  
+
+  const fetchQuestions = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:3001/questions/fetch');
       setQuestionsData(response.data); // Limit to 10 randomized questions
@@ -46,6 +74,106 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);  
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (selectedProgram) {
+          let response;
+          const maxQuestionsPerCategory = 100; // Set the maximum questions per category
+          let maxQuestions = 0; // Initialize maxQuestions to zero
+
+          if (selectedCompetency?.value === 'All Competency') {
+            // Check if competency data is already saved in local storage
+            const competencyDataAll = localStorage.getItem('competencyData_All');
+            if (competencyDataAll) {
+              const parsedData = JSON.parse(competencyDataAll);
+              response = { data: parsedData };
+              // Set maxQuestions to the number of questions available for all competencies
+              maxQuestions = parsedData.length;
+            } else {
+              // Fetch questions for all available competencies
+              const competencies = ['SWPPS', 'Casework', 'HBSE', 'CO', 'Groupwork']; // Replace with your predefined competencies
+              const allQuestions = [];
+  
+              // Fetch questions for each competency and merge the results
+              for (const competency of competencies) {
+                const competencyResponse = await axios.get(
+                  `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+                );
+  
+                // Limit to maxQuestionsPerCategory questions per category
+                const limitedQuestions = shuffleArray(competencyResponse.data).slice(0, maxQuestionsPerCategory);
+                maxQuestions += limitedQuestions.length; // Increment the total questions count
+  
+                // Check if maxQuestions exceeds 500, and if so, truncate the questions.
+                if (maxQuestions > 500) {
+                  const overflow = maxQuestions - 500;
+                  limitedQuestions.splice(-overflow);
+                  maxQuestions = 500;
+                }
+  
+                allQuestions.push(...limitedQuestions);
+  
+                // If maxQuestions is already 500, break the loop.
+                if (maxQuestions >= 500) {
+                  break;
+                }
+              }
+  
+              response = { data: allQuestions };
+              localStorage.setItem('selectedCompetencyId', 'All');
+              localStorage.setItem('competencyData_All', JSON.stringify(allQuestions));
+            }
+          } else if (selectedCompetency) {
+            // Check if competency data is already saved in local storage
+            const competencyData = localStorage.getItem(`competencyData_${selectedCompetency.value}`);
+            if (competencyData) {
+              const parsedData = JSON.parse(competencyData);
+              response = { data: parsedData };
+              // Set maxQuestions to the number of questions available for the selected competency
+              maxQuestions = parsedData.length;
+            } else {
+              // Fetch questions for the selected competency
+              response = await axios.get(
+                `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
+              );
+  
+              // Limit to maxQuestionsPerCategory questions for the selected category
+              response.data = shuffleArray(response.data).slice(0, maxQuestionsPerCategory);
+              maxQuestions = response.data.length; // Set the total questions count
+  
+              // Truncate if maxQuestions exceeds 500
+              if (maxQuestions > 500) {
+                response.data.splice(-maxQuestions + 500);
+                maxQuestions = 500;
+              }
+  
+              // Save the competency data to local storage
+              localStorage.setItem(`competencyData_${selectedCompetency.value}`, JSON.stringify(response.data));
+            }
+            localStorage.setItem('selectedCompetencyId', selectedCompetency.value);
+          } else {
+            // If no competency is selected, use all questions
+            return; // Exit early to avoid setting state again
+          }
+  
+          const randomizedQuestions = shuffleArray(response.data).slice(0, 500);
+          // Process choices
+          const processedQuestions = shuffleArrayWithCorrectChoice(randomizedQuestions);
+  
+          setQuestionsData(processedQuestions);
+          setLoading(true)
+          console.log('filteredQuestions:', response.data);
+          console.log('selectedCompetencyId', selectedCompetency.value);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+  
+    fetchData();
+  }, [selectedProgram, selectedCompetency]);
 
 
   // Function to generate letters (A, B, C, ...) based on the index
@@ -69,7 +197,6 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
   };
   const programOptions = [
     { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
-    { value: 'Option', label: 'Option' },
   ];
   
   const competencyOptions = [
@@ -83,7 +210,7 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
 
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
-      <header className="dark:bg-slate-900 space-y-2 p-2 sm:px-8 sm:py-6 lg:p-2 xl:px-8 xl:py-3 mb-2 border-[#4E73DF] border-2">
+      <header className="dark:bg-slate-900 space-y-2 p-2 sm:px-8 sm:py-6 lg:p-2 mb-2 border-2 border-slate-600 rounded-lg">
   <div className="flex items-center ">
     <h2 className="font-semibold text-slate-900 items-center dark:text-white">Exam Room</h2>
   </div>
@@ -156,7 +283,7 @@ const [selectedCompetency, setSelectedCompetency] = useState(null); // Track sel
         <ul>
   {questionsData.map((question, index) => (
     <li key={question.question_id}>
-      <div className="border-2 border-indigo-700 dark:bg-slate-900 shadow-lg items-center justify-center my-2">
+      <div className="border-2 border-slate-600 rounded-lg dark:bg-slate-900 shadow-lg items-center justify-center my-2">
         <div className="flex justify-end"> {/* Create a flex container for buttons */}
           <div className='m-2'>
             <button

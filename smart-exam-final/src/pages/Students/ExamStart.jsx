@@ -2,17 +2,19 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import classNames from "classnames";
 import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import Select from 'react-select';
 import ExamResult from './ExamResult'
 
-function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStartTime, countdownStarted, setCountdownStarted, formatTime, num, userExamId, setUserExamId}) {
+function ExamStart({selectedCompetency, setSelectedCompetency, selectedProgram, setSelectedProgram, selectedTime, setSelectedTime, countdownStarted, setCountdownStarted, num, setNum, examStartTime, handleTimeChange, formatTime}) {
   const [showResults, setShowResults] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [maxQuestions, setMaxQuestions] = useState(10);
+  const [maxQuestions, setMaxQuestions] = useState(null);
   const [score, setScore] = useState(0);
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null)); // Adjust the number of questions
   const questionsPerPage = 3; // Adjust the number of questions per page
   const [competencyScores, setCompetencyScores] = useState({});
   const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [userExamId, setUserExamId] = useState(null);
 
   function shuffleArray(array) {
     const shuffledArray = [...array];
@@ -42,20 +44,7 @@ function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStart
   
     return shuffledQuestions;
   }  
-
-  const getExamData = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:3001/questions/fetch');
-      setFilteredQuestions(response.data); // Limit to 10 randomized questions
-    } catch (error) {
-      console.error('Error fetching data for refresh:', error);
-    }
-  }, []);
   
-  useEffect(() => {
-    getExamData();
-  }, [getExamData]);  
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -63,61 +52,98 @@ function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStart
           let response;
           const maxQuestionsPerCategory = 100; // Set the maximum questions per category
           let maxQuestions = 0; // Initialize maxQuestions to zero
-  
+
           if (selectedCompetency?.value === 'All Competency') {
-            // Fetch questions for all available competencies
-            const competencies = ['SWPPS', 'Casework', 'HBSE', 'CO', 'Groupwork']; // Replace with your predefined competencies
-            const allQuestions = [];
+            // Check if competency data is already saved in local storage
+            const competencyDataAll = localStorage.getItem('competencyData_All');
+            if (competencyDataAll) {
+              const parsedData = JSON.parse(competencyDataAll);
+              response = { data: parsedData };
+              // Set maxQuestions to the number of questions available for all competencies
+              maxQuestions = parsedData.length;
+            } else {
+              // Fetch questions for all available competencies
+              const competencies = ['SWPPS', 'Casework', 'HBSE', 'CO', 'Groupwork']; // Replace with your predefined competencies
+              const allQuestions = [];
   
-            // Fetch questions for each competency and merge the results
-            for (const competency of competencies) {
-              const competencyResponse = await axios.get(
-                `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+              // Fetch questions for each competency and merge the results
+              for (const competency of competencies) {
+                const competencyResponse = await axios.get(
+                  `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+                );
+  
+                // Limit to maxQuestionsPerCategory questions per category
+                const limitedQuestions = shuffleArray(competencyResponse.data).slice(0, maxQuestionsPerCategory);
+                maxQuestions += limitedQuestions.length; // Increment the total questions count
+  
+                // Check if maxQuestions exceeds 500, and if so, truncate the questions.
+                if (maxQuestions > 500) {
+                  const overflow = maxQuestions - 500;
+                  limitedQuestions.splice(-overflow);
+                  maxQuestions = 500;
+                }
+  
+                allQuestions.push(...limitedQuestions);
+  
+                // If maxQuestions is already 500, break the loop.
+                if (maxQuestions >= 500) {
+                  break;
+                }
+              }
+  
+              response = { data: allQuestions };
+              localStorage.setItem('selectedCompetencyId', 'All');
+              localStorage.setItem('competencyData_All', JSON.stringify(allQuestions));
+            }
+          } else if (selectedCompetency) {
+            // Check if competency data is already saved in local storage
+            const competencyData = localStorage.getItem(`competencyData_${selectedCompetency.value}`);
+            if (competencyData) {
+              const parsedData = JSON.parse(competencyData);
+              response = { data: parsedData };
+              // Set maxQuestions to the number of questions available for the selected competency
+              maxQuestions = parsedData.length;
+            } else {
+              // Fetch questions for the selected competency
+              response = await axios.get(
+                `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
               );
   
-              // Limit to maxQuestionsPerCategory questions per category
-              const limitedQuestions = shuffleArray(competencyResponse.data).slice(0, maxQuestionsPerCategory);
-              maxQuestions += limitedQuestions.length; // Increment the total questions count
+              // Limit to maxQuestionsPerCategory questions for the selected category
+              response.data = shuffleArray(response.data).slice(0, maxQuestionsPerCategory);
+              maxQuestions = response.data.length; // Set the total questions count
   
-              // Check if maxQuestions exceeds 500, and if so, truncate the questions.
+              // Truncate if maxQuestions exceeds 500
               if (maxQuestions > 500) {
-                const overflow = maxQuestions - 500;
-                limitedQuestions.splice(-overflow);
+                response.data.splice(-maxQuestions + 500);
                 maxQuestions = 500;
               }
   
-              allQuestions.push(...limitedQuestions);
-  
-              // If maxQuestions is already 500, break the loop.
-              if (maxQuestions >= 500) {
-                break;
-              }
+              // Save the competency data to local storage
+              localStorage.setItem(`competencyData_${selectedCompetency.value}`, JSON.stringify(response.data));
             }
-  
-            response = { data: allQuestions };
-            localStorage.setItem('selectedCompetencyId', 'All');
-          } else if (selectedCompetency) {
-            // Fetch questions for the selected competency
-            response = await axios.get(
-              `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
-            );
-  
-            // Limit to maxQuestionsPerCategory questions for the selected category
-            response.data = shuffleArray(response.data).slice(0, maxQuestionsPerCategory);
-            maxQuestions = response.data.length; // Set the total questions count
-  
-            // Truncate if maxQuestions exceeds 500
-            if (maxQuestions > 500) {
-              response.data.splice(-maxQuestions + 500);
-              maxQuestions = 500;
-            }
-  
             localStorage.setItem('selectedCompetencyId', selectedCompetency.value);
           } else {
             // If no competency is selected, use all questions
-            await getExamData();
             return; // Exit early to avoid setting state again
           }
+
+          // Load selectedChoices from local storage
+        const storedSelectedChoices = localStorage.getItem('selectedChoices');
+        if (storedSelectedChoices) {
+          setSelectedChoices(JSON.parse(storedSelectedChoices));
+        } else {
+          // If selectedChoices aren't in local storage, initialize it
+          setSelectedChoices(Array(maxQuestions).fill(-1));
+        }
+
+        const storedCurrentQuestion = localStorage.getItem('currentQuestion');
+        if (storedCurrentQuestion) {
+          currentQuestion = parseInt(storedCurrentQuestion, 10);
+          setCurrentQuestion(currentQuestion);
+        } else {
+          setCurrentQuestion(0);
+        }
   
           const randomizedQuestions = shuffleArray(response.data).slice(0, 500);
           // Process choices
@@ -125,8 +151,6 @@ function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStart
   
           setFilteredQuestions(processedQuestions);
           setMaxQuestions(maxQuestions); // Set the total questions count
-          setCurrentQuestion(0);
-          setSelectedChoices(Array(maxQuestions).fill(-1));
           console.log('filteredQuestions:', response.data);
           console.log('selectedCompetencyId', selectedCompetency.value);
         }
@@ -138,25 +162,6 @@ function ExamStart({selectedProgram, selectedCompetency, selectedTime, examStart
     fetchData();
   }, [selectedProgram, selectedCompetency]);
 
-  const saveExamStateToLocalStorage = () => {
-    const examState = {
-      currentQuestion,
-      selectedChoices,
-      score,
-      userExamId,
-    };
-    localStorage.setItem('examState', JSON.stringify(examState));
-  };
-  useEffect(() => {
-    const savedExamState = localStorage.getItem('examState');
-    if (savedExamState) {
-      const parsedState = JSON.parse(savedExamState);
-      setCurrentQuestion(parsedState.currentQuestion);
-      setSelectedChoices(parsedState.selectedChoices);
-      setScore(parsedState.score);
-      setUserExamId(parsedState.userExamId);
-    }
-  }, []);
 // Function to update scores for each competency
 const updateCompetencyScore = (competencyId, score) => {
   setCompetencyScores((prevScores) => ({
@@ -164,6 +169,34 @@ const updateCompetencyScore = (competencyId, score) => {
     [competencyId]: score,
   }));
 };
+// Save exam state to localStorage
+const saveExamStateToLocalStorage = () => {
+  const examState = {
+    currentQuestion: currentQuestion,
+    score,
+    userExamId,
+    selectedProgram,
+    selectedCompetency,
+    maxQuestions: maxQuestions,
+    filteredQuestions: filteredQuestions.map(question => ({ ...question })), // Convert to plain objects
+  };
+  localStorage.setItem('examState', JSON.stringify(examState));
+};
+
+// Load exam state from localStorage
+useEffect(() => {
+  const savedExamState = localStorage.getItem('examState');
+  if (savedExamState) {
+    const parsedState = JSON.parse(savedExamState);
+    setCurrentQuestion(parsedState.currentQuestion); // Set the current question using the index
+    setScore(parsedState.score);
+    setSelectedCompetency(parsedState.selectedCompetency);
+    setUserExamId(parsedState.userExamId);
+    setSelectedProgram(parsedState.selectedProgram);
+    setMaxQuestions(parsedState.maxQuestions);
+    setFilteredQuestions(parsedState.filteredQuestions); // Convert plain objects back to the original format
+  }
+}, []);
 
 const handleChoiceClick = (choiceIndex, choice, competencyId) => {
   const updatedSelectedChoices = [...selectedChoices];
@@ -173,36 +206,59 @@ const handleChoiceClick = (choiceIndex, choice, competencyId) => {
   // Calculate the score for the current competency
   const competencyScore = calculateScore(updatedSelectedChoices, competencyId);
   updateCompetencyScore(competencyId, competencyScore);
-  saveExamStateToLocalStorage();
+  localStorage.setItem('selectedChoices', JSON.stringify(updatedSelectedChoices));
+  saveExamStateToLocalStorage()
+
 };
 
-  // Function to calculate the total score for selected questions
-  const calculateScore = () => {
-    const scoresByCompetency = {};
-  
-    filteredQuestions.forEach((question, index) => {
-      const selectedChoice = selectedChoices[index];
-  
-      if (selectedChoice && selectedChoice.isCorrect) {
-        // Check if the competency ID exists in the question
-        if (question.competency_id) {
-          const competencyId = question.competency_id;
-  
-          if (!scoresByCompetency[competencyId]) {
-            scoresByCompetency[competencyId] = 0;
-          }
-  
-          scoresByCompetency[competencyId]++;
+const calculateScore = () => {
+  const scoresByCompetency = {}; // Create an object to store scores by competency ID
+
+  filteredQuestions.forEach((question, index) => {
+    const selectedChoice = selectedChoices[index];
+
+    if (selectedChoice && selectedChoice.isCorrect) {
+      // Check if the competency ID exists in the question
+      if (question.competency_id) {
+        const competencyId = question.competency_id;
+
+        if (!scoresByCompetency[competencyId]) {
+          scoresByCompetency[competencyId] = 0;
+        }
+
+        scoresByCompetency[competencyId]++;
+      }
+    } else if (selectedChoice && !selectedChoice.isCorrect) {
+      // If the choice is incorrect, reduce the score of the associated competency
+      if (question.competency_id) {
+        const competencyId = question.competency_id;
+        if (!scoresByCompetency[competencyId]) {
+          scoresByCompetency[competencyId] = 0;
         }
       }
-    });
-  
-    // Log the scores for each competency
-    console.log('Scores by Competency ID:', scoresByCompetency);
-  
-    return JSON.stringify(scoresByCompetency); // Convert the object to a JSON string
-  };
-  
+    }
+  });
+
+  // Handle the case when "All Competency" is selected
+  if (selectedCompetency && selectedCompetency.value === "All Competency") {
+    // Add all competencies with a score of 0
+    for (const competencyId in competencyOptions) {
+      if (!scoresByCompetency[competencyId]) {
+        scoresByCompetency[competencyId] = 0;
+      }
+    }
+  }
+
+  return scoresByCompetency;
+};
+const competencyIdToValue = {
+  1: 'SWWPS',
+  2: 'Casework',
+  3: 'HBSE',
+  4: 'CO',
+  5: 'Groupwork',
+  // Add other competency IDs and values here
+};
 
   const resetGame = () => {
     setSelectedChoices(Array(maxQuestions).fill(-1)); // Reset selected answers
@@ -210,6 +266,52 @@ const handleChoiceClick = (choiceIndex, choice, competencyId) => {
     setCurrentQuestion(0);
     setShowResults(false);
   };
+// Define your Select options
+const programOptions = [
+  { value: 'Social Work', label: 'Social Work' },
+];
+
+const competencyOptions = [
+  { value: 'All Competency', label: 'All Competency' },
+  { value: 'SWPPS', label: 'SWPPS' },
+  { value: 'Casework', label: 'Casework' },
+  { value: 'HBSE', label: 'HBSE' },
+  { value: 'CO', label: 'CO' },
+  { value: 'Groupwork', label: 'Groupwork' },
+];
+const countdownOptions = [
+  { value: 0, label: '0' },
+  { value: 0.5, label: '30 minutes' },
+  { value: 1, label: '1 hour' },
+  { value: 2, label: '2 hours' },
+  { value: 3, label: '3 hours' },
+  { value: 4, label: '4 hours' },
+  { value: 5, label: '5 hours' },
+];
+
+// Add your state variables for selected options
+
+
+const saveTimerStateToLocalStorage = () => {
+  const timerState = {
+    num,
+    selectedTime,
+    countdownStarted,
+  };
+  localStorage.setItem('timerState', JSON.stringify(timerState));
+};
+
+// Load timer state from localStorage when the component mounts
+useEffect(() => {
+  const savedTimerState = localStorage.getItem('timerState');
+  if (savedTimerState) {
+    const parsedTimerState = JSON.parse(savedTimerState);
+    setNum(parsedTimerState.num);
+    setSelectedTime(parsedTimerState.selectedTime);
+    setCountdownStarted(parsedTimerState.countdownStarted);
+  }
+}, []);
+
 
 const endExam = async () => {
   try {
@@ -231,13 +333,15 @@ const formattedEndTime = `${endTime.getFullYear()}-${(endTime.getMonth() + 1).to
       Math.floor(total_duration_minutes_with_interval % 60)
     ).padStart(2, '0')}m:${String(Math.floor((total_duration_minutes_with_interval % 1) * 60)).padStart(2, '0')}s`;
 
-    const response = await axios.post('http://localhost:3001/exam-room/end-exam-room', {
+    const response = await axios.post('http://localhost:3001/exams/end-exam', {
       exam_id: user_exam_id, // Replace with the actual exam ID
       score: calculateScore(), // Replace with your score calculation logic
       total_duration_minutes: formattedTotalDuration, // Send the total duration in the "00h:00m:00s" format
       endTime: formattedEndTime,
     });
     localStorage.removeItem('examState');
+    localStorage.removeItem('timerState');
+    localStorage.removeItem('selectedChoices');
     if (response.status === 200) {
       // The exam has ended successfully, and you can handle any further actions here.
       console.log('Exam ended successfully');
@@ -252,14 +356,14 @@ const handleFinishExam = () => {
   setShowResults(true);
   setCountdownStarted(false);
   endExam(); // Call the endExam function when the Finish button is clicked
-  localStorage.removeItem('examState');
+  saveTimerStateToLocalStorage();
 };
 
 const nextPage = () => {
   const nextPage = Math.min(currentPage + 1, totalPages); // Ensure we don't go beyond the last page
   const nextQuestion = (nextPage - 1) * questionsPerPage;
   setCurrentQuestion(nextQuestion);
-  saveExamStateToLocalStorage();
+  saveExamStateToLocalStorage()
 };
 
 const prevPage = () => {
@@ -283,65 +387,116 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
   }
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
-      <div className="flex flex-col lg:flex-row text-center dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
-        
-        {selectedTime > 0 && (
-            <div className="flex items-center">
-              {formatTime(num)}
+      <div className="text-center border-2 dark:border-gray-700 border-indigo-700 rounded-lg dark:rounded-lg dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
+        <div className="flex flex-row gap-5 justify-center mx-3 items-center dark:text-white">
+          <div className="mb-4 lg:w-72 dark:bg-slate-600">
+        {!showResults && ( 
+            <Select
+              placeholder="Program"
+              id="program"
+              name="program"
+              value={selectedProgram}
+              onChange={(selectedOption) => setSelectedProgram(selectedOption)}
+              options={programOptions}
+              isDisabled={countdownStarted}
+            />
+        )}
+          </div>
+
+          <div className="mb-4 lg:w-72">
+        {!showResults && ( 
+            <Select
+              placeholder="Competency"
+              id="competency"
+              name="competency"
+              value={selectedCompetency}
+              onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+              options={competencyOptions}
+              isDisabled={countdownStarted}
+            />
+        )}
+          </div>
+
+          <div className="mb-4 lg:w-72">
+        {!showResults && ( 
+            <Select
+              options={countdownOptions}
+              value={countdownOptions.find(option => option.value === selectedTime)}
+              onChange={handleTimeChange}
+              placeholder="Select Time"
+              isDisabled={countdownStarted}
+            />
+        )}
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center items-center w-full sticky top-0 left-0 bg-white dark:bg-transparent text-center">
+      {selectedTime > 0 && (
+            <div className="flex items-center dark:text-white dark:bg-slate-900 p-2 border-x-2 border-b-2 rounded-b-lg dark:border-gray-700 border-indigo-700">
+              <div className='text-blue-600 text-lg'>{formatTime(num)}</div>
               {!countdownStarted ? (
-                null
+        !showResults && ( 
+          null
+        )
               ) : (
-                <button className="text-red-700" disabled>
+                <button className="text-red-700 text-base ml-2" disabled>
                   Counting Down
                 </button>
               )}
             </div>
           )}
       </div>
-
         {!showResults && (
           <div>
             {filteredQuestions.slice(currentQuestion, currentQuestion + questionsPerPage).map((question, index) => (
-              <div key={index} className="border-2 dark:border-gray-700 dark:rounded-lg dark:bg-slate-900 shadow-lg items-center justify-center my-2 mb-4">
+              <div key={index} className="border-2 dark:border-gray-700 border-indigo-700 rounded-lg dark:rounded-lg dark:bg-slate-900 shadow-lg items-center justify-center my-2 mb-4">
                 <h2 className="text-xl text-center dark:text-white btn-primary">Question {currentQuestion + index + 1}/{maxQuestions}</h2>
                 <p className="p-3 dark:text-white text-2xl text-center">{question.questionText}</p>
                 <ul className="p-3">
                 {question.choices && question.choices.map((choice, choiceIndex) => (
-                    <li
+                    <div
                       key={choiceIndex}
                       onClick={() => {
-                        // Add the console.log statement here
+                        if (countdownStarted) {
                         console.log('selectedChoices before update:', selectedChoices);
                         handleChoiceClick(currentQuestion + index, choice);
                         console.log('selectedChoices after update:', selectedChoices);
-                      }}
-                      className={classNames(
-                        "container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer",
-                        {
-                          "bg-indigo-700 text-white": selectedChoices[currentQuestion + index] === choice,
                         }
-                      )}
+                      }}
+                      className={
+                        `container dark:text-white text-gray-700 btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer 
+                         ${selectedChoices[currentQuestion + index] === choice ? 'bg-indigo-500 text-white' : ''}`
+                      }
                       disabled={!countdownStarted}
                     >
                       <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                   {String.fromCharCode(65 + choiceIndex)}
                 </div>
-                <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
+                <div className=" py-2 px-4 font-semibold">
                   {choice.choiceText}
                 </div>
-                    </li>
+                    </div>
                   ))}
                 </ul>
               </div>
             ))}
             <div className="flex justify-center p-4">
-            <div className="justify-center items-center">
-              <button
-          className="relative rounded h-10 mr-2 bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white transition-all duration-300 flex"
-          onClick={handleFinishExam}
-        >
-          Submit
-        </button>
+            <div className="container w-full flex justify-end items-end">
+            <button
+    className="relative rounded justify-center items-center h-10 mr-2 bg-indigo-700 px-3 py-1.5 text-md font-medium text-white flex ease-in-out transition delay-150 hover:-translate-y-2 duration-300 ..."
+              onClick={() => {
+                if (countdownStarted) {
+                  const confirmSubmit = window.confirm("Are you sure you want to continue?");
+                  if (confirmSubmit) {
+                    // The user confirmed, you can proceed with the action
+                    handleFinishExam();
+                  }
+                }
+              }}
+              disabled={!countdownStarted}
+            >
+              Submit
+            </button>
             </div>
           <div className="container flex justify-end header-bg dark:text-white">
           <ul className="list-style-none flex">
@@ -363,7 +518,7 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
             className={`${
               currentPage === page
                 ? "bg-indigo-700 text-white "
-                : "hover:bg-indigo-600 text-white"
+                : "hover:bg-indigo-600 hover:text-white dark:text-white text-black"
             } py-2 px-4 rounded gap-1`}
             onClick={() => handlePageClick(page)}
           >

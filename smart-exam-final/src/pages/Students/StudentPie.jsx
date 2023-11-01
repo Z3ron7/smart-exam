@@ -49,7 +49,7 @@ const StudentPie = () => {
         const endDate = new Date(end_time);
         const endDateFormatted = endDate.toISOString().split('T')[0];
               const competencyMap = {
-                '1': 'SWWPS',
+                '1': 'SWPPS',
                 '2': 'Casework',
                 '3': 'HBSE',
                 '4': 'CO',

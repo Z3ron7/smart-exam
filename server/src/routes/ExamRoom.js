@@ -82,4 +82,25 @@ router.get('/fetch-exam-room', async (req, res) => {
   }
 });
 
+router.get('/check-user-exam/:user_id/:room_id', async (req, res) => {
+  try {
+    const { user_id, room_id } = req.params;
+
+    // Check if there is an existing exam record for the user and room
+    const checkUserExamQuery = 'SELECT exam_room_id FROM exam_room WHERE user_id = ? AND room_id = ?';
+    const examResult = await queryAsync(checkUserExamQuery, [user_id, room_id]);
+
+    if (examResult.length > 0) {
+      // The user has already taken the exam for the given room
+      res.json({ hasTakenExam: true });
+    } else {
+      // The user has not taken the exam for the given room
+      res.json({ hasTakenExam: false });
+    }
+  } catch (error) {
+    console.error('Error checking user exam:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;

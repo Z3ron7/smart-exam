@@ -33,7 +33,7 @@ const CreateRoom = ({isOpen, onClose}) => {
       description: description,
       program: programValue,
       competency: competencyValue,
-      duration_minutes: selectedTime * 60,
+      duration_minutes: selectedTime,
       expiry_date: expiryDate,
       date_created: new Date().toISOString(), // Set the current date and time
     };
@@ -74,17 +74,10 @@ const CreateRoom = ({isOpen, onClose}) => {
   
   // Add your state variables for selected options
   const [num, setNum] = useState(0);
-  const [selectedTime, setSelectedTime] = useState(1);
+  const [selectedTime, setSelectedTime] = useState(null);
   const [countdownStarted, setCountdownStarted] = useState(false);
   
   let intervalRef = useRef();
-  
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(remainingSeconds).padStart(2, '0')}s`;
-  };
   
   const decreaseNum = () => setNum((prev) => prev - 1);
   
@@ -167,7 +160,7 @@ const CreateRoom = ({isOpen, onClose}) => {
               options={countdownOptions}
               value={countdownOptions.find(option => option.value === selectedTime)}
               onChange={handleTimeChange}
-              placeholder="Select Time"
+              placeholder="Select a Timer"
             />
           </div>
         <div className='lg:w-72 md:w-36 sm:w-16'>

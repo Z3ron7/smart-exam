@@ -1,32 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
+//Super Admin---------------------------
 import LayoutSuper from './components/LayoutSuper';
+import RoomSuper from './pages/SuperAdmin/Room';
+import DashboardSuper from './pages/SuperAdmin/Dashboard'
+import QuestionnaireSuper from './pages/SuperAdmin/Questionnaire'
+import RegisterAdmin from './pages/SuperAdmin/RegisterAdmin';
+import Users from './pages/users/Users';
+import User from './pages/user/User';
+//Admin----------------------------------
 import Layout from './components/Layout';
-import LayoutStudents from './components/LayoutStudents';
-import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Admin/Dashboard';
 import Questionnaire from './pages/Admin/Questionnaire';
 import Room from './pages/Admin/Room';
-import RoomSuper from './pages/SuperAdmin/Room';
+import AddQuestion from './pages/Admin/AddQuestion'
+//Exam-takers----------------------------
+import LayoutStudents from './components/LayoutStudents';
 import RoomStudent from './pages/Students/Room';
 import ExamRoom from './pages/Students/ExamRoom';
-import Users from './pages/users/Users';
-import User from './pages/user/User';
-import LoginPage from './pages/Login/LoginPage';
-import Verification from './pages/Login/Verification';
-import Register from './pages/Login/Register';
-import PageNotFound from './pages/PageNotFound';
+import ExamStart from './pages/Students/ExamStart';
 import StudentDashboard from './pages/Students/StudentDashboard';
 import Exam from './pages/Students/Exam'
 import Analytics from './pages/Students/Analytics'
 import ExamHistory from './pages/Students/ExamHistory'
 import ExamHistorySet from './pages/Students/ExamHistorySet'
+//Other components------------------------
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/Login/LoginPage';
+import Verification from './pages/Login/Verification';
+import Register from './pages/Login/Register';
+import PageNotFound from './pages/PageNotFound';
 import ProtectedRoute from './pages/ProtectedRoute';
-import AddQuestion from './pages/Admin/AddQuestion'
 
-import DashboardSuper from './pages/SuperAdmin/Dashboard'
-import QuestionnaireSuper from './pages/SuperAdmin/Questionnaire'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -109,7 +114,19 @@ function App() {
             />
           }
         />
-        {/* Routes for admin */}
+        <Route
+          path="/add-admin"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><RegisterAdmin /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+
+        {/*------------------------------------ Routes for admin-------------------------------------- */}
         <Route
           path="/dashboard"
           element={
@@ -166,7 +183,7 @@ function App() {
           }
         />
 
-        {/* Routes for student */}
+        {/* --------------------------------------Routes for student----------------------------------- */}
         <Route
   path="/student-dashboard"
   element={
@@ -242,10 +259,21 @@ function App() {
           }
         />
         <Route
-          path="/exam-room"
+          path="/student-room/exam-room/:room_id"
           element={
             <ProtectedRoute
               element={<LayoutStudents><ExamRoom /></LayoutStudents>}
+              allowedRoles={['Exam-taker']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/student-room/exam-room/start-exam"
+          element={
+            <ProtectedRoute
+              element={<LayoutStudents><ExamStart /></LayoutStudents>}
               allowedRoles={['Exam-taker']}
               isLoggedIn={isLoggedIn}
               userRole={userRole}

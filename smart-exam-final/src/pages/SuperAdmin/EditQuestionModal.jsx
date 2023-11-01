@@ -4,7 +4,7 @@ import Select from 'react-select';
 import { ThemeContext } from "../../components/ThemeContext";
 
 const programOptions = [
-    { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
+    { value: 1, label: 'Bachelor of Science in Social Work' },
   ];
 
   const competencyOptions = [
@@ -24,7 +24,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
 
   useEffect(() => {
     if (isOpen && questionToEdit) {
-      setSelectedProgram(questionToEdit.program ? { value: questionToEdit.program, label: questionToEdit.program } : null);
+      setSelectedProgram(questionToEdit.program_id);
       setSelectedCompetency(questionToEdit.competency_id);
       console.log('questionToEdit.competency_id:', questionToEdit.competency_id);
       setQuestionText(questionToEdit.questionText);

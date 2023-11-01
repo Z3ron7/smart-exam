@@ -8,7 +8,7 @@ import ExamResult from './ExamResult'
 function Exam() {
   const [showResults, setShowResults] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [maxQuestions, setMaxQuestions] = useState(10);
+  const [maxQuestions, setMaxQuestions] = useState(null);
   const [score, setScore] = useState(0);
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null)); // Adjust the number of questions
   const questionsPerPage = 3; // Adjust the number of questions per page
@@ -47,19 +47,6 @@ function Exam() {
     return shuffledQuestions;
   }  
 
-  const getExamData = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:3001/questions/fetch');
-      setFilteredQuestions(response.data); // Limit to 10 randomized questions
-    } catch (error) {
-      console.error('Error fetching data for refresh:', error);
-    }
-  }, []);
-  
-  useEffect(() => {
-    getExamData();
-  }, [getExamData]);  
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -67,61 +54,98 @@ function Exam() {
           let response;
           const maxQuestionsPerCategory = 100; // Set the maximum questions per category
           let maxQuestions = 0; // Initialize maxQuestions to zero
-  
+
           if (selectedCompetency?.value === 'All Competency') {
-            // Fetch questions for all available competencies
-            const competencies = ['SWPPS', 'Casework', 'HBSE', 'CO', 'Groupwork']; // Replace with your predefined competencies
-            const allQuestions = [];
+            // Check if competency data is already saved in local storage
+            const competencyDataAll = localStorage.getItem('competencyData_All');
+            if (competencyDataAll) {
+              const parsedData = JSON.parse(competencyDataAll);
+              response = { data: parsedData };
+              // Set maxQuestions to the number of questions available for all competencies
+              maxQuestions = parsedData.length;
+            } else {
+              // Fetch questions for all available competencies
+              const competencies = ['SWPPS', 'Casework', 'HBSE', 'CO', 'Groupwork']; // Replace with your predefined competencies
+              const allQuestions = [];
   
-            // Fetch questions for each competency and merge the results
-            for (const competency of competencies) {
-              const competencyResponse = await axios.get(
-                `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+              // Fetch questions for each competency and merge the results
+              for (const competency of competencies) {
+                const competencyResponse = await axios.get(
+                  `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+                );
+  
+                // Limit to maxQuestionsPerCategory questions per category
+                const limitedQuestions = shuffleArray(competencyResponse.data).slice(0, maxQuestionsPerCategory);
+                maxQuestions += limitedQuestions.length; // Increment the total questions count
+  
+                // Check if maxQuestions exceeds 500, and if so, truncate the questions.
+                if (maxQuestions > 500) {
+                  const overflow = maxQuestions - 500;
+                  limitedQuestions.splice(-overflow);
+                  maxQuestions = 500;
+                }
+  
+                allQuestions.push(...limitedQuestions);
+  
+                // If maxQuestions is already 500, break the loop.
+                if (maxQuestions >= 500) {
+                  break;
+                }
+              }
+  
+              response = { data: allQuestions };
+              localStorage.setItem('selectedCompetencyId', 'All');
+              localStorage.setItem('competencyData_All', JSON.stringify(allQuestions));
+            }
+          } else if (selectedCompetency) {
+            // Check if competency data is already saved in local storage
+            const competencyData = localStorage.getItem(`competencyData_${selectedCompetency.value}`);
+            if (competencyData) {
+              const parsedData = JSON.parse(competencyData);
+              response = { data: parsedData };
+              // Set maxQuestions to the number of questions available for the selected competency
+              maxQuestions = parsedData.length;
+            } else {
+              // Fetch questions for the selected competency
+              response = await axios.get(
+                `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
               );
   
-              // Limit to maxQuestionsPerCategory questions per category
-              const limitedQuestions = shuffleArray(competencyResponse.data).slice(0, maxQuestionsPerCategory);
-              maxQuestions += limitedQuestions.length; // Increment the total questions count
+              // Limit to maxQuestionsPerCategory questions for the selected category
+              response.data = shuffleArray(response.data).slice(0, maxQuestionsPerCategory);
+              maxQuestions = response.data.length; // Set the total questions count
   
-              // Check if maxQuestions exceeds 500, and if so, truncate the questions.
+              // Truncate if maxQuestions exceeds 500
               if (maxQuestions > 500) {
-                const overflow = maxQuestions - 500;
-                limitedQuestions.splice(-overflow);
+                response.data.splice(-maxQuestions + 500);
                 maxQuestions = 500;
               }
   
-              allQuestions.push(...limitedQuestions);
-  
-              // If maxQuestions is already 500, break the loop.
-              if (maxQuestions >= 500) {
-                break;
-              }
+              // Save the competency data to local storage
+              localStorage.setItem(`competencyData_${selectedCompetency.value}`, JSON.stringify(response.data));
             }
-  
-            response = { data: allQuestions };
-            localStorage.setItem('selectedCompetencyId', 'All');
-          } else if (selectedCompetency) {
-            // Fetch questions for the selected competency
-            response = await axios.get(
-              `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
-            );
-  
-            // Limit to maxQuestionsPerCategory questions for the selected category
-            response.data = shuffleArray(response.data).slice(0, maxQuestionsPerCategory);
-            maxQuestions = response.data.length; // Set the total questions count
-  
-            // Truncate if maxQuestions exceeds 500
-            if (maxQuestions > 500) {
-              response.data.splice(-maxQuestions + 500);
-              maxQuestions = 500;
-            }
-  
             localStorage.setItem('selectedCompetencyId', selectedCompetency.value);
           } else {
             // If no competency is selected, use all questions
-            await getExamData();
             return; // Exit early to avoid setting state again
           }
+
+          // Load selectedChoices from local storage
+        const storedSelectedChoices = localStorage.getItem('selectedChoices');
+        if (storedSelectedChoices) {
+          setSelectedChoices(JSON.parse(storedSelectedChoices));
+        } else {
+          // If selectedChoices aren't in local storage, initialize it
+          setSelectedChoices(Array(maxQuestions).fill(-1));
+        }
+
+        const storedCurrentQuestion = localStorage.getItem('currentQuestion');
+        if (storedCurrentQuestion) {
+          currentQuestion = parseInt(storedCurrentQuestion, 10);
+          setCurrentQuestion(currentQuestion);
+        } else {
+          setCurrentQuestion(0);
+        }
   
           const randomizedQuestions = shuffleArray(response.data).slice(0, 500);
           // Process choices
@@ -129,8 +153,6 @@ function Exam() {
   
           setFilteredQuestions(processedQuestions);
           setMaxQuestions(maxQuestions); // Set the total questions count
-          setCurrentQuestion(0);
-          setSelectedChoices(Array(maxQuestions).fill(-1));
           console.log('filteredQuestions:', response.data);
           console.log('selectedCompetencyId', selectedCompetency.value);
         }
@@ -149,23 +171,35 @@ const updateCompetencyScore = (competencyId, score) => {
     [competencyId]: score,
   }));
 };
+// Save exam state to localStorage
 const saveExamStateToLocalStorage = () => {
   const examState = {
-    currentQuestion,
+    currentQuestion: currentQuestion,
     score,
     userExamId,
+    selectedProgram,
+    selectedCompetency,
+    maxQuestions: maxQuestions,
+    filteredQuestions: filteredQuestions.map(question => ({ ...question })), // Convert to plain objects
   };
   localStorage.setItem('examState', JSON.stringify(examState));
 };
+
+// Load exam state from localStorage
 useEffect(() => {
   const savedExamState = localStorage.getItem('examState');
   if (savedExamState) {
     const parsedState = JSON.parse(savedExamState);
-    setCurrentQuestion(parsedState.currentQuestion);
+    setCurrentQuestion(parsedState.currentQuestion); // Set the current question using the index
     setScore(parsedState.score);
+    setSelectedCompetency(parsedState.selectedCompetency);
     setUserExamId(parsedState.userExamId);
+    setSelectedProgram(parsedState.selectedProgram);
+    setMaxQuestions(parsedState.maxQuestions);
+    setFilteredQuestions(parsedState.filteredQuestions); // Convert plain objects back to the original format
   }
 }, []);
+
 const handleChoiceClick = (choiceIndex, choice, competencyId) => {
   const updatedSelectedChoices = [...selectedChoices];
   updatedSelectedChoices[choiceIndex] = choice;
@@ -174,31 +208,11 @@ const handleChoiceClick = (choiceIndex, choice, competencyId) => {
   // Calculate the score for the current competency
   const competencyScore = calculateScore(updatedSelectedChoices, competencyId);
   updateCompetencyScore(competencyId, competencyScore);
-  saveSelectedChoicesToLocalStorage();
+  localStorage.setItem('selectedChoices', JSON.stringify(updatedSelectedChoices));
   saveExamStateToLocalStorage()
 
 };
-const saveSelectedChoicesToLocalStorage = () => {
-  localStorage.setItem('selectedChoices', JSON.stringify(selectedChoices));
-};
 
-// Load selected choices from localStorage when the component mounts
-useEffect(() => {
-  const savedSelectedChoices = localStorage.getItem('selectedChoices');
-  if (savedSelectedChoices) {
-    const parsedSelectedChoices = JSON.parse(savedSelectedChoices);
-    setSelectedChoices(parsedSelectedChoices);
-  }
-}, []);
-
-const [localSelectedCompetency, setLocalSelectedCompetency] = useState('All Competency');
-
-  // Function to filter questions based on selected competency
-  const filteredQuestionsByCompetency = localSelectedCompetency === 'All Competency'
-    ? filteredQuestions
-    : filteredQuestions.filter(question => question.competency_id === localSelectedCompetency);
-
-  // Function to calculate the total score for selected questions
   // Function to calculate the total score for selected questions
   const calculateScore = () => {
     const scoresByCompetency = {}; // Create an object to store scores by competency ID
@@ -499,7 +513,7 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
                 <p className="p-3 dark:text-white text-2xl text-center">{question.questionText}</p>
                 <ul className="p-3">
                 {question.choices && question.choices.map((choice, choiceIndex) => (
-                    <li
+                    <div
                       key={choiceIndex}
                       onClick={() => {
                         if (countdownStarted) {
@@ -508,21 +522,19 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
                         console.log('selectedChoices after update:', selectedChoices);
                         }
                       }}
-                      className={classNames(
-                        "container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer",
-                        {
-                          "bg-indigo-500 text-white": selectedChoices[currentQuestion + index] === choice,
-                        }
-                      )}
+                      className={
+                        `container dark:text-white text-gray-700 btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer 
+                         ${selectedChoices[currentQuestion + index] === choice ? 'bg-indigo-500 text-white' : ''}`
+                      }
                       disabled={!countdownStarted}
                     >
                       <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
                   {String.fromCharCode(65 + choiceIndex)}
                 </div>
-                <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">
+                <div className=" py-2 px-4 font-semibold">
                   {choice.choiceText}
                 </div>
-                    </li>
+                    </div>
                   ))}
                 </ul>
               </div>

@@ -20,7 +20,7 @@ const SidebarSuper = () => {
     { title: 'Students', path: '/users', src: <BsPeopleFill /> },
     { title: 'Questionnaire', path: '/questionnaire', src: <RiQuestionnaireFill /> },
     { title: 'Room', path: '/room', src: <SiGoogleclassroom /> },
-    { title: 'Admin', path: '/admin', src: <RiAdminFill /> },
+    { title: 'Admin', path: '/add-admin', src: <RiAdminFill /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ]
 
@@ -29,7 +29,7 @@ const SidebarSuper = () => {
       <div
         className={`${
           open ? 'w-60' : 'w-fit'
-        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r border-gray-200 dark:border-gray-600 pt-4 dark:bg-slate-900 `}
+        } hidden sm:block relative h-screen duration-300 bg-gray-100 border-r-2 border-gray-600 dark:border-gray-600 pt-4 dark:bg-slate-900 `}
         style={{
           position: 'sticky',
           top: 0,

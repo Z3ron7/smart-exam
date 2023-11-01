@@ -29,7 +29,7 @@ router.post('/room', async (req, res) => {
 // Read all rooms
 router.get('/rooms', async (req, res) => {
   try {
-    const rooms = await queryAsync('SELECT * FROM room');
+    const rooms = await queryAsync('SELECT * FROM room ORDER BY room_id DESC');
     res.json({ success: true, rooms });
   } catch (error) {
     console.error('Error fetching rooms:', error);
@@ -37,8 +37,7 @@ router.get('/rooms', async (req, res) => {
   }
 });
 
-// Read a specific room by room_id
-router.get('/room/:room_id', async (req, res) => {
+router.get('/rooms/:room_id', async (req, res) => {
   const { room_id } = req.params;
   try {
     const room = await queryAsync('SELECT * FROM room WHERE room_id = ?', [room_id]);
@@ -46,6 +45,7 @@ router.get('/room/:room_id', async (req, res) => {
     if (room.length === 1) {
       res.json({ success: true, room: room[0] });
     } else {
+      console.error('Room not found for room_id:', room_id);
       res.status(404).json({ success: false, message: 'Room not found' });
     }
   } catch (error) {
