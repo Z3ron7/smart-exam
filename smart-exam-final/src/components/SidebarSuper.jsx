@@ -17,9 +17,10 @@ const SidebarSuper = () => {
 
   const Menus = [
     { title: 'Dashboard', path: '/super-dashboard', src: <AiFillPieChart /> },
-    { title: 'Students', path: '/users', src: <BsPeopleFill /> },
+    { title: 'Users', path: '/users', src: <BsPeopleFill /> },
     { title: 'Questionnaire', path: '/questionnaire', src: <RiQuestionnaireFill /> },
     { title: 'Room', path: '/room', src: <SiGoogleclassroom /> },
+    { title: 'Exam Result', path: '/exam-result', src: <SiGoogleclassroom /> },
     { title: 'Admin', path: '/add-admin', src: <RiAdminFill /> },
     // { title: 'Signin', path: '/login', src: <SiFuturelearn />, gap: 'true' },
   ]

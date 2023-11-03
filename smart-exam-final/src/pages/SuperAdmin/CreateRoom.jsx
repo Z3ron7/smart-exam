@@ -7,12 +7,13 @@ const CUSTOM_ANIMATION = {
   unmount: { scale: 0.9 },
 };
 
-const CreateRoom = ({isOpen, onClose}) => {
+const CreateRoom = ({isOpen, onClose, onCreateRoom}) => {
   const [roomName, setRoomName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState({ value: 1, label: 'Social Work' });
+  const [selectedProgram, setSelectedProgram] = useState({ value: 1, label: 'Bachelor of Science in Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState('All Competency');
   const [expiryDate, setExpiryDate] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,25 +44,32 @@ const CreateRoom = ({isOpen, onClose}) => {
     axios.post('http://localhost:3001/room/room', roomData)
       .then((response) => {
         console.log(response.data);
+        setAlertMessage('Room created successfully');
+        setRoomName('');
+        setDescription('');
+        setSelectedCompetency('');
+        setExpiryDate('');
         // Reset the form fields after successful submission
-       
+        onCreateRoom(roomData)
       })
       .catch((error) => {
         console.error('Error adding room:', error);
+        setAlertMessage('Failed to create a room');
+
       });
   };
 
   const programOptions = [
-    { value: 'Social Work', label: 'Social Work' },
+    { value: 'Social Work', label: 'Bachelor of Science in Social Work' },
   ];
   
   const competencyOptions = [
-    { value: 4, label: 'All Competency' },
+    { value: 6, label: 'All Competency' },
     { value: 1, label: 'SWPPS' },
     { value: 2, label: 'Casework' },
     { value: 3, label: 'HBSE' },
-    { value: 5, label: 'CO' },
-    { value: 6, label: 'Groupwork' },
+    { value: 4, label: 'CO' },
+    { value: 5, label: 'Groupwork' },
   ];
   const countdownOptions = [
     { value: 0, label: '0' },
@@ -107,16 +115,20 @@ const CreateRoom = ({isOpen, onClose}) => {
       } bg-opacity-50 bg-gray-900`}
       onClick={onClose}
     >
+      
       <div
         className="modal-container bg-white dark:bg-slate-900 w-3/5 p-4 border-2 border-indigo-700 mb-2 rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="absolute top-2 right-2 text-red-600" onClick={onClose}>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <button className="absolute top-7 right-36 text-4xl hover:text-red-600 text-slate-300" onClick={onClose}>
+          x
         </button>
       <form onSubmit={handleSubmit}>
+      {alertMessage && (
+        <div className={`mb-2 mx-auto flex justify-center ${alertMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+          {alertMessage}
+        </div>
+      )}
         <div>
           <label className="block font-bold text-gray-700">Room Name:</label>
           <input className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"

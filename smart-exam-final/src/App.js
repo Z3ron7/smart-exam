@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 //Super Admin---------------------------
+import ProfileS from './pages/SuperAdmin/Profile'
 import LayoutSuper from './components/LayoutSuper';
 import RoomSuper from './pages/SuperAdmin/Room';
 import DashboardSuper from './pages/SuperAdmin/Dashboard'
 import QuestionnaireSuper from './pages/SuperAdmin/Questionnaire'
 import RegisterAdmin from './pages/SuperAdmin/RegisterAdmin';
+import ViewRoom from './pages/SuperAdmin/ViewRoom';
+import ExamResult from './pages/SuperAdmin/ExamResult';
 import Users from './pages/users/Users';
 import User from './pages/user/User';
 //Admin----------------------------------
+import ProfileA from './pages/Admin/Profile'
 import Layout from './components/Layout';
 import Dashboard from './pages/Admin/Dashboard';
 import Questionnaire from './pages/Admin/Questionnaire';
 import Room from './pages/Admin/Room';
 import AddQuestion from './pages/Admin/AddQuestion'
 //Exam-takers----------------------------
+import ProfileSt from './pages/Students/Profile'
 import LayoutStudents from './components/LayoutStudents';
 import RoomStudent from './pages/Students/Room';
 import ExamRoom from './pages/Students/ExamRoom';
@@ -59,6 +64,17 @@ function App() {
 
 
         {/* Routes for super admin */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><ProfileS /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
         <Route
           path="/super-dashboard"
           element={
@@ -125,8 +141,41 @@ function App() {
             />
           }
         />
+        <Route
+          path="/room/view-room/:room_id"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><ViewRoom /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/exam-result"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><ExamResult /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
 
         {/*------------------------------------ Routes for admin-------------------------------------- */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><ProfileA /></LayoutSuper>}
+              allowedRoles={['Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
         <Route
           path="/dashboard"
           element={
@@ -185,24 +234,35 @@ function App() {
 
         {/* --------------------------------------Routes for student----------------------------------- */}
         <Route
-  path="/student-dashboard"
-  element={
-    <ProtectedRoute
-      element={
-        isLoggedIn && isVerified ? (
-          <LayoutStudents>
-            <StudentDashboard />
-          </LayoutStudents>
-        ) : (
-          <Verification />
-        )
-      }
-      allowedRoles={['Exam-taker']}
-      isLoggedIn={isLoggedIn}
-      userRole={userRole}
-    />
-  }
-/>
+          path="/profile"
+          element={
+            <ProtectedRoute
+              element={<LayoutSuper><ProfileSt /></LayoutSuper>}
+              allowedRoles={['Super Admin']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute
+              element={
+                isLoggedIn && isVerified ? (
+                  <LayoutStudents>
+                    <StudentDashboard />
+                  </LayoutStudents>
+                ) : (
+                  <Verification />
+                )
+              }
+              allowedRoles={['Exam-taker']}
+              isLoggedIn={isLoggedIn}
+              userRole={userRole}
+            />
+          }
+        />
         <Route
           path="/exam"
           element={

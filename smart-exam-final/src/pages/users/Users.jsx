@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Add from "../../components/add/Add";
 import DataTable from "../../components/dataTable/DataTable";
 import "./users.scss";
-import VerifyUser from '../SuperAdmin/VerifyUser';
 import axios from "axios";
 
 const columns = [
@@ -50,8 +49,6 @@ const columns = [
 
 const Users = () => {
   const [open, setOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [questionToEdit, setQuestionToEdit] = useState(null);
   const [data, setData] = useState([]); // State to store fetched data
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,16 +63,6 @@ const Users = () => {
         console.error("Error fetching data:", error);
         setIsLoading(false);
       });
-  };
-
-  const openModal = (question) => {
-    setIsModalOpen(true);
-    setQuestionToEdit(question);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setQuestionToEdit(null);
   };
 
   const handleDelete = (user_id) => {
@@ -100,22 +87,12 @@ const Users = () => {
 
   return (
     <div className="users">
-      <div className="flex info">
-        <h1 className="dark:text-white">Students</h1>
+      <div className="flex justify-center info">
+        <h1 className="dark:text-white flex justify-center font-bold text-3xl">USER'S</h1>
         <div className="flex items-end marker:justify-end">
-          <button
-            onClick={() => openModal()}
-            className="bg-transparent border-2 border-indigo-700 hover:bg-indigo-700 active:bg-indigo-700 dark:text-white hover:text-white active:text-white py-2 px-4 rounded"
-          >
-            Verify User's
-          </button>
+          
         </div>
       </div>
-      <VerifyUser
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        questionToEdit={questionToEdit}
-      />
 
       {isLoading ? (
         "Loading..."

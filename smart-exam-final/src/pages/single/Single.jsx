@@ -88,6 +88,7 @@ const Single = () => {
         console.error('Error fetching latest activities:', error);
       }
     }
+
     fetchLatestActivities();
   }, [user_id]);
   return (
@@ -95,31 +96,31 @@ const Single = () => {
       <div className="view">
         <div className="info">
           <div className="topInfo">
-            {userData && userData.image && <img src={userData.image} alt="" />}
+            {userData && userData.image && <img src="/avatar/Context Diagram.jpg" alt="" />}
           </div>
           <div className="details">
         {userData && (
           <div className="item">
-            <span className="itemTitle dark:text-white">Name:</span>
-            <span className="itemValue dark:text-white">{userData.name}</span>
+            <span className="itemTitle">Name:</span>
+            <span className="itemValue">{userData.name}</span>
           </div>
         )}
         {userData && (
           <div className="item">
-            <span className="itemTitle dark:text-white">Email:</span>
-            <span className="itemValue dark:text-white">{userData.username}</span>
+            <span className="itemTitle">Email:</span>
+            <span className="itemValue">{userData.username}</span>
           </div>
         )}
         {userData && (
           <div className="item">
-            <span className="itemTitle dark:text-white">Status:</span>
-            <span className="itemValue dark:text-white">{userData.status}</span>
+            <span className="itemTitle">Status:</span>
+            <span className="itemValue">{userData.status}</span>
           </div>
         )}
         {userData && (
           <div className="item">
-            <span className="itemTitle dark:text-white">Verified:</span>
-            <span className="itemValue dark:text-white">{userData.isVerified ? 'Yes' : 'No'}</span>
+            <span className="itemTitle">Verified:</span>
+            <span className="itemValue">{userData.isVerified ? 'Yes' : 'No'}</span>
           </div>
         )}
       </div>
@@ -154,13 +155,13 @@ const Single = () => {
           </div> */}
       </div>
       <div className="activities">
-  <h2 className="dark:text-white">Latest Activities</h2>
+  <h2>Latest Activities</h2>
   <ul className="activity-list">
       {latestActivities.map((activity, index) => (
         <li key={index}>
           <div>
-          <p className="dark:text-white">{`Took the exam with a category of ${competencyMap[activity.competency_id]}`}</p>
-            <time className="dark:text-white">{getTimeAgo(activity.end_time)}</time>
+          <p>{`Took the exam with a category of ${competencyMap[activity.competency_id]}`}</p>
+            <time>{getTimeAgo(activity.end_time)}</time>
           </div>
         </li>
       ))}

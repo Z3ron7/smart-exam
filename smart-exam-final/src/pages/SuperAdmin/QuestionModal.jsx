@@ -16,7 +16,7 @@ import Select from 'react-select';
   ];
 
 const QuestionModal = ({isOpen, onClose}) => {
-  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor Science in Social Work' });
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor of Science in Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState(null);
   const [questionText, setQuestionText] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
@@ -79,10 +79,10 @@ const QuestionModal = ({isOpen, onClose}) => {
       onClick={onClose}
     >
       <div
-        className="modal-container bg-white w-3/5 p-4 border border-gray-700 mb-2 rounded-3xl"
+        className="modal-container bg-white dark:bg-slate-900 w-3/5 p-4 border border-gray-700 mb-2 rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
+        <button className="absolute top-24 right-2 text-gray-600" onClick={onClose}>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -93,11 +93,13 @@ const QuestionModal = ({isOpen, onClose}) => {
           </svg>
         </button>
     <form onSubmit={handleSubmit}>
-      {alertMessage && (
-        <div className="mb-2 text-blue-600 mx-auto justify-center">{alertMessage}</div>
-      )}
+    {alertMessage && (
+            <div className={`mb-2 mx-auto flex justify-center ${alertMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+              {alertMessage}
+            </div>
+          )}
       <div className="mb-4">
-        <label htmlFor="program" className="block font-bold text-gray-700">
+        <label htmlFor="program" className="block font-bold dark:text-white text-gray-700">
           Program
         </label>
         <Select
@@ -110,7 +112,7 @@ const QuestionModal = ({isOpen, onClose}) => {
       </div>
 
       <div className="mb-4">
-        <label htmlFor="competency" className="block font-bold text-gray-700">
+        <label htmlFor="competency" className="block font-bold dark:text-white text-gray-700">
           Competency
         </label>
         <Select
@@ -123,7 +125,7 @@ const QuestionModal = ({isOpen, onClose}) => {
       </div>
 
       <div className="mb-4">
-        <label htmlFor="questionText" className="block font-bold text-gray-700">
+        <label htmlFor="questionText" className="block font-bold dark:text-white text-gray-700">
           Question Text
         </label>
         <textarea
@@ -164,7 +166,7 @@ const QuestionModal = ({isOpen, onClose}) => {
       <button
         type="button"
         onClick={handleAddChoice}
-        className="mb-2 text-indigo-600 underline focus:outline-none"
+        className="mb-2 text-indigo-600 dark:text-white dark:hover:text-green-700 hover:text-green-700 focus:outline-none"
       >
         Add Choice
       </button>

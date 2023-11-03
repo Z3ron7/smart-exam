@@ -3,24 +3,31 @@ import axios from 'axios';
 import QuestionModal from './QuestionModal';
 import EditQuestionModal from './EditQuestionModal';
 import Select from 'react-select';
+import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const Questionnaire = () => {
   const [questionsData, setQuestionsData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [maxQuestions, setMaxQuestions] = useState(null);
+  const questionsPerPage = 15; 
+  const [modalOpen, setModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState(null);
+  const [questionToEdits, setQuestionToEdits] = useState(null);
   const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' });
   const [loading, setLoading] = useState(true);
 
 
   const openModal = (question) => {
-    setIsModalOpen(true);
-    setQuestionToEdit(question);
+    setModalOpen(true);
+    setQuestionToEdits(question);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
-    setQuestionToEdit(null);
+    setModalOpen(false);
+    setQuestionToEdits(null);
   };
 
   const openEditModal = (question) => {
@@ -61,21 +68,7 @@ const Questionnaire = () => {
   
     return shuffledQuestions;
   }  
-
-  const fetchQuestions = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:3001/questions/fetch');
-      setQuestionsData(response.data); // Limit to 10 randomized questions
-    } catch (error) {
-      console.error('Error fetching data for refresh:', error);
-    }
-  }, []);
   
-  useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);  
-  
-  useEffect(() => {
     const fetchData = async () => {
       try {
         if (selectedProgram) {
@@ -99,7 +92,7 @@ const Questionnaire = () => {
               // Fetch questions for each competency and merge the results
               for (const competency of competencies) {
                 const competencyResponse = await axios.get(
-                  `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
+                  `http://localhost:3001/questions/fetch?program=${selectedProgram.label || ''}&competency=${competency}`
                 );
   
                 // Limit to maxQuestionsPerCategory questions per category
@@ -136,7 +129,7 @@ const Questionnaire = () => {
             } else {
               // Fetch questions for the selected competency
               response = await axios.get(
-                `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
+                `http://localhost:3001/questions/fetch?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}&search=${searchQuery}`
               );
   
               // Limit to maxQuestionsPerCategory questions for the selected category
@@ -158,11 +151,20 @@ const Questionnaire = () => {
             return; // Exit early to avoid setting state again
           }
   
+          const storedCurrentQuestion = localStorage.getItem('currentQuestion');
+        if (storedCurrentQuestion) {
+          currentQuestion = parseInt(storedCurrentQuestion, 10);
+          setCurrentQuestion(currentQuestion);
+        } else {
+          setCurrentQuestion(0);
+        }
+  
           const randomizedQuestions = shuffleArray(response.data).slice(0, 500);
           // Process choices
           const processedQuestions = shuffleArrayWithCorrectChoice(randomizedQuestions);
   
           setQuestionsData(processedQuestions);
+          setMaxQuestions(maxQuestions); // Set the total questions count
           setLoading(true)
           console.log('filteredQuestions:', response.data);
           console.log('selectedCompetencyId', selectedCompetency.value);
@@ -171,9 +173,10 @@ const Questionnaire = () => {
         console.error('Error:', error);
       }
     };
+    useEffect(() => {
   
     fetchData();
-  }, [selectedProgram, selectedCompetency]);
+  }, [searchQuery, selectedProgram, selectedCompetency]);
 
 
   // Function to generate letters (A, B, C, ...) based on the index
@@ -208,6 +211,31 @@ const Questionnaire = () => {
     { value: 'Groupwork', label: 'Groupwork' },
   ];
 
+  const nextPage = () => {
+    const nextPage = Math.min(currentPage + 1, totalPages); // Ensure we don't go beyond the last page
+    const nextQuestion = (nextPage - 1) * questionsPerPage;
+    setCurrentQuestion(nextQuestion);
+  };
+  
+  const prevPage = () => {
+    const prevPage = Math.max(currentPage - 1, 1); // Ensure we don't go before the first page
+    const prevQuestion = (prevPage - 1) * questionsPerPage;
+    setCurrentQuestion(prevQuestion);
+  };
+  
+  const handlePageClick = (page) => {
+  const newPage = Math.max(1, Math.min(page, totalPages)); // Ensure the selected page is within valid bounds
+  const newQuestion = (newPage - 1) * questionsPerPage;
+  setCurrentQuestion(newQuestion);
+  };
+  
+  const totalPages = Math.ceil(maxQuestions / questionsPerPage);
+    const currentPage = Math.floor(currentQuestion / questionsPerPage) + 1;
+    const displayPages = 4;
+    const pages = [];
+    for (let i = Math.max(1, currentPage - Math.floor(displayPages / 2)); i <= Math.min(totalPages, currentPage + Math.floor(displayPages / 2)); i++) {
+      pages.push(i);
+    }
   return (
     <div className="container min-h-screen h-auto items flex flex-col">
       <header className="dark:bg-slate-900 space-y-2 p-2 sm:px-8 sm:py-6 lg:p-2 mb-2 border-2 border-slate-600 rounded-lg">
@@ -232,11 +260,13 @@ const Questionnaire = () => {
     />
   </svg>
   <input
-    className="focus:ring-2 focus:ring-blue-500 w-full focus:outline-none appearance-none lg:w-full text-sm leading-6 text-slate-900 placeholder-slate-400 rounded-md py-2 pl-10 ring-1 ring-slate-200 shadow-sm"
-    type="text"
-    aria-label="Filter projects"
-    placeholder="Search question..."
-  />
+          className="focus:ring-2 focus:ring-blue-500 w-full focus:outline-none appearance-none lg:w-full text-sm leading-6 text-slate-900 placeholder-slate-400 rounded-md py-2 pl-10 ring-1 ring-slate-200 shadow-sm"
+          type="text"
+          aria-label="Filter questions"
+          placeholder="Search question and choices..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)} // Update searchQuery state as the user types
+        />
 </form>
 
     <button
@@ -247,7 +277,7 @@ const Questionnaire = () => {
     </button>
   </div>
   <div className="flex space-x-4 lg:order-last items-center justify-center">
-    <Select
+    <Select className="text-black"
       placeholder="Program"
       id="program"
       name="program"
@@ -255,7 +285,7 @@ const Questionnaire = () => {
       onChange={(selectedOption) => setSelectedProgram(selectedOption)}
       options={programOptions}
     />
-    <Select
+    <Select className="text-black"
       placeholder="Competency"
       id="competency"
       name="competency"
@@ -270,9 +300,9 @@ const Questionnaire = () => {
 
   {/* Render the modal */}
   <QuestionModal
-    isOpen={isModalOpen}
+    isOpen={modalOpen}
     onClose={closeModal}
-    questionToEdit={questionToEdit}
+    questionToEdit={questionToEdits}
   />
 </header>
 
@@ -281,7 +311,7 @@ const Questionnaire = () => {
       
         <div className="grid grid-cols-1 gap-4 mt-4">
         <ul>
-  {questionsData.map((question, index) => (
+  {questionsData.slice(currentQuestion, currentQuestion + questionsPerPage).map((question, index) => (
     <li key={question.question_id}>
       <div className="border-2 border-slate-600 rounded-lg dark:bg-slate-900 shadow-lg items-center justify-center my-2">
         <div className="flex justify-end"> {/* Create a flex container for buttons */}
@@ -293,17 +323,21 @@ const Questionnaire = () => {
               }}
               className="items-end text-green-600 text-base"
             >
-              Edit
+               <img className='w-5 h-5' src="/view.svg" alt="" />
             </button>
           </div>
           <div className='mr-4 mt-2'>
             <button
               onClick={() => {
-                handleDelete(question.question_id);
+                const confirmDelete = window.confirm("Are you sure you want to delete this question?");
+                if (confirmDelete) {
+                  handleDelete(question.question_id);
+                }
               }}
               className="items-end text-red-600"
             >
-              Delete
+              <img className='w-5 h-5' src="../delete.svg" alt="" />
+
             </button>
           </div>
         </div>
@@ -313,26 +347,25 @@ const Questionnaire = () => {
           questionToEdit={questionToEdit}
           programOptions={programOptions}
           competencyOptions={competencyOptions}
-          fetchQuestions={fetchQuestions}
+          fetchData={fetchData}
         />
-        <div className="text-xl text-center dark:text-white btn-primary">Question</div>
-        <div className="p-3 dark:text-white text-2xl text-center">{question.questionText}</div>
+        <div className="p-3 dark:text-white lg:text-2xl sm:text-sm md:text-lg text-center">{question.questionText}</div>
         <div id="answers-container" className="p-3">
           {question.choices.map((choice, choiceIndex) => (
             <div
-              className="container btn-container items-center flex border border-gray-700 mb-2 rounded-3xl cursor-pointer"
+              className="container items-center flex border border-gray-700 mb-2 rounded-3xl"
               key={choiceIndex}
             >
-              <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold text-lg rounded-3xl m-1 shadow-md btn-primary">
+              <div className="dark:text-white py-2 px-4 bg-gray-700 text-white font-bold lg:text-lg sm:text-sm md:text-md rounded-3xl m-1 shadow-md btn-primary">
                 {generateLetter(choiceIndex)}
               </div>
-              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold">{choice.choiceText}</div>
+              <div className="dark:text-white py-2 px-4 text-gray-700 font-semibold lg:text-xl sm:text-sm md:text-lg">{choice.choiceText}</div>
             </div>
           ))}
         </div>
         <div className="flex mb-4 items-center">
           <span className="font-bold mx-3 text-lg dark:text-white">Answer:</span>
-          <span className="container btn-container px-3 py-2 h-fit w-fit items-center flex border dark:text-white text-lg border-gray-700 mb-2 rounded-3xl ml-4">
+          <span className="container px-3 py-2 h-fit w-fit items-center flex border-3 dark:text-white lg:text-lg sm:text-sm md:text-lg border-gray-700 mb-2 rounded-2xl ml-4">
             {question.choices.filter((choice) => choice.isCorrect).map((choice) => choice.choiceText).join(', ')}
           </span>
         </div>
@@ -344,6 +377,49 @@ const Questionnaire = () => {
 </div>
 
       </div>
+      <div className="flex justify-center p-4">
+          <div className="container flex justify-center header-bg dark:text-white">
+          <ul className="list-style-none flex">
+          <li>
+        {currentPage > 1 && (
+          <button
+          className="relative rounded h-10 mr-2 bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white transition-all duration-300 flex items-center"
+          onClick={prevPage}
+        >
+          <ArrowLeftIcon strokeWidth={2} className="h-4 w-4 mr-2" />
+          Previous
+        </button>
+        
+        )}
+      </li>
+      {pages.map((page) => (
+        <li key={page}>
+          <button
+            className={`${
+              currentPage === page
+                ? "bg-indigo-700 text-white "
+                : "hover:bg-indigo-600 hover:text-white dark:text-white text-black"
+            } py-2 px-4 rounded gap-1`}
+            onClick={() => handlePageClick(page)}
+          >
+            {page}
+          </button>
+        </li>
+      ))}
+      <li>
+        {currentPage < totalPages && (
+          <button
+            className="relative rounded bg-indigo-700 hover:bg-indigo-600 text-white ml-2 py-2 px-4 flex items-center"
+            onClick={nextPage}
+          >
+            Next
+            <ArrowRightIcon strokeWidth={2} className="h-4 w-4 ml-2" />
+          </button>
+        )}
+      </li>
+            </ul>
+          </div>
+          </div>
     </div>
   );
 };

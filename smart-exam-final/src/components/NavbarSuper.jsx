@@ -7,6 +7,7 @@ import { HiOutlineBell, HiOutlineSearch, HiOutlineChatAlt } from 'react-icons/hi
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 import axios from "axios"; // Import Axios
+import { Link } from "react-router-dom";
 
 
 
@@ -79,10 +80,12 @@ const NavbarSuper = () => {
           )}
 
           {open && (
-            <div className="bg-white border h-[120px] w-[150px] absolute bottom-[-135px] z-20 right-0 pt-[15px] pl-[15px] space-y-[10px]">
+            <div className="bg-white border h-[90px] w-[150px] absolute bottom-[-135px] z-20 right-0 pt-[15px] pl-[15px] space-y-[10px]">
+              <Link to="/profile">
               <p className="cursor-pointer hover:text-[blue] font-semibold">
                 Profile
               </p>
+              </Link>
               <p
                 className="cursor-pointer hover:text-[blue] font-semibold"
                 onClick={handleLogout}

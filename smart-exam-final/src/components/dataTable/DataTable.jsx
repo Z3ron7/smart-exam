@@ -17,7 +17,7 @@ const DataTable = (props) => {
       return (
         <div className="action">
           <Link to={`/users/${params.row.user_id}`}>
-            <img src="/view.svg" alt="" />
+            <img src="/view1.svg" alt="" />
           </Link>
           <div className="delete" onClick={() => props.handleDelete(params.row.user_id)}>
               <img src="/delete.svg" alt="" />
@@ -28,7 +28,7 @@ const DataTable = (props) => {
   };
 
     return (
-      <div className="dataTable w-full border-2 border-indigo-700"> 
+      <div className="dataTable w-full border-2 border-slate-700"> 
         <DataGrid
           className="dataGrid dark:bg-slate-900 flex-row-reverse dark:text-white"
           rows={props.rows}

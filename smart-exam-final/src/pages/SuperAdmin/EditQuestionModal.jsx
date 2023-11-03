@@ -8,15 +8,16 @@ const programOptions = [
   ];
 
   const competencyOptions = [
-    { value: 1, label: 'SWPPS' },
-    { value: 2, label: 'Casework' },
-    { value: 3, label: 'HBSE' },
-    { value: 5, label: 'CO' },
-    { value: 6, label: 'Groupwork' },
+    { value: 'All Competency', label: 'All Competency' },
+    { value: 'SWPPS', label: 'SWPPS' },
+    { value: 'Casework', label: 'Casework' },
+    { value: 'HBSE', label: 'HBSE' },
+    { value: 'CO', label: 'CO' },
+    { value: 'Groupwork', label: 'Groupwork' },
   ];
 
-const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions }) => {
-  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor Science in Social Work' });
+const EditQuestionModal = ({ isOpen, onClose, questionToEdit }) => {
+  const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Bachelor of Science in Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState(null);
   const [questionText, setQuestionText] = useState('');
   const [choices, setChoices] = useState([{ choiceText: '', isCorrect: false }]);
@@ -24,20 +25,31 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
 
   useEffect(() => {
     if (isOpen && questionToEdit) {
-      setSelectedProgram(questionToEdit.program_id);
-      setSelectedCompetency(questionToEdit.competency_id);
+      const mappedCompetencyValue = competencyIdToValue[questionToEdit.competency_id];
+      setSelectedCompetency({ value: mappedCompetencyValue, label: mappedCompetencyValue });
       console.log('questionToEdit.competency_id:', questionToEdit.competency_id);
       setQuestionText(questionToEdit.questionText);
       setChoices(questionToEdit.choices);
-      console.log('questionToEdit:', questionToEdit);
+      console.log('competency:', mappedCompetencyValue)
     }
-    // Fetch questions when the modal opens
-    if (isOpen) {
-      fetchQuestions();
-    }
+    
   }, [isOpen, questionToEdit]);
-  
-
+  const competencyIdToValue = {
+    1: 'SWPPS',
+    2: 'Casework',
+    3: 'HBSE',
+    4: 'CO',
+    5: 'Groupwork',
+    6: 'All Competency',
+  };
+  const competencyValueToId = {
+    'SWPPS' : 1,
+    'Casework' : 2,
+    'HBSE': 3,
+    'CO': 4,
+    'Groupwork': 5,
+    'All Competency': 6,
+  };
   const handleAddChoice = () => {
     setChoices([...choices, { choiceText: '', isCorrect: false }]);
   };
@@ -59,6 +71,8 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
 
     setChoices(updatedChoices);
   };
+  const competencyValue = selectedCompetency ? selectedCompetency.value : null;
+  const competencyId = competencyValueToId[competencyValue];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -66,7 +80,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
     const requestBody = {
       question_text: questionText,
       program: selectedProgram ? selectedProgram.value : null,
-      competency: selectedCompetency ? selectedCompetency.value : null,
+      competency: competencyValue,
       choices,
     };
 
@@ -84,7 +98,7 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
   const { theme } = useContext(ThemeContext);
   const customStyles = {
     control: (provided, state) => {
-      const backgroundColor = theme === 'dark' ? 'slate-700' : 'white'; // Adjust colors for dark mode
+      const backgroundColor = theme === 'dark' ? 'slate-400' : 'white'; // Adjust colors for dark mode
       const textColor = theme === 'dark' ? 'white' : 'black';
       return {
         ...provided,
@@ -106,27 +120,27 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
     <div
       className={`fixed inset-0 flex items-center justify-center z-50 ${
         isOpen ? 'block' : 'hidden'
-      } bg-opacity-50 bg-transparent`}
+      } bg-opacity-50 bg-gray-900`}
       onClick={onClose}
     >
       <div
         className="modal-container bg-white dark:bg-slate-900 w-3/5 p-4 border-2 border-indigo-700 mb-2 rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="absolute top-2 right-2 text-white-600" onClick={onClose}>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <button className="absolute top-3 right-56 text-4xl hover:text-red-700 text-slate-200" onClick={onClose}>
+          x
         </button>
         <form onSubmit={handleSubmit}>
-          {alertMessage && (
-            <div className="mb-2 text-blue-600 mx-auto justify-center">{alertMessage}</div>
+        {alertMessage && (
+            <div className={`mb-2 mx-auto flex justify-center ${alertMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+              {alertMessage}
+            </div>
           )}
           <div className="mb-4 dark:text-white">
             <label htmlFor="program" className="block font-bold dark:text-white text-gray-700">
               Program
             </label>
-            <Select  className='dark:bg-slate-700 dark:text-white'
+            <Select  className='dark:bg-slate-700 text-black'
               id="program"
               name="program"
               value={selectedProgram}
@@ -141,13 +155,13 @@ const EditQuestionModal = ({ isOpen, onClose, questionToEdit , fetchQuestions })
               Competency
             </label>
             <Select className='dark:bg-slate-700 text-black'
-  id="competency"
-  name="competency"
-  value={competencyOptions.find((option) => option.value === selectedCompetency)}
-  onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
-  options={competencyOptions}
-  styles={customStyles}
-/>
+              id="competency"
+              name="competency"
+              value={selectedCompetency}
+              onChange={(selectedOption) => setSelectedCompetency(selectedOption)}
+              options={competencyOptions}
+              styles={customStyles}
+            />
           </div>
 
           <div className="mb-4">

@@ -11,7 +11,7 @@ function Exam() {
   const [maxQuestions, setMaxQuestions] = useState(null);
   const [score, setScore] = useState(0);
   const [selectedChoices, setSelectedChoices] = useState(Array(maxQuestions).fill(null)); // Adjust the number of questions
-  const questionsPerPage = 3; // Adjust the number of questions per page
+  const questionsPerPage = 3; 
   const [selectedProgram, setSelectedProgram] = useState({ value: 'Social Work', label: 'Social Work' });
   const [selectedCompetency, setSelectedCompetency] = useState({ value: 'All Competency', label: 'All Competency' });
   const [competencyScores, setCompetencyScores] = useState({});
@@ -439,7 +439,7 @@ const totalPages = Math.ceil(maxQuestions / questionsPerPage);
     pages.push(i);
   }
   return (
-    <div className="container min-h-screen h-auto items flex flex-col">
+    <div className="container min-h-screen h-auto items scroll-smooth flex flex-col">
       <div className="text-center border-2 dark:border-gray-700 border-indigo-700 rounded-lg dark:rounded-lg dark:bg-slate-900 py-4 header-bg shadow-md text-lg font-semibold dark:text-white">
         <div className="flex flex-row gap-5 justify-center mx-3 items-center dark:text-white">
           <div className="mb-4 lg:w-72 dark:bg-slate-600">

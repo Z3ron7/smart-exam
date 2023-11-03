@@ -19,9 +19,9 @@ const queryAsync = promisify(conn.query).bind(conn);
 
 router.get("/filterQuestions", async (req, res) => {
   try {
-    const { program, competency } = req.query;
+    const { program, competency, search } = req.query;
 
-    // Build a SQL query to filter questions by program and competency, including choices
+    // Build a SQL query to filter questions by program, competency, and search text, including choices
     let sqlQuery = `
       SELECT q.question_id, q.questionText, c.choiceText, c.isCorrect
       FROM question AS q
@@ -47,6 +47,16 @@ router.get("/filterQuestions", async (req, res) => {
       queryParams.push(`%${competency}%`);
     }
 
+    if (search) {
+      if (queryParams.length > 0) {
+        sqlQuery += ' AND';
+      } else {
+        sqlQuery += ' WHERE';
+      }
+      sqlQuery += ' (q.questionText LIKE ? OR c.choiceText LIKE ?)';
+      queryParams.push(`%${search}%`, `%${search}%`);
+    }
+
     const result = await queryAsync(sqlQuery, queryParams);
 
     res.json(result);
@@ -55,6 +65,7 @@ router.get("/filterQuestions", async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 

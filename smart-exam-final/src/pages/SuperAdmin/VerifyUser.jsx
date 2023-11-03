@@ -1,9 +1,8 @@
-// SuperAdminVerificationPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import error from "../../assets/images/error.png"
 
-function VerifyUser({isOpen, onClose}) {
+function VerifyUser() {
   const [unverifiedUsers, setUnverifiedUsers] = useState([]);
 
   useEffect(() => {
@@ -14,37 +13,35 @@ function VerifyUser({isOpen, onClose}) {
   }, []);
 
   const handleAcceptUser = (userId) => {
+    const confirmAccept = window.confirm('Are you sure you want to accept this user?');
     // Send a request to the server to accept the user
-    axios.post(`http://localhost:3001/verify/accept-user/${userId}`).then(() => {
-      // Update the list of unverified users
-      setUnverifiedUsers((users) => users.filter((user) => user.user_id !== userId));
-
-      localStorage.setItem('isVerified', 'true');
-    });
+    if (confirmAccept) {
+      // Send a request to the server to accept the user
+      axios.post(`http://localhost:3001/verify/accept-user/${userId}`).then(() => {
+        // Update the list of unverified users
+        setUnverifiedUsers((users) => users.filter((user) => user.user_id !== userId));
+        localStorage.setItem('isVerified', 'true');
+      });
   };
+  }
 
   const handleRejectUser = (userId) => {
+    const confirmReject = window.confirm('Are you sure you want to reject this user?');
     // Send a request to the server to reject the user
-    axios.post(`http://localhost:3001/verify/reject-user/${userId}`).then(() => {
-      // Update the list of unverified users
-      setUnverifiedUsers((users) => users.filter((user) => user.user_id !== userId));
-
-      localStorage.setItem('isVerified', 'false');
-    });
+    if (confirmReject) {
+      // Send a request to the server to reject the user
+      axios.post(`http://localhost:3001/verify/reject-user/${userId}`).then(() => {
+        // Update the list of unverified users
+        setUnverifiedUsers((users) => users.filter((user) => user.user_id !== userId));
+        localStorage.setItem('isVerified', 'false');
+      });
+    }
   };
 
   return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center z-50 ${
-        isOpen ? 'block' : 'hidden'
-      } bg-opacity-50 bg-gray-900`}
-      onClick={onClose}
-    >
-      <div
-        className="modal-container bg-white w-3/5 p-4 border border-gray-700 mb-2 rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
+    <div className='flex items-center justify-center'>
+      <div className="w-full p-4 mb-2">
+        <button className="absolute top-2 right-2 text-gray-600">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -54,87 +51,41 @@ function VerifyUser({isOpen, onClose}) {
             />
           </svg>
         </button>
-      <h2>User Verification</h2>
-      <div className="max-h-96 overflow-y-auto">
-      <ul>
-  <li className="bg-gray-200 p-2 font-semibold">
-    <div className="grid grid-cols-3 gap-2">
-      <div>Name</div>
-      <div>Email</div>
-      <div>Actions</div>
-    </div>
-  </li>
-  {unverifiedUsers.map((user) => (
-    <li key={user.user_id} className="border-b border-gray-200 p-2 flex items-center justify-between">
-      <div>{user.name}</div>
-      <div>{user.username}</div>
-      <div>
-        <button onClick={() => handleAcceptUser(user.user_id)} className="bg-green-500 text-white px-2 py-1 rounded-md mr-2">
-          Accept
-        </button>
-        <button onClick={() => handleRejectUser(user.user_id)} className="bg-red-500 text-white px-2 py-1 rounded-md">
-          Reject
-        </button>
+        <div className="max-h-96 overflow-y-auto">
+          {unverifiedUsers.length === 0 ? ( // Check if there are no unverified users
+            <div className='text-center'>
+              <img src={error} alt="" className='scale-[135%]' />
+              <p className='mt-[15px] text-semibold text-gray-500'>No data available</p>
+            </div>
+          ) : (
+            <ul className="dark:text-white ">
+              <li className="bg-slate-600 p-2 font-semibold">
+                <div className="grid text-white grid-cols-3 gap-2">
+                  <div>Name</div>
+                  <div>Email</div>
+                  <div className='ml-24'>Actions</div>
+                </div>
+              </li>
+              {unverifiedUsers.map((user) => (
+                <li key={user.user_id} className="border-b border-gray-200 p-2 flex justify-between">
+                  <div>{user.name}</div>
+                  <div>{user.username}</div>
+                  <div>
+                  <button onClick={() => handleAcceptUser(user.user_id)} className=" text-white px-2 py-1 rounded-md mr-2">
+                  <img className='w-5 h-5' src="../check.svg" alt="" />
+                    </button>
+                    <button onClick={() => handleRejectUser(user.user_id)} className=" text-white px-2 py-1 rounded-md">
+                    <img className='w-5 h-5' src="../eks.svg" alt="" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-    </li>
-  ))}
-</ul>
-</div>
-    </div>
     </div>
   );
 }
 
 export default VerifyUser;
-
-
-// useEffect(() => {
-//   const fetchData = async () => {
-//     try {
-//       if (selectedProgram) {
-//         let response;
-
-//         if (selectedCompetency?.value === 'All Competency') {
-//           // If "All Competency" is selected, fetch questions for all available competencies
-//           const competencies = ['SWPPS', 'Casework', 'HBSE']; // Replace with your predefined competencies
-//           const allQuestions = [];
-
-//           // Fetch questions for each competency and merge the results
-//           for (const competency of competencies) {
-//             const competencyResponse = await axios.get(
-//               `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${competency}`
-//             );
-
-//             // Check if questions already exist in allQuestions array
-//             for (const question of competencyResponse.data) {
-//               const existingQuestion = allQuestions.find((q) => q.question_id === question.question_id);
-//               if (!existingQuestion) {
-//                 allQuestions.push(question);
-//               }
-//             }
-//           }
-//           response = { data: allQuestions };
-//           localStorage.setItem('selectedCompetencyId', 'All');
-//         } else if (selectedCompetency) {
-//           // Fetch questions for the selected competency
-//           response = await axios.get(
-//             `http://localhost:3001/questions/refresh?program=${selectedProgram.label || ''}&competency=${selectedCompetency.value || ''}`
-//           );
-//           localStorage.setItem('selectedCompetencyId', selectedCompetency.value);
-//         } else {
-//           // If no competency is selected, use all questions
-//           await fetchQuestions();
-//           return; // Exit early to avoid setting state again
-//         }
-//         setQuestionsData(response.data);
-//         // setMaxQuestions(response.data.length);
-//         // setCurrentQuestion(0);
-
-//       }
-//     } catch (error) {
-//       console.error('Error:', error);
-//     }
-//   };
-
-//   fetchData();
-// }, [selectedProgram, selectedCompetency]);

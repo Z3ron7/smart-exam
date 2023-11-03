@@ -61,10 +61,10 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.get("/fetch", async (req, res) => {
+router.get('/fetch', async (req, res) => {
   const db = new Database();
   const conn = db.connection;
-  const { program, competency } = req.query;
+  const { program, competency, search } = req.query;
 
   // Define the base query to fetch questions and choices, including competency_id
   let query = `
@@ -73,9 +73,9 @@ router.get("/fetch", async (req, res) => {
     LEFT JOIN choices AS c ON q.question_id = c.question_id
   `;
 
-  // Add filters for program and competency if provided
+  // Add filters for program, competency, and search if provided
   const queryParams = [];
-  if (program || competency) {
+  if (program || competency || search) {
     query += ' WHERE';
 
     if (program) {
@@ -90,7 +90,17 @@ router.get("/fetch", async (req, res) => {
       query += ' q.competency_id IN (SELECT competency_id FROM competency WHERE competency_name LIKE ?)';
       queryParams.push(`%${competency}%`);
     }
+
+    if (search) {
+      if (program || competency) {
+        query += ' AND';
+      }
+      query += ' (q.questionText LIKE ? OR c.choiceText LIKE ?)'; // Search in questionText and choiceText
+      queryParams.push(`%${search}%`);
+      queryParams.push(`%${search}%`);
+    }
   }
+  
   try {
     await conn.connect();
 
@@ -134,6 +144,7 @@ router.get("/fetch", async (req, res) => {
     conn.end();
   }
 });
+
 
 router.put("/update/:questionId", async (req, res) => {
   const { questionId } = req.params;
@@ -278,7 +289,22 @@ router.get('/refresh', async (req, res) => {
     conn.end();
   }
 });
+router.get("/search/:questionText", async (req, res) => {
+  const { questionText } = req.params;
+  const query = "SELECT * FROM question WHERE questionText LIKE ?";
 
+  try {
+    await conn.connect();
+
+    conn.query(query, [`%${questionText}%`], (error, rows) => {
+      if (error) throw error;
+      res.json(rows);
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
 
 
 

@@ -37,6 +37,16 @@ router.get('/rooms', async (req, res) => {
   }
 });
 
+router.get('/refresh-rooms', async (req, res) => {
+  try {
+    const rooms = await queryAsync('SELECT * FROM room ORDER BY room_id DESC');
+    res.json({ success: true, rooms });
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch rooms' });
+  }
+});
+
 router.get('/rooms/:room_id', async (req, res) => {
   const { room_id } = req.params;
   try {

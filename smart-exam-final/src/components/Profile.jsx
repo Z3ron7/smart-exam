@@ -9,7 +9,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import "./single.scss";
 import { useParams } from "react-router-dom";
 
 function getTimeAgo(time) {
@@ -57,14 +56,13 @@ const competencyMap = {
   // Add more mappings as needed
 }
 
-const Single = () => {
-  const { user_id } = useParams(); // Retrieve the user ID from the route
+const Profile = () => {
 
   const [userData, setUserData] = useState(null);
   const [latestActivities, setLatestActivities] = useState([]);
+  const user_id = localStorage.getItem('user_id');
 
   useEffect(() => {
-    // Fetch user data based on the user ID
     async function fetchUserData() {
       try {
         const response = await axios.get(`http://localhost:3001/users/users/${user_id}`);
@@ -91,40 +89,40 @@ const Single = () => {
     fetchLatestActivities();
   }, [user_id]);
   return (
-    <div className="single">
-      <div className="view">
-        <div className="info">
-          <div className="topInfo">
-            {userData && userData.image && <img src={userData.image} alt="" />}
+    <div className="flex flex-col gap-44">
+      <div className="flex-1">
+        <div className="flex items-center">
+          <div className="flex items-center gap-20">
+            {userData && userData.image && <img className="w-[150px] h-[150px] rounded-[20px]" src={userData.image} alt="" />}
           </div>
-          <div className="details">
+          <div className=" text-lg">
         {userData && (
-          <div className="item">
-            <span className="itemTitle dark:text-white">Name:</span>
+          <div className=" m-8">
+            <span className=" font-semibold mr-3 capitalize dark:text-white">Name:</span>
             <span className="itemValue dark:text-white">{userData.name}</span>
           </div>
         )}
         {userData && (
-          <div className="item">
+          <div className="m-8">
             <span className="itemTitle dark:text-white">Email:</span>
             <span className="itemValue dark:text-white">{userData.username}</span>
           </div>
         )}
         {userData && (
-          <div className="item">
+          <div className="m-8">
             <span className="itemTitle dark:text-white">Status:</span>
             <span className="itemValue dark:text-white">{userData.status}</span>
           </div>
         )}
         {userData && (
-          <div className="item">
+          <div className="m-8">
             <span className="itemTitle dark:text-white">Verified:</span>
             <span className="itemValue dark:text-white">{userData.isVerified ? 'Yes' : 'No'}</span>
           </div>
         )}
       </div>
         </div>
-        <hr />
+        <hr className=" w-11/12 h-0 border-[o.5px] m-5" />
           {/* <div className="chart">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -154,13 +152,13 @@ const Single = () => {
           </div> */}
       </div>
       <div className="activities">
-  <h2 className="dark:text-white">Latest Activities</h2>
-  <ul className="activity-list">
+  <h2 className="flex dark:text-white mb-5 ">Latest Activities</h2>
+  <ul className=" max-h-[450px] overflow-y-auto">
       {latestActivities.map((activity, index) => (
-        <li key={index}>
-          <div>
+        <li className="relative w-1 pt-12 bg-[#f45b69] " key={index}>
+          <div className=" min-w-[480px] p-4 bg-[#f45b6810]">
           <p className="dark:text-white">{`Took the exam with a category of ${competencyMap[activity.competency_id]}`}</p>
-            <time className="dark:text-white">{getTimeAgo(activity.end_time)}</time>
+            <time className="dark:text-white text-xs">{getTimeAgo(activity.end_time)}</time>
           </div>
         </li>
       ))}
@@ -171,4 +169,4 @@ const Single = () => {
 };
 
 
-export default Single;
+export default Profile;
