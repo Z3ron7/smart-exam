@@ -1,8 +1,11 @@
 import React, {useState} from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { Spinner } from "@material-tailwind/react";
+import Cookies from 'js-cookie';
 
 function LoginPage() {
+  const [isLoading, setLoading] = useState(false);
   const [values, setValues] = useState({
     username: '',
     password: '',
@@ -12,11 +15,13 @@ function LoginPage() {
 
   const handleLogin = (event) => {
     event.preventDefault();
+    setLoading(true);
     axios
       .post('http://localhost:3001/login', values, { withCredentials: true })
       .then((res) => {
         if (res.data.Status === 'Login Successful') {
           localStorage.setItem('token', res.data.token);
+          console.log('data:', res.data)
           localStorage.setItem('role', res.data.role);
           localStorage.setItem('user_id', res.data.user_id);
           const userRole = res.data.role;
@@ -24,6 +29,8 @@ function LoginPage() {
           // Access the isVerified status from the response
           const isVerified = res.data.isVerified;
   
+          
+
           if (userRole === 'Exam-taker') {
             if (isVerified) {
               // User is verified, redirect to the student dashboard
@@ -42,7 +49,10 @@ function LoginPage() {
             }
             navigate(dashboardURL);
           }
-  
+          setTimeout(() => {
+            // Reset the loading state to false after 2 seconds
+            setLoading(false);
+          }, 3000);
           alert('Login successfully.');
         } else {
           setError('Login failed. Please check your credentials.');
@@ -56,19 +66,15 @@ function LoginPage() {
   
   return (
     <>
-    <div className="flex bg-white min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <img
-            className="mx-auto h-10 w-auto"
-            src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-            alt="Your Company"
-          />
-          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+    <div className="flex bg-gradient-to-r from-blue-500 to-red-500 h-screen flex-1 flex-col items-center px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-sm mt-10">
+         
+          <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
             Sign in to your account
           </h2>
         </div>
 
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <div className="mt-5 sm:mx-auto p-5 sm:w-full h-80 sm:max-w-sm shadow-black shadow-lg">
         <form className="space-y-6" onSubmit={handleLogin}>
           <div>
             <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
@@ -117,17 +123,20 @@ function LoginPage() {
             <div className="text-red-600">{error}</div>
           )}
 
-          <div>
+          <div className='flex justify-center items-center '>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className={`flex w-1/2 rounded-md justify-center bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white
+              transition-colors duration-200 transform shadow-md hover:shadow-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
+                isLoading ? 'bg-indigo-500 font-semibold cursor-not-allowed' : 'bg-indigo-700 hover-translate-y-1'
+              }duration-300`}
             >
-              Sign in
+              {isLoading ? <Spinner className="flex justify-center mr-2 font-medium"/> : null }
+              {isLoading ? null : 'Sign in'}
             </button>
           </div>
         </form>
-
-          <p className="mt-10 text-center text-sm text-gray-500">
+          <p className="mt-10 text-center text-sm text-white">
             Not a member?{' '}
             <Link to="/register" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
               Register

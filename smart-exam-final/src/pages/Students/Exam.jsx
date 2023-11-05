@@ -417,18 +417,21 @@ const nextPage = () => {
   const nextQuestion = (nextPage - 1) * questionsPerPage;
   setCurrentQuestion(nextQuestion);
   saveExamStateToLocalStorage()
+  window.scrollTo(0, 0);
 };
 
 const prevPage = () => {
   const prevPage = Math.max(currentPage - 1, 1); // Ensure we don't go before the first page
   const prevQuestion = (prevPage - 1) * questionsPerPage;
   setCurrentQuestion(prevQuestion);
+  window.scrollTo(0, 0);
 };
 
 const handlePageClick = (page) => {
 const newPage = Math.max(1, Math.min(page, totalPages)); // Ensure the selected page is within valid bounds
 const newQuestion = (newPage - 1) * questionsPerPage;
 setCurrentQuestion(newQuestion);
+window.scrollTo(0, 0);
 };
 
 const totalPages = Math.ceil(maxQuestions / questionsPerPage);

@@ -6,15 +6,7 @@ const router = express.Router();
 
 const db = new Database();
 const conn = db.connection;
-(async () => {
-  try {
-    await conn.connect();
-    console.log('Connected to the database');
-  } catch (error) {
-    console.error('Error connecting to the database:', error);
-    process.exit(1); // Exit the application if database connection fails
-  }
-})();
+
 const queryAsync = promisify(conn.query).bind(conn);
 
 router.post("/create", async (req, res) => {

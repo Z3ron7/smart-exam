@@ -67,13 +67,16 @@ router.get('/fetch-exam-room', async (req, res) => {
     // Replace 'userId' with the actual user ID for whom you want to fetch exams
 
     const userExams = await queryAsync(query, [userId, limit]);
+    
     // Fetch the score for the user
     const scoreQuery = `
       SELECT score FROM exam_room WHERE user_id = ?;
     `;
 
     const scoreResult = await queryAsync(scoreQuery, [userId]);
-    const score = scoreResult[0].score;
+
+    // Check if a score exists before accessing it
+    const score = scoreResult.length > 0 ? scoreResult[0].score : null;
 
     res.json({ userExams, score });
   } catch (error) {
@@ -81,6 +84,7 @@ router.get('/fetch-exam-room', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.get('/check-user-exam/:user_id/:room_id', async (req, res) => {
   try {

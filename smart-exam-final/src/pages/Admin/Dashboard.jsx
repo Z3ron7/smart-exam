@@ -1,7 +1,6 @@
 import React from 'react'
 import { FaRegCalendarMinus, FaEllipsisV } from "react-icons/fa"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Sector } from 'recharts';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, } from 'recharts';
 import PieComponent from './PieComponent';
 // import { Progress } from 'antd';
 import error from "../../assets/images/error.png"

@@ -7,6 +7,7 @@ import { Menu, Popover, Transition } from '@headlessui/react'
 import classNames from "classnames";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; // Import Axios
+import Cookies from 'js-cookie';
 
 const NavbarStudents = () => {
   const [open, setOpen] = useState(false);
@@ -20,8 +21,13 @@ const NavbarStudents = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+    axios
+      .get('http://localhost:3001/logout', { withCredentials: true })
+      .then((res) => {
+        localStorage.removeItem('token'); // Remove the token from local storage
+        navigate('/');
+      })
+      .catch((err) => console.log(err));
   };
 
   useEffect(() => {

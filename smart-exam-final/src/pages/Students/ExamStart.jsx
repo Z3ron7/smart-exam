@@ -333,7 +333,7 @@ const formattedEndTime = `${endTime.getFullYear()}-${(endTime.getMonth() + 1).to
       Math.floor(total_duration_minutes_with_interval % 60)
     ).padStart(2, '0')}m:${String(Math.floor((total_duration_minutes_with_interval % 1) * 60)).padStart(2, '0')}s`;
 
-    const response = await axios.post('http://localhost:3001/exams/end-exam', {
+    const response = await axios.post('http://localhost:3001/exam-room/end-exam-room', {
       exam_id: user_exam_id, // Replace with the actual exam ID
       score: calculateScore(), // Replace with your score calculation logic
       total_duration_minutes: formattedTotalDuration, // Send the total duration in the "00h:00m:00s" format

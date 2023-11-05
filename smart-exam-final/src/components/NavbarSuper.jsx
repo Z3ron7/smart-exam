@@ -2,14 +2,11 @@ import React, {useState, useEffect, Fragment} from "react";
 import "./navbarSuper.scss";
 import Toggle from "./ThemeToggle";
 import { FaBell, FaCog } from "react-icons/fa";
-import { Menu, Popover, Transition } from '@headlessui/react'
 import { HiOutlineBell, HiOutlineSearch, HiOutlineChatAlt } from 'react-icons/hi'
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 import axios from "axios"; // Import Axios
 import { Link } from "react-router-dom";
-
-
 
 
 const NavbarSuper = () => {
@@ -24,8 +21,13 @@ const NavbarSuper = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+    axios
+      .get('http://localhost:3001/logout', { withCredentials: true })
+      .then((res) => {
+        localStorage.removeItem('token'); // Remove the token from local storage
+        navigate('/');
+      })
+      .catch((err) => console.log(err));
   };
 
   useEffect(() => {

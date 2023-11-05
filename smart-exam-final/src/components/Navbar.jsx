@@ -7,8 +7,7 @@ import { HiOutlineBell, HiOutlineSearch, HiOutlineChatAlt } from 'react-icons/hi
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 import axios from "axios"; // Import Axios
-
-
+import Cookies from 'js-cookie';
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -22,8 +21,13 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+    axios
+      .get('http://localhost:3001/logout', { withCredentials: true })
+      .then((res) => {
+        localStorage.removeItem('token'); // Remove the token from local storage
+        navigate('/');
+      })
+      .catch((err) => console.log(err));
   };
 
   useEffect(() => {

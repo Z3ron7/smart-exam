@@ -21,8 +21,6 @@ app.use(
 
 const examsRouter = require("./src/routes/Exam");
 const questionsRouter = require("./src/routes/Questions"); // Add this
-const choicesRouter = require("./src/routes/Choices");
-const programRouter = require("./src/routes/Program");
 const filterRouter = require ("./src/routes/FilterQuestion")
 const verifyRouter = require ("./src/routes/Verification")
 const usersRouter = require ("./src/routes/Users")
@@ -34,8 +32,6 @@ app.use("/exams", examsRouter);
 app.use("/room", roomRouter);
 app.use("/exam-room", examRoomRouter);
 app.use("/questions", questionsRouter); // Add this
-app.use("/choices", choicesRouter); // Add this
-app.use("/category", programRouter); // Add this
 app.use("/filter", filterRouter); // Add this
 app.use("/verify", verifyRouter); // Add this
 app.use("/users", usersRouter); // Add this
@@ -190,7 +186,7 @@ app.post("/login", (req, res) => {
           });
           res.cookie("token", token);
 
-          return res.json({ Status: "Login Successful", user_id, name, image, role, isVerified });
+          return res.json({ Status: "Login Successful", token, user_id, name, image, role, isVerified });
         } else {
           return res.json({ Error: "Password error!" });
         }
@@ -200,6 +196,11 @@ app.post("/login", (req, res) => {
     }
   });
 });
+
+app.get('/logout', (req, res) => {
+  res.clearCookie('token');
+  return res.json({Status: "Success"});
+ })
 
 // Add a new route to fetch user data for the currently logged-in user
 app.get("/fetch-user", verifyUser, async (req, res) => {

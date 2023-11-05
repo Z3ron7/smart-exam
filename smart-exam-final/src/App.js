@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+
 //Super Admin---------------------------
 import ProfileS from './pages/SuperAdmin/Profile'
 import LayoutSuper from './components/LayoutSuper';
@@ -16,8 +18,7 @@ import ProfileA from './pages/Admin/Profile'
 import Layout from './components/Layout';
 import Dashboard from './pages/Admin/Dashboard';
 import Questionnaire from './pages/Admin/Questionnaire';
-import Room from './pages/Admin/Room';
-import AddQuestion from './pages/Admin/AddQuestion'
+import Room from './pages/SuperAdmin/Room';
 //Exam-takers----------------------------
 import ProfileSt from './pages/Students/Profile'
 import LayoutStudents from './components/LayoutStudents';
@@ -46,7 +47,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    setIsLoggedIn(token !== null);
+    setIsLoggedIn(token !== undefined && token !== null);
     setUserRole(role);
 
     const verificationStatus = localStorage.getItem('isVerified');
@@ -220,17 +221,6 @@ function App() {
             />
           }
         />
-        <Route
-          path="/addQuestion"
-          element={
-            <ProtectedRoute
-              element={<Layout><AddQuestion /></Layout>}
-              allowedRoles={['Admin']}
-              isLoggedIn={isLoggedIn}
-              userRole={userRole}
-            />
-          }
-        />
 
         {/* --------------------------------------Routes for student----------------------------------- */}
         <Route
@@ -297,7 +287,7 @@ function App() {
           }
         />
          <Route
-          path="/exam-result"
+          path="/exam-results"
           element={
             <ProtectedRoute
               element={<LayoutStudents><ExamHistorySet /></LayoutStudents>}

@@ -23,7 +23,7 @@ const SidebarStudents = () => {
       path: false,
       src: <RiFolderHistoryFill />,
       subMenus: [ // Add sub-menus here
-        { title: 'Exam', path: '/exam-result', src: <MdViewComfy /> },
+        { title: 'Exam', path: '/exam-results', src: <MdViewComfy /> },
         { title: 'Customize Exam', path: '/result', src: <PiExamFill /> },
       ],
     },

@@ -5,15 +5,6 @@ const router = express.Router();
 
 const db = new Database();
 const conn = db.connection;
-(async () => {
-  try {
-    await conn.connect();
-    console.log('Connected to the database');
-  } catch (error) {
-    console.error('Error connecting to the database:', error);
-    process.exit(1); // Exit the application if database connection fails
-  }
-})();
 const queryAsync = promisify(conn.query).bind(conn);
 
 router.get('/users', async (req, res) => {
@@ -49,6 +40,35 @@ router.get('/users/:user_id', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while fetching data' });
   }
 });
+
+router.put('/users/:user_id', async (req, res) => {
+  const userId = req.params.user_id; // Retrieve the userId from the URL parameters
+  const updatedUserData = req.body; // Retrieve the updated user data from the request body
+
+  try {
+    const query = 'UPDATE users SET name = ?, gender = ?, username = ?, status = ?, image = ?, isVerified = ? WHERE user_id = ?';
+    
+    const result = await queryAsync(query, [
+      updatedUserData.name,
+      updatedUserData.gender,
+      updatedUserData.username,
+      updatedUserData.status,
+      updatedUserData.image,
+      updatedUserData.isVerified,
+      userId
+    ]);
+    
+    if (result.affectedRows === 0) {
+      res.status(404).json({ message: 'User not found' });
+    } else {
+      res.json({ message: 'User data updated successfully' });
+    }
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    res.status(500).json({ error: 'An error occurred while updating user data' });
+  }
+});
+
   
   router.delete('/users/:user_id', async (req, res) => {
     try {
